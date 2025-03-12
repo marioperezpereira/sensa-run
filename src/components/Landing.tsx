@@ -12,7 +12,7 @@ export const Landing = () => {
           <img 
             src="/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png" 
             alt="Sensa" 
-            className="h-32 w-32"
+            className="h-64 w-64"
           />
           <h1 className="text-5xl font-bold text-sensa-purple tracking-tight">Sensa</h1>
           <h2 className="text-3xl font-medium text-gray-800 max-w-lg leading-tight tracking-tight">
