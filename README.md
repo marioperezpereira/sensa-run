@@ -1,69 +1,43 @@
-# Welcome to your Lovable project
+# Sensa: Corre por sensaciones
 
-## Project info
+**URL**: https://sensa.run
 
-**URL**: https://lovable.dev/projects/0e1b0579-92be-41e2-8e63-881c6bdbf815
+## Tus sensaciones, claves en el entrenamiento
 
-## How can I edit this code?
+Para evaluar qué entrenamientos realizar en el día a día, los atletas de fondo suelen recurrir a dos fórmulas: 
+- Planes cerrados de entrenamiento, que se encuentran disponibles en múltiples plataformas y formatos desde hace décadas.
+- Entrenador personal, que además de diseñar una planificación, evalúa las condiciones del atleta, el calendario de competiciones y especifica el entrenamiento a realizar teniendo en cuenta múltiples factores
 
-There are several ways of editing your application.
+Para aquellos atletas que buscan respuestas a la pregunta **"¿Qué entrenamiento me conviene realizar hoy?"** y no disponen de un entrenador  hemos creado Sensa, un asistente que recoge tus últimos entrenamientos y tus sensaciones y te recomienda cuál es el mejor entrenamiento a realizar en el día de hoy.
 
-**Use Lovable**
+## ¿Cómo funciona?
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0e1b0579-92be-41e2-8e63-881c6bdbf815) and start prompting.
+Actualmente, la aplicación cuenta con dos componentes:
 
-Changes made via Lovable will be committed automatically to this repo.
+### Personalización
 
-**Use your preferred IDE**
+Está destinado a obtener la información del atleta (experiencia, objetivos, hábitos...) a través de una serie de pasos estructurados.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Finalmente cuenta con conexión con Strava para recuperar sus últimos entrenamientos.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+![image](https://github.com/user-attachments/assets/f96acabc-8c8c-44a7-9450-9972f1bd2232)
 
-Follow these steps:
+Esta personalización se puede repetir en cualquier momento desde la sección "Mi perfil", en caso de que cambien los objetivos o hábitos del usuario.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Entrenamientos del día a día
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+![image](https://github.com/user-attachments/assets/2fbf0545-d4e8-4e46-8489-1554456b0617)
 
-# Step 3: Install the necessary dependencies.
-npm i
+Destinado a ser el punto diario de encuentro con Sensa, el usuario recibe una serie de preguntas acerca de cómo fue su último entrenamiento, estado de fatiga y cómo se encuentra en el día de hoy mentalmente.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Una vez respondidas estas 3 preguntas, el usuario recibirá una sesión de entrenamiento recomendada acorde a la información recogida.
 
-**Edit a file directly in GitHub**
+![image](https://github.com/user-attachments/assets/da8c32ad-01d2-4134-96dd-0be0e1b9a809)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Tecnología
 
-**Use GitHub Codespaces**
+Este proyecto está realizado con [Lovable](https://lovable.dev)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Cuenta con conexión a Supabase, que organiza la autenticación de usuarios, base de datos y conexión a APIs de terceros.
 
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/0e1b0579-92be-41e2-8e63-881c6bdbf815) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+Los terceros con los que se integra son con Strava para recoger las últimas 20 sesiones de entrenamiento del usuario, y con OpenAI para, a través de un prompt generado, obtener la recomendación del entrenamiento a realizar.
