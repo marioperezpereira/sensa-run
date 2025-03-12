@@ -22,7 +22,7 @@ export const Landing = () => {
         
         <Button 
           onClick={() => navigate("/auth")}
-          className="bg-sensa-purple hover:bg-sensa-purple/90 text-white px-[100px] py-6 h-auto text-lg rounded-[42px] font-medium tracking-wide transform transition hover:scale-105 w-full sm:w-auto"
+          className="bg-sensa-purple hover:bg-sensa-purple/90 text-white px-8 py-6 h-auto text-lg rounded-[42px] font-medium tracking-wide transform transition hover:scale-105 w-full sm:w-auto"
         >
           Descubre Sensa
         </Button>
