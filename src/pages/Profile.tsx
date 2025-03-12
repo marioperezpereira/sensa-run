@@ -92,7 +92,7 @@ const Profile = () => {
       
       setShowConfirmDialog(false);
       queryClient.invalidateQueries({ queryKey: ['onboarding'] });
-      window.location.href = '/';
+      window.location.href = '/app';
     } catch (error: any) {
       toast({
         title: "Error",

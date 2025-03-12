@@ -21,7 +21,7 @@ const StravaCallback = () => {
           description: "No se pudo conectar con Strava. Por favor, inténtalo de nuevo.",
           variant: "destructive",
         });
-        navigate("/");
+        navigate("/app");
         return;
       }
 
@@ -32,7 +32,7 @@ const StravaCallback = () => {
           description: "Parámetros de autenticación inválidos",
           variant: "destructive",
         });
-        navigate("/");
+        navigate("/app");
         return;
       }
 
@@ -62,7 +62,7 @@ const StravaCallback = () => {
             description: "No se encontraron tus datos de onboarding. Por favor, completa el formulario de nuevo.",
             variant: "destructive",
           });
-          navigate("/");
+          navigate("/app");
           return;
         }
 
@@ -90,7 +90,7 @@ const StravaCallback = () => {
           description: "Tu cuenta de Strava ha sido conectada exitosamente.",
         });
 
-        navigate("/", { replace: true });
+        navigate("/app", { replace: true });
       } catch (error: any) {
         console.error("Error exchanging token:", error);
         toast({
@@ -98,7 +98,7 @@ const StravaCallback = () => {
           description: "Error al conectar con Strava. Por favor, inténtalo de nuevo.",
           variant: "destructive",
         });
-        navigate("/");
+        navigate("/app");
       }
     };
 
