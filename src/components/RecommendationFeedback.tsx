@@ -60,7 +60,7 @@ export const RecommendationFeedback = ({ onFeedbackProvided }: RecommendationFee
           onClick={() => handleFeedback('like')}
           disabled={isSubmitting}
           variant="outline"
-          className="text-lg py-6 hover:bg-green-50"
+          className="text-lg py-4 hover:bg-green-50"
         >
           😄 ¡Me gusta! Voy a hacer el entrenamiento
         </Button>
@@ -68,7 +68,7 @@ export const RecommendationFeedback = ({ onFeedbackProvided }: RecommendationFee
           onClick={() => handleFeedback('alternative')}
           disabled={isSubmitting}
           variant="outline"
-          className="text-lg py-6 hover:bg-yellow-50"
+          className="text-lg py-4 hover:bg-yellow-50"
         >
           😏 Creo que me convence más la sesión alternativa
         </Button>
@@ -76,7 +76,7 @@ export const RecommendationFeedback = ({ onFeedbackProvided }: RecommendationFee
           onClick={() => handleFeedback('dislike')}
           disabled={isSubmitting}
           variant="outline"
-          className="text-lg py-6 hover:bg-red-50"
+          className="text-lg py-4 hover:bg-red-50"
         >
           🙄 No creo que ninguna se adapte a lo que necesito...
         </Button>
