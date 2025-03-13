@@ -56,13 +56,15 @@ const StravaSection = ({ onboardingData }: StravaSectionProps) => {
       ) : (
         <div className="space-y-2">
           <p className="text-gray-900">No conectado</p>
-          <button onClick={handleConnectStrava} className="w-full p-0 border-0">
-            <img 
-              src="/lovable-uploads/d5ae09c9-5cfe-42e6-92bc-37a0d851af39.png" 
-              alt="Connect with Strava"
-              className="w-full"
-            />
-          </button>
+          <div className="max-w-48 w-full">
+            <button onClick={handleConnectStrava} className="w-full p-0 border-0">
+              <img 
+                src="/lovable-uploads/d5ae09c9-5cfe-42e6-92bc-37a0d851af39.png" 
+                alt="Connect with Strava"
+                className="w-full"
+              />
+            </button>
+          </div>
         </div>
       )}
     </div>

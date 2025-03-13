@@ -1,3 +1,4 @@
+
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -48,18 +49,20 @@ export const StravaStep = ({ onSkip, onNext }: StravaStepProps) => {
       <p className="text-gray-800 text-sm md:text-base">
         Conecta con Strava para recoger tus últimas actividades y personalizar mejor tu entrenamiento
       </p>
-      <div className="space-y-2">
-        <button onClick={handleConnectStrava} className="w-full p-0 border-0">
-          <img 
-            src="/lovable-uploads/d5ae09c9-5cfe-42e6-92bc-37a0d851af39.png" 
-            alt="Connect with Strava"
-            className="w-full"
-          />
-        </button>
+      <div className="flex flex-col items-center gap-3">
+        <div className="max-w-48 w-full">
+          <button onClick={handleConnectStrava} className="w-full p-0 border-0">
+            <img 
+              src="/lovable-uploads/d5ae09c9-5cfe-42e6-92bc-37a0d851af39.png" 
+              alt="Connect with Strava"
+              className="w-full"
+            />
+          </button>
+        </div>
         <Button 
           onClick={onSkip}
           variant="outline"
-          className="w-full py-4 rounded-[42px]"
+          className="max-w-48 w-full py-4 rounded-[42px]"
         >
           Continuar sin Strava
         </Button>
