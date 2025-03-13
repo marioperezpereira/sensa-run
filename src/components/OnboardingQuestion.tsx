@@ -88,7 +88,7 @@ export const OnboardingQuestion = ({ onComplete }: OnboardingQuestionProps) => {
         <Button
           onClick={handleNext}
           disabled={!canProceed() || isSubmitting}
-          className="bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-6 h-auto"
+          className="bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-2"
         >
           {isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
