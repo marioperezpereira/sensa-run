@@ -1,3 +1,4 @@
+
 import { useRatingsFlow } from "@/hooks/useRatingsFlow";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,21 +73,23 @@ export const RatingFlow = () => {
         .limit(1)
         .single();
 
+      // Now we get the effort value from the same daily_conditions table
       let effortRating = null;
       if (activity?.id) {
-        const { data: effortRatings } = await supabase
-          .from('activity_efforts')
-          .select('perceived_effort')
-          .eq('activity_id', activity.id)
+        const { data: latestCondition } = await supabase
+          .from('daily_conditions')
+          .select('energy_level')
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(1);
+          .limit(1)
+          .maybeSingle();
 
-        effortRating = effortRatings?.[0];
+        effortRating = latestCondition;
       }
 
       const prompt = await generateTrainingPrompt(
         activity,
-        effortRating?.perceived_effort,
+        effortRating?.energy_level,
         energyRating?.energy_level || 0,
         condition
       );
