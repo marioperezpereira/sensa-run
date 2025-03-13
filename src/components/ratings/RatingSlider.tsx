@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
 
@@ -39,7 +39,7 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
       
       <Button
         onClick={() => onSubmit(rating)}
-        className="w-full bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-6 h-auto"
+        className="w-full bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-4"
       >
         Enviar valoración
       </Button>

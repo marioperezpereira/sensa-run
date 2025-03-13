@@ -58,7 +58,7 @@ export const ConditionSelection = ({ onCompleted }: ConditionSelectionProps) => 
           <Button
             key={condition.id}
             onClick={() => setSelectedCondition(condition.id)}
-            className={`justify-start text-left rounded-xl ${
+            className={`justify-start text-left rounded-xl py-4 ${
               selectedCondition === condition.id ? 'ring-2 ring-offset-2 ring-sensa-purple bg-sensa-purple/10' : ''
             }`}
             variant="outline"
@@ -70,7 +70,7 @@ export const ConditionSelection = ({ onCompleted }: ConditionSelectionProps) => 
       {selectedCondition && (
         <Button
           onClick={handleSubmit}
-          className="w-full bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-6 h-auto"
+          className="w-full bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-4"
         >
           Confirmar condición
         </Button>
