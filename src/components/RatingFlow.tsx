@@ -1,4 +1,3 @@
-
 import { useRatingsFlow } from "@/hooks/useRatingsFlow";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,21 +25,22 @@ export const RatingFlow = () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const { data: existingRec } = await supabase
+        const { data: existingRec, error: recError } = await supabase
           .from('training_recommendations')
           .select('*')
           .eq('user_id', user.id)
           .gte('created_at', today.toISOString())
           .maybeSingle();
 
+        if (recError) throw recError;
+
         if (existingRec) {
           console.log('Found existing recommendation, showing it directly');
           setRecommendation(existingRec.recommendation);
           setShowFeedback(!existingRec.feedback);
-          // Skip all steps and go straight to completed
-          while (currentStep !== 'completed') {
-            moveToNextStep();
-          }
+          moveToNextStep(); // Move to energy step
+          moveToNextStep(); // Move to condition step
+          moveToNextStep(); // Move to completed step
         }
         setIsLoading(false);
       } catch (error) {
@@ -51,7 +51,7 @@ export const RatingFlow = () => {
     };
 
     checkExistingRecommendation();
-  }, []);
+  }, [moveToNextStep]);
 
   const handleConditionComplete = async (condition: string) => {
     try {
@@ -121,7 +121,15 @@ export const RatingFlow = () => {
     return <LoadingSpinner />;
   }
 
-  if (currentStep === 'completed') {
+  if (error) {
+    return (
+      <div className="text-red-500 text-center">
+        {error}
+      </div>
+    );
+  }
+
+  if (currentStep === 'completed' && recommendation) {
     return (
       <RecommendationDisplay 
         recommendation={recommendation}
