@@ -1,11 +1,10 @@
-
 import { useRatingsFlow } from "@/hooks/useRatingsFlow";
 import { EffortRating } from "./EffortRating";
 import { EnergyRating } from "./EnergyRating";
 import { ConditionSelection } from "./ConditionSelection";
 import { Card } from "./ui/card";
 import { generateTrainingPrompt } from "@/utils/generateTrainingPrompt";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from 'react-markdown';
 import { useToast } from "./ui/use-toast";
@@ -18,6 +17,42 @@ export const RatingFlow = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const checkExistingRecommendation = async () => {
+      try {
+        setIsLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('No user found');
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const { data: existingRec } = await supabase
+          .from('training_recommendations')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('created_at', today.toISOString())
+          .maybeSingle();
+
+        if (existingRec) {
+          setRecommendation(existingRec.recommendation);
+          setShowFeedback(!existingRec.feedback);
+          moveToNextStep();
+          moveToNextStep();
+          moveToNextStep();
+        }
+      } catch (error) {
+        console.error('Error checking existing recommendation:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (currentStep === 'effort') {
+      checkExistingRecommendation();
+    }
+  }, [currentStep, moveToNextStep]);
 
   const handleConditionComplete = async (condition: string) => {
     try {
