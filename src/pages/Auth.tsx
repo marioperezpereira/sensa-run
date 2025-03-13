@@ -98,7 +98,7 @@ export const Auth = () => {
           </div>
           <Button
             type="submit"
-            className="w-full bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-6 h-auto"
+            className="w-full bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-4 h-auto"
             disabled={isLoading}
           >
             {isLoading
