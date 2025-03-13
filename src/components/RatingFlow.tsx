@@ -38,9 +38,11 @@ export const RatingFlow = () => {
           console.log('Found existing recommendation, showing it directly');
           setRecommendation(existingRec.recommendation);
           setShowFeedback(!existingRec.feedback);
-          moveToNextStep(); // Move to energy step
-          moveToNextStep(); // Move to condition step
-          moveToNextStep(); // Move to completed step
+          setTimeout(() => {
+            moveToNextStep(); // Move to energy step
+            moveToNextStep(); // Move to condition step
+            moveToNextStep(); // Move to completed step
+          }, 0);
         }
         setIsLoading(false);
       } catch (error) {
@@ -51,7 +53,7 @@ export const RatingFlow = () => {
     };
 
     checkExistingRecommendation();
-  }, [moveToNextStep]);
+  }, []);
 
   const handleConditionComplete = async (condition: string) => {
     try {
