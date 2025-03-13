@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { OnboardingStep } from "./onboarding/types";
 import { ExperienceStep } from "./onboarding/ExperienceStep";
 import { FrequencyStep } from "./onboarding/FrequencyStep";
 import { GoalStep } from "./onboarding/GoalStep";
@@ -81,13 +80,15 @@ export const OnboardingQuestion = ({ onComplete }: OnboardingQuestionProps) => {
 
   return (
     <div className="flex flex-col space-y-6 animate-message-appear p-4">
-      {renderStep()}
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        {renderStep()}
+      </div>
       
       {currentStep !== "strava" && (
         <Button
           onClick={handleNext}
           disabled={!canProceed() || isSubmitting}
-          className="bg-telegram-blue hover:bg-telegram-dark"
+          className="bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-6 h-auto"
         >
           {isSubmitting ? (
             <Loader2 className="h-4 w-4 animate-spin" />

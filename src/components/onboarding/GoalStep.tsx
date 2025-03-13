@@ -30,9 +30,9 @@ export const GoalStep = ({ value, onChange }: GoalStepProps) => {
             <Label
               htmlFor={option}
               className={cn(
-                "flex-1 cursor-pointer rounded-xl border border-gray-200 p-4",
+                "flex-1 cursor-pointer rounded-xl border border-gray-200 p-4 bg-white",
                 "hover:bg-gray-50 hover:border-gray-300",
-                "peer-checked:border-telegram-blue peer-checked:bg-telegram-light",
+                "peer-checked:border-sensa-purple peer-checked:bg-sensa-purple/5",
                 "transition-all duration-200",
                 value === option && "font-bold"
               )}
