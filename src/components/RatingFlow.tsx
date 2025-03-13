@@ -1,4 +1,3 @@
-
 import { useRatingsFlow } from "@/hooks/useRatingsFlow";
 import { EffortRating } from "./EffortRating";
 import { EnergyRating } from "./EnergyRating";
@@ -37,23 +36,21 @@ export const RatingFlow = () => {
           .maybeSingle();
 
         if (existingRec) {
+          console.log('Found existing recommendation, showing it directly');
           setRecommendation(existingRec.recommendation);
           setShowFeedback(!existingRec.feedback);
           // Skip all steps and go straight to completed
           while (currentStep !== 'completed') {
             moveToNextStep();
           }
+          setIsLoading(false);
           return;
         }
 
-        // If no recommendation exists, start with effort rating if there's a recent activity
-        if (!activity) {
-          moveToNextStep(); // Skip effort and go straight to energy if no activity
-        }
+        setIsLoading(false);
       } catch (error) {
         console.error('Error checking existing recommendation:', error);
         setError('Error loading recommendation. Please try again.');
-      } finally {
         setIsLoading(false);
       }
     };
@@ -72,7 +69,6 @@ export const RatingFlow = () => {
         throw new Error('No user found');
       }
 
-      // Get energy rating
       const { data: energyRating } = await supabase
         .from('daily_conditions')
         .select('energy_level')
@@ -129,8 +125,15 @@ export const RatingFlow = () => {
     }
   };
 
-  if (currentStep === 'loading' || isLoading) {
-    return <div className="grid place-items-center h-full">Cargando...</div>;
+  if (isLoading) {
+    return (
+      <div className="grid place-items-center h-full">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sensa-purple"></div>
+          <p className="text-sensa-purple">Cargando...</p>
+        </div>
+      </div>
+    );
   }
 
   if (currentStep === 'completed') {

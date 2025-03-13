@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays } from 'date-fns';
@@ -12,6 +11,8 @@ interface Activity {
   distance: number;
   start_date: string;
   moving_time: number;
+  formattedDate?: string;
+  formattedDistance?: string;
 }
 
 export const useRatingsFlow = () => {
@@ -20,7 +21,6 @@ export const useRatingsFlow = () => {
 
   const syncStravaActivities = async (userId: string) => {
     try {
-      console.log('Syncing latest Strava activities...');
       const { data: athlete } = await supabase
         .from('user_onboarding')
         .select('strava_profile')
@@ -32,8 +32,22 @@ export const useRatingsFlow = () => {
         return false;
       }
 
-      // Fetch latest activities through our edge function
-      console.log('Fetching activities for user:', userId);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const { data: existingRec } = await supabase
+        .from('training_recommendations')
+        .select('id')
+        .eq('user_id', userId)
+        .gte('created_at', today.toISOString())
+        .maybeSingle();
+
+      if (existingRec) {
+        console.log('Already have recommendation for today, skipping Strava sync');
+        return false;
+      }
+
+      console.log('Fetching latest Strava activities...');
       const { data: stravaData, error: stravaError } = await supabase.functions.invoke(
         'fetch-strava-activities',
         {
@@ -46,7 +60,6 @@ export const useRatingsFlow = () => {
         return false;
       }
 
-      // Store fetched activities in our database
       if (stravaData?.activities && Array.isArray(stravaData.activities)) {
         const activitiesToUpsert = stravaData.activities.map(activity => ({
           user_id: userId,
@@ -86,12 +99,26 @@ export const useRatingsFlow = () => {
         return;
       }
 
-      // First sync latest activities from Strava
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const { data: existingRec } = await supabase
+        .from('training_recommendations')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('created_at', today.toISOString())
+        .maybeSingle();
+
+      if (existingRec) {
+        console.log('Already have recommendation, skipping activity check');
+        setCurrentStep('completed');
+        return;
+      }
+
       await syncStravaActivities(user.id);
 
       const sevenDaysAgo = subDays(new Date(), 7);
       
-      // Check if we have any recent activities
       const { data: activities, error: activitiesError } = await supabase
         .from('strava_activities')
         .select('*')
@@ -103,7 +130,6 @@ export const useRatingsFlow = () => {
       if (activitiesError) throw activitiesError;
 
       if (!activities || activities.length === 0) {
-        // If no Strava activities, skip effort rating and go straight to energy
         console.log('No recent activities found, moving to energy rating');
         setCurrentStep('energy');
         return;
@@ -114,7 +140,6 @@ export const useRatingsFlow = () => {
       setCurrentStep('effort');
     } catch (error) {
       console.error('Error in checkLatestActivity:', error);
-      // On error, still continue with the flow starting at energy
       setCurrentStep('energy');
     }
   };
@@ -152,7 +177,7 @@ export const useRatingsFlow = () => {
 
   return {
     currentStep,
-    activity: formatActivity(),
+    activity: activity ? formatActivity() : null,
     moveToNextStep,
     reset: () => {
       setCurrentStep('loading');
