@@ -1,4 +1,3 @@
-
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -52,16 +51,13 @@ export const StravaStep = ({ onSkip, onNext }: StravaStepProps) => {
       <div className="space-y-2">
         <button onClick={handleConnectStrava} className="w-full p-0 border-0">
           <img 
-            src="/lovable-uploads/button.png" 
+            src="/lovable-uploads/d5ae09c9-5cfe-42e6-92bc-37a0d851af39.png" 
             alt="Connect with Strava"
             className="w-full"
           />
         </button>
         <Button 
-          onClick={() => {
-            console.log('Skipping Strava connection...');
-            onSkip();
-          }}
+          onClick={onSkip}
           variant="outline"
           className="w-full py-4 rounded-[42px]"
         >

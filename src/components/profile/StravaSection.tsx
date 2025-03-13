@@ -1,3 +1,4 @@
+
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ExternalLink } from "lucide-react";
@@ -57,7 +58,7 @@ const StravaSection = ({ onboardingData }: StravaSectionProps) => {
           <p className="text-gray-900">No conectado</p>
           <button onClick={handleConnectStrava} className="w-full p-0 border-0">
             <img 
-              src="/lovable-uploads/button.png" 
+              src="/lovable-uploads/d5ae09c9-5cfe-42e6-92bc-37a0d851af39.png" 
               alt="Connect with Strava"
               className="w-full"
             />
