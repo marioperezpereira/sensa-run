@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,11 +36,10 @@ export const EffortRating = ({ activityId, onRatingSubmitted }: EffortRatingProp
       if (!user) throw new Error('No user found');
 
       const { error } = await supabase
-        .from('activity_efforts')
+        .from('daily_conditions')
         .insert({
           user_id: user.id,
-          activity_id: activityId,
-          perceived_effort: selectedRating,
+          energy_level: selectedRating,
         });
 
       if (error) throw error;

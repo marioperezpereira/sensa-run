@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -22,20 +22,14 @@ export const useMessages = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const twoDaysAgo = subDays(new Date(), 2);
-      
-      const { data: activities, error } = await supabase
-        .from('strava_activities')
-        .select('*')
-        .gte('start_date', twoDaysAgo.toISOString())
-        .eq('user_id', user.id)
-        .order('start_date', { ascending: false })
-        .limit(1);
+      const { data: activities, error } = await supabase.functions.invoke('fetch-strava-activities', {
+        body: { user_id: user.id }
+      });
 
       if (error) throw error;
 
-      if (activities && activities.length > 0) {
-        const activity = activities[0];
+      if (activities?.activities && activities.activities.length > 0) {
+        const activity = activities.activities[0];
         
         // Skip if we've already asked about this activity
         if (activity.id === lastActivityChecked) {

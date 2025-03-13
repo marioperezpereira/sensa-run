@@ -1,5 +1,5 @@
 
-import { format, differenceInWeeks, differenceInDays } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,25 +16,16 @@ export const generateTrainingPrompt = async (latestActivity: any, effort: number
 
     if (!onboarding) throw new Error('No onboarding data found');
 
-    const { data: activities } = await supabase
-      .from('strava_activities')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('start_date', { ascending: false })
-      .limit(20);
+    const { data: activities } = await supabase.functions.invoke('fetch-strava-activities', {
+      body: { user_id: user.id }
+    });
 
     let recentActivitiesText = '';
     let averageDistanceText = '';
 
-    if (activities && activities.length > 0) {
-      const latestDate = new Date(activities[0].start_date);
-      const oldestDate = new Date(activities[activities.length - 1].start_date);
-      const daysDiff = Math.max(differenceInDays(latestDate, oldestDate), 1);
-      const weeksDiff = Math.max(daysDiff / 7, 1);
-      const totalKm = activities.reduce((sum, activity) => sum + (activity.distance || 0), 0) / 1000;
-      const weeklyAverage = (totalKm / weeksDiff).toFixed(2);
-
-      recentActivitiesText = activities.slice(0, 5).map(activity => {
+    if (activities?.activities && activities.activities.length > 0) {
+      const recentActivities = activities.activities.slice(0, 5);
+      recentActivitiesText = recentActivities.map(activity => {
         const date = format(new Date(activity.start_date), "d 'de' MMMM", { locale: es });
         const distance = (activity.distance / 1000).toFixed(2);
         let durationText = '';
@@ -50,8 +41,6 @@ export const generateTrainingPrompt = async (latestActivity: any, effort: number
         }
         return `- ${activity.name}, ${distance}km el ${date}${durationText ? ` en ${durationText}` : ''}`;
       }).join('\n');
-
-      averageDistanceText = `Desde el ${format(oldestDate, "d 'de' MMMM 'de' yyyy", { locale: es })} hasta el ${format(latestDate, "d 'de' MMMM 'de' yyyy", { locale: es })}, el usuario está promediando ${weeklyAverage} kilómetros por semana.`;
     }
 
     const conditionText = {
