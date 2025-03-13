@@ -52,7 +52,7 @@ export const StravaStep = ({ onSkip, onNext }: StravaStepProps) => {
       <div className="space-y-2">
         <Button 
           onClick={handleConnectStrava}
-          className="w-full bg-[#FC4C02] hover:bg-[#E34402] text-white py-2 rounded-[42px]"
+          className="w-full bg-[#FC4C02] hover:bg-[#E34402] text-white py-4 rounded-[42px]"
         >
           Conectar con Strava
         </Button>
@@ -62,7 +62,7 @@ export const StravaStep = ({ onSkip, onNext }: StravaStepProps) => {
             onSkip();
           }}
           variant="outline"
-          className="w-full py-2 rounded-[42px]"
+          className="w-full py-4 rounded-[42px]"
         >
           Continuar sin Strava
         </Button>
@@ -70,3 +70,4 @@ export const StravaStep = ({ onSkip, onNext }: StravaStepProps) => {
     </div>
   );
 };
+
