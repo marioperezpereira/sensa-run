@@ -9,10 +9,12 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from 'react-markdown';
 import { useToast } from "./ui/use-toast";
+import { RecommendationFeedback } from "./RecommendationFeedback";
 
 export const RatingFlow = () => {
   const { currentStep, activity, moveToNextStep } = useRatingsFlow();
   const [recommendation, setRecommendation] = useState<string>('');
+  const [showFeedback, setShowFeedback] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -60,7 +62,10 @@ export const RatingFlow = () => {
       const { data, error: fnError } = await supabase.functions.invoke(
         'generate-training-recommendation',
         {
-          body: { prompt }
+          body: { 
+            prompt,
+            userId: user.id
+          }
         }
       );
 
@@ -68,6 +73,7 @@ export const RatingFlow = () => {
       if (!data?.recommendation) throw new Error('No recommendation received');
 
       setRecommendation(data.recommendation);
+      setShowFeedback(!data.hasFeedback);
     } catch (error) {
       console.error('Error in handleConditionComplete:', error);
       setError('Lo siento, ha habido un error generando tu recomendación. Por favor, inténtalo de nuevo.');
@@ -93,19 +99,22 @@ export const RatingFlow = () => {
             Espera unos segundos, estoy generando tu recomendación para el día de hoy...
           </div>
         ) : error ? (
-          <div className="text-center text-red-500">
-            {error}
-          </div>
+          <div className="text-center text-red-500">{error}</div>
         ) : recommendation ? (
-          <div className="prose dark:prose-invert max-w-none">
-            <ReactMarkdown
-              components={{
-                h3: ({children}) => <h3 className="text-2xl font-bold mb-4 text-sensa-purple">{children}</h3>
-              }}
-            >
-              {recommendation}
-            </ReactMarkdown>
-          </div>
+          <>
+            <div className="prose dark:prose-invert max-w-none">
+              <ReactMarkdown
+                components={{
+                  h3: ({children}) => <h3 className="text-2xl font-bold mb-4 text-sensa-purple">{children}</h3>
+                }}
+              >
+                {recommendation}
+              </ReactMarkdown>
+            </div>
+            {showFeedback && (
+              <RecommendationFeedback onFeedbackProvided={() => setShowFeedback(false)} />
+            )}
+          </>
         ) : null}
       </Card>
     );

@@ -178,6 +178,36 @@ export type Database = {
         }
         Relationships: []
       }
+      training_recommendations: {
+        Row: {
+          created_at: string
+          feedback: string | null
+          feedback_provided_at: string | null
+          id: string
+          prompt: string
+          recommendation: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string | null
+          feedback_provided_at?: string | null
+          id?: string
+          prompt: string
+          recommendation: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string | null
+          feedback_provided_at?: string | null
+          id?: string
+          prompt?: string
+          recommendation?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_onboarding: {
         Row: {
           additional_info: string | null
