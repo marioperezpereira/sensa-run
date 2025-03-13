@@ -29,7 +29,7 @@ export const Landing = () => {
           </Button>
           <div>
             <img 
-              src="/lovable-uploads/compatible.png" 
+              src="/api/_assets/powered-by-strava.png" 
               alt="Compatible with Strava" 
               className="h-8 mx-auto"
             />
