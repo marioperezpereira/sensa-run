@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -29,7 +28,7 @@ export const Landing = () => {
           </Button>
           <div>
             <img 
-              src="/api/_assets/powered-by-strava.png" 
+              src="/lovable-uploads/ad9bf09c-d585-4525-90d8-155a9006ca68.png" 
               alt="Compatible with Strava" 
               className="h-8 mx-auto"
             />
