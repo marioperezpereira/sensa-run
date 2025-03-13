@@ -26,13 +26,16 @@ Esta personalización se puede repetir en cualquier momento desde la sección "M
 
 ### Entrenamientos del día a día
 
-![image](https://github.com/user-attachments/assets/2fbf0545-d4e8-4e46-8489-1554456b0617)
 
 Destinado a ser el punto diario de encuentro con Sensa, el usuario recibe una serie de preguntas acerca de cómo fue su último entrenamiento, estado de fatiga y cómo se encuentra en el día de hoy mentalmente.
+![image](https://github.com/user-attachments/assets/70de7127-212d-4efd-b914-9ecf2535a1bb)
+![image](https://github.com/user-attachments/assets/bd55978b-c05b-4382-bc4e-8bbeeafbeac3)
+![image](https://github.com/user-attachments/assets/641529b3-0879-4ccb-8aab-ed0783e7395f)
+
 
 Una vez respondidas estas 3 preguntas, el usuario recibirá una sesión de entrenamiento recomendada acorde a la información recogida.
 
-![image](https://github.com/user-attachments/assets/da8c32ad-01d2-4134-96dd-0be0e1b9a809)
+![image](https://github.com/user-attachments/assets/1414d89d-fca7-41ca-8331-77e37f5366ee)
 
 ## Tecnología
 
