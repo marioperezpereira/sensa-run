@@ -38,9 +38,10 @@ export const RatingFlow = () => {
         if (existingRec) {
           setRecommendation(existingRec.recommendation);
           setShowFeedback(!existingRec.feedback);
-          moveToNextStep();
-          moveToNextStep();
-          moveToNextStep();
+          // Skip all steps and go straight to completed
+          while (currentStep !== 'completed') {
+            moveToNextStep();
+          }
         }
       } catch (error) {
         console.error('Error checking existing recommendation:', error);
@@ -49,10 +50,9 @@ export const RatingFlow = () => {
       }
     };
 
-    if (currentStep === 'effort') {
-      checkExistingRecommendation();
-    }
-  }, [currentStep, moveToNextStep]);
+    // Check immediately when component mounts
+    checkExistingRecommendation();
+  }, []); // Empty dependency array to run only once on mount
 
   const handleConditionComplete = async (condition: string) => {
     try {
