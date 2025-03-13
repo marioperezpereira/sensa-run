@@ -60,7 +60,7 @@ const StravaSection = ({ onboardingData }: StravaSectionProps) => {
           <Button 
             variant="outline" 
             onClick={handleConnectStrava}
-            className="w-full bg-[#FC4C02] text-white hover:bg-[#E34402] border-0"
+            className="w-full bg-[#FC4C02] text-white hover:bg-[#E34402]"
           >
             Conectar con Strava 
             <ArrowRight className="ml-2 h-4 w-4" />
