@@ -1,3 +1,4 @@
+
 import { useRatingsFlow } from "@/hooks/useRatingsFlow";
 import { EffortRating } from "./EffortRating";
 import { EnergyRating } from "./EnergyRating";
@@ -42,15 +43,21 @@ export const RatingFlow = () => {
           while (currentStep !== 'completed') {
             moveToNextStep();
           }
+          return;
+        }
+
+        // If no recommendation exists, start with effort rating if there's a recent activity
+        if (!activity) {
+          moveToNextStep(); // Skip effort and go straight to energy if no activity
         }
       } catch (error) {
         console.error('Error checking existing recommendation:', error);
+        setError('Error loading recommendation. Please try again.');
       } finally {
         setIsLoading(false);
       }
     };
 
-    // Check immediately when component mounts
     checkExistingRecommendation();
   }, []); // Empty dependency array to run only once on mount
 
@@ -122,18 +129,14 @@ export const RatingFlow = () => {
     }
   };
 
-  if (currentStep === 'loading') {
+  if (currentStep === 'loading' || isLoading) {
     return <div className="grid place-items-center h-full">Cargando...</div>;
   }
 
   if (currentStep === 'completed') {
     return (
       <Card className="p-6 bg-white/80 backdrop-blur-sm border-none">
-        {isLoading ? (
-          <div className="text-center">
-            Espera unos segundos, estoy generando tu recomendación para el día de hoy...
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center text-red-500">{error}</div>
         ) : recommendation ? (
           <>

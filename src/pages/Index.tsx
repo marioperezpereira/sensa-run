@@ -45,10 +45,12 @@ const Index = () => {
     enabled: session !== null && session !== false,
   });
 
+  // Show landing page for non-authenticated users
   if (session === false) {
     return <Landing />;
   }
 
+  // Show loading state while checking session or fetching onboarding data
   if (isOnboardingLoading || session === null) {
     return (
       <div className="h-screen grid place-items-center bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
