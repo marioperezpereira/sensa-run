@@ -20,12 +20,21 @@ export const Landing = () => {
           </h2>
         </div>
         
-        <Button 
-          onClick={() => navigate("/auth")}
-          className="bg-sensa-purple hover:bg-sensa-purple/90 text-white px-8 py-6 h-auto text-lg rounded-[42px] font-medium tracking-wide transform transition hover:scale-105 w-full sm:w-auto"
-        >
-          Descubre Sensa
-        </Button>
+        <div className="space-y-4">
+          <Button 
+            onClick={() => navigate("/auth")}
+            className="bg-sensa-purple hover:bg-sensa-purple/90 text-white px-8 py-6 h-auto text-lg rounded-[42px] font-medium tracking-wide transform transition hover:scale-105 w-full sm:w-auto"
+          >
+            Descubre Sensa
+          </Button>
+          <div>
+            <img 
+              src="/lovable-uploads/compatible.png" 
+              alt="Compatible with Strava" 
+              className="h-8 mx-auto"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

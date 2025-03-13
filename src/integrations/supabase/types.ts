@@ -9,41 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      activity_efforts: {
-        Row: {
-          activity_id: string
-          created_at: string
-          id: string
-          perceived_effort: number
-          reset_timestamp: string | null
-          user_id: string
-        }
-        Insert: {
-          activity_id: string
-          created_at?: string
-          id?: string
-          perceived_effort: number
-          reset_timestamp?: string | null
-          user_id: string
-        }
-        Update: {
-          activity_id?: string
-          created_at?: string
-          id?: string
-          perceived_effort?: number
-          reset_timestamp?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activity_efforts_activity_id_fkey"
-            columns: ["activity_id"]
-            isOneToOne: false
-            referencedRelation: "strava_activities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       chat_messages: {
         Row: {
           activity_id: string | null
@@ -81,15 +46,7 @@ export type Database = {
           timestamp?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "chat_messages_activity_id_fkey"
-            columns: ["activity_id"]
-            isOneToOne: false
-            referencedRelation: "strava_activities"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       daily_conditions: {
         Row: {
@@ -111,45 +68,6 @@ export type Database = {
           created_at?: string
           energy_level?: number | null
           id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      strava_activities: {
-        Row: {
-          created_at: string
-          distance: number | null
-          id: string
-          moving_time: number
-          name: string
-          start_date: string
-          strava_id: number
-          type: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          distance?: number | null
-          id?: string
-          moving_time: number
-          name: string
-          start_date: string
-          strava_id: number
-          type: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          distance?: number | null
-          id?: string
-          moving_time?: number
-          name?: string
-          start_date?: string
-          strava_id?: number
-          type?: string
-          updated_at?: string
           user_id?: string
         }
         Relationships: []

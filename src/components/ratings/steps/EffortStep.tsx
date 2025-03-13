@@ -16,12 +16,12 @@ export const EffortStep = ({ activity, onCompleted }: EffortStepProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
+      // Store only the rating without activity reference
       const { error } = await supabase
-        .from('activity_efforts')
+        .from('daily_conditions')
         .insert({
           user_id: user.id,
-          activity_id: activity.id,
-          perceived_effort: rating,
+          energy_level: rating,
         });
 
       if (error) throw error;
@@ -46,10 +46,19 @@ export const EffortStep = ({ activity, onCompleted }: EffortStepProps) => {
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-sensa-purple">Valoración de tu última actividad</h2>
       <p className="text-gray-700">
-        Tu última actividad fue "{activity.name}", {activity.formattedDistance} km 
-        el {activity.formattedDate}. En una escala del 1 al 10, donde 1 es un 
-        paseo suave y 10 el máximo esfuerzo posible, ¿podrías decirnos cuánto 
-        fue el esfuerzo percibido durante esta sesión?
+        Tu última actividad fue{" "}
+        <a 
+          href={activity.strava_url} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 underline"
+        >
+          "{activity.name}"
+        </a>
+        , {activity.formattedDistance} km el {activity.formattedDate}. 
+        En una escala del 1 al 10, donde 1 es un paseo suave y 10 el máximo 
+        esfuerzo posible, ¿podrías decirnos cuánto fue el esfuerzo percibido 
+        durante esta sesión?
       </p>
       <RatingSlider onSubmit={handleSubmit} />
     </div>

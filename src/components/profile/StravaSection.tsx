@@ -1,8 +1,6 @@
-
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalLink, ArrowRight } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 interface StravaSectionProps {
   onboardingData: any;
@@ -57,14 +55,13 @@ const StravaSection = ({ onboardingData }: StravaSectionProps) => {
       ) : (
         <div className="space-y-2">
           <p className="text-gray-900">No conectado</p>
-          <Button 
-            variant="outline" 
-            onClick={handleConnectStrava}
-            className="w-full bg-[#FC4C02] text-white hover:bg-[#E34402]"
-          >
-            Conectar con Strava 
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+          <button onClick={handleConnectStrava} className="w-full p-0 border-0">
+            <img 
+              src="/lovable-uploads/button.png" 
+              alt="Connect with Strava"
+              className="w-full"
+            />
+          </button>
         </div>
       )}
     </div>
