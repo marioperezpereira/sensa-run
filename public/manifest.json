@@ -7,6 +7,7 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#6366f1",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png",
@@ -16,7 +17,8 @@
     {
       "src": "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
