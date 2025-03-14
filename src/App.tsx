@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
 import StravaCallback from "./pages/StravaCallback";
 import { Landing } from "./components/Landing";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +80,7 @@ const App = () => (
             }
           />
           <Route path="/strava/callback" element={<StravaCallback />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -69,9 +70,20 @@ export const Auth = () => {
             {isSignUp ? "Crear cuenta" : "Iniciar sesión"}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            {isSignUp
-              ? "Regístrate para comenzar"
-              : "Bienvenido de nuevo"}
+            {isSignUp ? (
+              <>
+                Regístrate para comenzar
+                <br />
+                <a
+                  href="/privacy"
+                  className="text-sensa-purple hover:underline mt-1 inline-block"
+                >
+                  Recibe más información sobre cómo Sensa usa tus datos
+                </a>
+              </>
+            ) : (
+              "Bienvenido de nuevo"
+            )}
           </p>
         </div>
 
