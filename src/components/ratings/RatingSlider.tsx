@@ -38,8 +38,9 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
               sideOffset={5}
               style={{
                 position: 'absolute',
-                left: `calc(${((rating - 1) / 9) * 100}%)`,
-                transform: 'translateX(-50%)'
+                left: `${((rating - 1) / 9) * 100}%`,
+                transform: 'translateX(-50%)',
+                top: '0'
               }}
             >
               {rating}
