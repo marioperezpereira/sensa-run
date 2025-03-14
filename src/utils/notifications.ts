@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 
 export async function registerPushNotifications() {
   try {
@@ -58,4 +59,3 @@ function urlB64ToUint8Array(base64String: string) {
   }
   return outputArray;
 }
-
