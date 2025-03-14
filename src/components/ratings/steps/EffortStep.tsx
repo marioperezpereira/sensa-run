@@ -51,7 +51,7 @@ export const EffortStep = ({ activity, onCompleted }: EffortStepProps) => {
           href={activity.strava_url} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="text-blue-600 hover:text-blue-800 underline"
+          className="text-sensa-purple hover:text-sensa-purple/80 underline"
         >
           "{activity.name}"
         </a>
@@ -64,3 +64,4 @@ export const EffortStep = ({ activity, onCompleted }: EffortStepProps) => {
     </div>
   );
 };
+

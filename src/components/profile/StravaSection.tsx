@@ -49,7 +49,7 @@ const StravaSection = ({ onboardingData }: StravaSectionProps) => {
           href={onboardingData.strava_profile}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-telegram-blue hover:text-telegram-dark flex items-center gap-1"
+          className="text-sensa-purple hover:text-sensa-purple/80 flex items-center gap-1"
         >
           Ver perfil <ExternalLink className="h-4 w-4" />
         </a>
