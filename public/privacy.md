@@ -76,6 +76,7 @@ Tienes derecho a:
 Nos reservamos el derecho de actualizar esta política de privacidad. Te notificaremos sobre cambios significativos a través del correo electrónico asociado a tu cuenta.
 
 ## Contacto
-Si tienes preguntas sobre esta política de privacidad o sobre cómo manejamos tus datos, por favor contáctanos a través de [correo de contacto].
+Si tienes preguntas sobre esta política de privacidad o sobre cómo manejamos tus datos, por favor contáctanos a través de info@sensa.run.
 
 Última actualización: Marzo 2024
+
