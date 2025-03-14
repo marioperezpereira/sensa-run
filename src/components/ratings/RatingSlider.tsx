@@ -29,22 +29,27 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
               min={1}
               step={1}
               className="relative"
-              thumbClassName="relative"
             >
-              <Tooltip open={true}>
-                <TooltipTrigger asChild>
-                  <div className="absolute h-6 w-6 rounded-full border-2 border-sensa-purple bg-white -translate-y-1/2 top-1/2" style={{
-                    left: `calc(${((rating - 1) / 9) * 100}% - 12px)`
-                  }} />
-                </TooltipTrigger>
-                <TooltipContent
-                  className="bg-sensa-purple text-white text-xs font-medium px-2 py-1"
-                  side="top"
-                  sideOffset={5}
-                >
-                  {rating}
-                </TooltipContent>
-              </Tooltip>
+              <div 
+                className="absolute top-1/2 -translate-y-1/2" 
+                style={{
+                  left: `calc(${((rating - 1) / 9) * 100}% - 12px)`,
+                  zIndex: 50
+                }}
+              >
+                <Tooltip open={true}>
+                  <TooltipTrigger asChild>
+                    <div className="h-6 w-6 rounded-full border-2 border-sensa-purple bg-white" />
+                  </TooltipTrigger>
+                  <TooltipContent
+                    className="bg-sensa-purple text-white text-xs font-medium px-2 py-1"
+                    side="top"
+                    sideOffset={5}
+                  >
+                    {rating}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </Slider>
           </div>
         </TooltipProvider>
