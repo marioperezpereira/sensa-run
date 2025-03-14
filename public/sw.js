@@ -1,4 +1,3 @@
-
 const CACHE_NAME = 'sensa-cache-v1';
 const ASSETS_TO_CACHE = [
   '/',
@@ -13,6 +12,41 @@ self.addEventListener('install', (event) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+});
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  const options = {
+    body: event.data.text(),
+    icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
+    badge: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: '1'
+    },
+    actions: [
+      {
+        action: 'explore',
+        title: 'View App',
+      }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification('Sensa.run', options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'explore') {
+    event.waitUntil(
+      clients.openWindow('/')
+    );
+  }
 });
 
 self.addEventListener('fetch', (event) => {

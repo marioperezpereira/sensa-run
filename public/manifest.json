@@ -8,6 +8,7 @@
   "background_color": "#ffffff",
   "theme_color": "#6366f1",
   "orientation": "portrait",
+  "permissions": ["notifications"],
   "icons": [
     {
       "src": "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png",
