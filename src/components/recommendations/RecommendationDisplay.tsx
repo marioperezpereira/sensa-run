@@ -27,7 +27,8 @@ export const RecommendationDisplay = ({
       <div className="prose dark:prose-invert max-w-none">
         <ReactMarkdown
           components={{
-            h3: ({children}) => <h3 className="text-2xl font-bold mb-4 text-sensa-purple">{children}</h3>
+            h3: ({children}) => <h3 className="text-2xl font-bold mb-4 text-sensa-purple">{children}</h3>,
+            hr: () => <hr className="my-4" /> // Added margin top and bottom
           }}
         >
           {recommendation}
