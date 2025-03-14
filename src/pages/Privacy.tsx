@@ -27,8 +27,15 @@ const Privacy = () => {
           Volver al registro
         </Button>
         <div className="bg-white/80 backdrop-blur-sm p-8 rounded-2xl">
-          <div className="prose dark:prose-invert max-w-none">
-            <ReactMarkdown>
+          <div className="prose prose-slate dark:prose-invert max-w-none">
+            <ReactMarkdown components={{
+              h1: ({ children }) => <h1 className="text-3xl font-bold text-sensa-purple mb-8">{children}</h1>,
+              h2: ({ children }) => <h2 className="text-2xl font-semibold text-gray-800 mt-8 mb-4">{children}</h2>,
+              h3: ({ children }) => <h3 className="text-xl font-medium text-gray-700 mt-6 mb-3">{children}</h3>,
+              p: ({ children }) => <p className="text, text-gray-600 mb-4 leading-relaxed">{children}</p>,
+              ul: ({ children }) => <ul className="list-disc pl-6 mb-4 text-gray-600">{children}</ul>,
+              li: ({ children }) => <li className="mb-2">{children}</li>,
+            }}>
               {privacy}
             </ReactMarkdown>
           </div>
