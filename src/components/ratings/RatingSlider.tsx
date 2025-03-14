@@ -34,8 +34,9 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
             </TooltipTrigger>
             <TooltipContent 
               className="bg-sensa-purple text-white text-sm font-medium px-2 py-1"
+              side="top"
               style={{
-                transform: `translateX(calc(${(rating - 1) * 10}% - ${(rating - 1) * 0.3}rem))`
+                transform: `translateX(calc(${(rating - 1) * 10}% - ${(rating - 1) * 0.3}rem)) translateY(-0.5rem)`
               }}
             >
               {rating}
