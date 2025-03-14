@@ -33,7 +33,7 @@ const Slider = React.forwardRef<
         {value && (
           <TooltipContent 
             className="bg-sensa-purple text-white text-xs font-medium px-2 py-1"
-            side="top"
+            side="bottom"
             sideOffset={5}
           >
             {value[0]}

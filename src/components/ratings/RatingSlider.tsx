@@ -12,7 +12,12 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-6 relative">
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <span>Fácil</span>
+          <span>Moderado</span>
+          <span>Máximo</span>
+        </div>
         <Slider
           defaultValue={[5]}
           value={[rating]}
@@ -22,11 +27,6 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
           step={1}
           className="py-4"
         />
-        <div className="flex justify-between text-sm text-gray-600">
-          <span>Fácil</span>
-          <span>Moderado</span>
-          <span>Máximo</span>
-        </div>
       </div>
       
       <Button
