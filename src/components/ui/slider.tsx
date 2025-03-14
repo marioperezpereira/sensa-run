@@ -38,10 +38,10 @@ const Slider = React.forwardRef<
             <TooltipContent 
               className={cn(
                 "bg-sensa-purple text-white text-xs font-medium px-2 py-1",
-                isMobile ? "-translate-y-4" : "-translate-y-2"
+                isMobile ? "-translate-y-6" : "-translate-y-2"
               )}
               side="bottom"
-              sideOffset={0}
+              sideOffset={4}
             >
               {value[0]}
             </TooltipContent>

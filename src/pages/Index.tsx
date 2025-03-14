@@ -70,8 +70,8 @@ const Index = () => {
     <div className="min-h-screen w-full bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
       {onboardingData && <ChatHeader />}
       
-      <main className="pt-[72px]"> {/* Add padding-top to account for fixed header height */}
-        <div className="max-w-2xl mx-auto p-4">
+      <main className="relative min-h-screen pt-20"> {/* Changed padding and made relative */}
+        <div className="max-w-2xl mx-auto px-4 py-6">
           {!onboardingData ? (
             <OnboardingQuestion onComplete={() => window.location.reload()} />
           ) : (
