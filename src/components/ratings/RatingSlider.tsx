@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface RatingSliderProps {
   onSubmit: (rating: number) => void;
@@ -18,18 +19,29 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-6">
-        <div className="text-center text-2xl font-semibold text-sensa-purple">
-          {rating}
-        </div>
-        <Slider
-          value={[rating]}
-          onValueChange={(value) => setRating(value[0])}
-          max={10}
-          min={1}
-          step={1}
-          className="py-4"
-        />
+      <div className="space-y-6 relative">
+        <TooltipProvider>
+          <Tooltip open={true}>
+            <TooltipTrigger asChild>
+              <Slider
+                value={[rating]}
+                onValueChange={(value) => setRating(value[0])}
+                max={10}
+                min={1}
+                step={1}
+                className="py-4"
+              />
+            </TooltipTrigger>
+            <TooltipContent 
+              className="bg-sensa-purple text-white text-sm font-medium px-2 py-1"
+              style={{
+                transform: `translateX(calc(${(rating - 1) * 10}% - ${(rating - 1) * 0.3}rem))`
+              }}
+            >
+              {rating}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <div className="flex justify-between text-sm text-gray-600">
           <span>Fácil</span>
           <span>Moderado</span>
