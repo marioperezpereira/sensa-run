@@ -33,10 +33,13 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
               />
             </TooltipTrigger>
             <TooltipContent 
-              className="bg-sensa-purple text-white text-sm font-medium px-2 py-1"
+              className="bg-sensa-purple text-white text-xs font-medium px-2 py-1 transition-transform duration-200"
               side="top"
+              sideOffset={5}
               style={{
-                transform: `translateX(calc(${(rating - 1) * 10}% - ${(rating - 1) * 0.3}rem)) translateY(-0.5rem)`
+                position: 'absolute',
+                left: `calc(${((rating - 1) / 9) * 100}%)`,
+                transform: 'translateX(-50%)'
               }}
             >
               {rating}
