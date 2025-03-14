@@ -2,11 +2,16 @@
 import * as React from "react"
 import * as SliderPrimitive from "@radix-ui/react-slider"
 import { cn } from "@/lib/utils"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+
+interface SliderProps extends React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> {
+  value?: number[];
+}
 
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(({ className, ...props }, ref) => (
+  SliderProps
+>(({ className, value, ...props }, ref) => (
   <SliderPrimitive.Root
     ref={ref}
     className={cn(
@@ -18,7 +23,22 @@ const Slider = React.forwardRef<
     <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-gray-200">
       <SliderPrimitive.Range className="absolute h-full bg-sensa-purple" />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block h-6 w-6 rounded-full border-2 border-sensa-purple bg-white ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
+    <TooltipProvider>
+      <Tooltip open>
+        <TooltipTrigger asChild>
+          <SliderPrimitive.Thumb className="block h-6 w-6 rounded-full border-2 border-sensa-purple bg-white ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
+        </TooltipTrigger>
+        {value && (
+          <TooltipContent 
+            className="bg-sensa-purple text-white text-xs font-medium px-2 py-1"
+            side="top"
+            sideOffset={5}
+          >
+            {value[0]}
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
   </SliderPrimitive.Root>
 ))
 Slider.displayName = SliderPrimitive.Root.displayName
