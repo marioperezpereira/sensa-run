@@ -21,31 +21,32 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
     <div className="space-y-8">
       <div className="space-y-6 relative">
         <TooltipProvider>
-          <Tooltip open={true}>
-            <TooltipTrigger asChild>
-              <Slider
-                value={[rating]}
-                onValueChange={(value) => setRating(value[0])}
-                max={10}
-                min={1}
-                step={1}
-                className="py-4"
-              />
-            </TooltipTrigger>
-            <TooltipContent 
-              className="bg-sensa-purple text-white text-xs font-medium px-2 py-1 transition-transform duration-200"
-              side="top"
-              sideOffset={5}
-              style={{
-                position: 'absolute',
-                left: `${((rating - 1) / 9) * 100}%`,
-                transform: 'translateX(-50%)',
-                top: '0'
-              }}
+          <div className="relative py-4">
+            <Slider
+              value={[rating]}
+              onValueChange={(value) => setRating(value[0])}
+              max={10}
+              min={1}
+              step={1}
+              className="relative"
+              thumbClassName="relative"
             >
-              {rating}
-            </TooltipContent>
-          </Tooltip>
+              <Tooltip open={true}>
+                <TooltipTrigger asChild>
+                  <div className="absolute h-6 w-6 rounded-full border-2 border-sensa-purple bg-white -translate-y-1/2 top-1/2" style={{
+                    left: `calc(${((rating - 1) / 9) * 100}% - 12px)`
+                  }} />
+                </TooltipTrigger>
+                <TooltipContent
+                  className="bg-sensa-purple text-white text-xs font-medium px-2 py-1"
+                  side="top"
+                  sideOffset={5}
+                >
+                  {rating}
+                </TooltipContent>
+              </Tooltip>
+            </Slider>
+          </div>
         </TooltipProvider>
         <div className="flex justify-between text-sm text-gray-600">
           <span>Fácil</span>
