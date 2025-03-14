@@ -1,0 +1,22 @@
+
+{
+  "name": "Sensa.run",
+  "short_name": "Sensa",
+  "description": "Alcanza tus objetivos, entrena por sensaciones",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
