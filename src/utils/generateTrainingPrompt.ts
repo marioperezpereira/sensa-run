@@ -53,8 +53,16 @@ export const generateTrainingPrompt = async (latestActivity: any, effort: number
 
     let lastActivityText = '';
     if (latestActivity) {
-      lastActivityText = effort !== null && effort !== undefined
-        ? `En su último entrenamiento corrió ${(latestActivity.distance / 1000).toFixed(2)}km y su percepción de esfuerzo fue de ${effort} sobre 10.`
+      const { data: latestCondition } = await supabase
+        .from('daily_conditions')
+        .select('effort_level') // Changed from energy_level to effort_level
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      lastActivityText = latestCondition?.effort_level !== null && latestCondition?.effort_level !== undefined
+        ? `En su último entrenamiento corrió ${(latestActivity.distance / 1000).toFixed(2)}km y su percepción de esfuerzo fue de ${latestCondition.effort_level} sobre 10.`
         : `En su último entrenamiento corrió ${(latestActivity.distance / 1000).toFixed(2)}km.`;
     }
 

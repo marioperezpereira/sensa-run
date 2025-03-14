@@ -52,6 +52,7 @@ export type Database = {
         Row: {
           condition: string | null
           created_at: string
+          effort_level: number | null
           energy_level: number | null
           id: string
           user_id: string
@@ -59,6 +60,7 @@ export type Database = {
         Insert: {
           condition?: string | null
           created_at?: string
+          effort_level?: number | null
           energy_level?: number | null
           id?: string
           user_id: string
@@ -66,6 +68,7 @@ export type Database = {
         Update: {
           condition?: string | null
           created_at?: string
+          effort_level?: number | null
           energy_level?: number | null
           id?: string
           user_id?: string

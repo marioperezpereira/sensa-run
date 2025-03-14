@@ -16,12 +16,11 @@ export const EffortStep = ({ activity, onCompleted }: EffortStepProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      // Store only the rating without activity reference
       const { error } = await supabase
         .from('daily_conditions')
         .insert({
           user_id: user.id,
-          energy_level: rating,
+          effort_level: rating, // Changed from energy_level to effort_level
         });
 
       if (error) throw error;
@@ -64,4 +63,3 @@ export const EffortStep = ({ activity, onCompleted }: EffortStepProps) => {
     </div>
   );
 };
-
