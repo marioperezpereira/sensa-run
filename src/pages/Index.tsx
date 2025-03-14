@@ -67,18 +67,18 @@ const Index = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen w-full bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
-      <div className="max-w-2xl mx-auto w-full">
-        {onboardingData && <ChatHeader />}
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
+    <div className="min-h-screen w-full bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
+      {onboardingData && <ChatHeader />}
+      
+      <main className="pt-[72px]"> {/* Add padding-top to account for fixed header height */}
+        <div className="max-w-2xl mx-auto p-4">
           {!onboardingData ? (
             <OnboardingQuestion onComplete={() => window.location.reload()} />
           ) : (
             <RatingFlow key="rating-flow" />
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 };
