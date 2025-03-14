@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,10 +75,11 @@ const StravaCallback = () => {
         if (error) throw error;
 
         if (data?.athlete_id) {
+          const stravaProfileUrl = `https://www.strava.com/athletes/${data.athlete_id}`;
           const { error: updateError } = await supabase
             .from('user_onboarding')
             .update({
-              strava_profile: `https://www.strava.com/athletes/${data.athlete_id}`,
+              strava_profile: stravaProfileUrl,
               completed_at: new Date().toISOString()
             })
             .eq('user_id', user.id);
