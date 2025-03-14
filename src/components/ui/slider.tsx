@@ -6,14 +6,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface SliderProps extends React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> {
   value?: number[];
+  defaultValue?: number[];
 }
 
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   SliderProps
->(({ className, value, ...props }, ref) => (
+>(({ className, value, defaultValue, ...props }, ref) => (
   <SliderPrimitive.Root
     ref={ref}
+    defaultValue={defaultValue}
     className={cn(
       "relative flex w-full touch-none select-none items-center",
       className

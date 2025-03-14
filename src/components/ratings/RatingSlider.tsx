@@ -14,6 +14,7 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
     <div className="space-y-8">
       <div className="space-y-6 relative">
         <Slider
+          defaultValue={[5]}
           value={[rating]}
           onValueChange={(value) => setRating(value[0])}
           max={10}
