@@ -21,37 +21,31 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
     <div className="space-y-8">
       <div className="space-y-6 relative">
         <TooltipProvider>
-          <div className="relative py-4">
-            <Slider
-              value={[rating]}
-              onValueChange={(value) => setRating(value[0])}
-              max={10}
-              min={1}
-              step={1}
-              className="relative"
+          <Tooltip open={true}>
+            <TooltipTrigger asChild>
+              <Slider
+                value={[rating]}
+                onValueChange={(value) => setRating(value[0])}
+                max={10}
+                min={1}
+                step={1}
+                className="py-4"
+              />
+            </TooltipTrigger>
+            <TooltipContent 
+              className="bg-sensa-purple text-white text-xs font-medium px-2 py-1 transition-transform duration-200"
+              side="top"
+              sideOffset={5}
+              style={{
+                position: 'absolute',
+                left: `${((rating - 1) / 9) * 100}%`,
+                transform: 'translateX(-50%)',
+                top: '0'
+              }}
             >
-              <div 
-                className="absolute top-1/2 -translate-y-1/2" 
-                style={{
-                  left: `calc(${((rating - 1) / 9) * 100}% - 12px)`,
-                  zIndex: 50
-                }}
-              >
-                <Tooltip open={true}>
-                  <TooltipTrigger asChild>
-                    <div className="h-6 w-6 rounded-full border-2 border-sensa-purple bg-white" />
-                  </TooltipTrigger>
-                  <TooltipContent
-                    className="bg-sensa-purple text-white text-xs font-medium px-2 py-1"
-                    side="top"
-                    sideOffset={5}
-                  >
-                    {rating}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </Slider>
-          </div>
+              {rating}
+            </TooltipContent>
+          </Tooltip>
         </TooltipProvider>
         <div className="flex justify-between text-sm text-gray-600">
           <span>Fácil</span>
