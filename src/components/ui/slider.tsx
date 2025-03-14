@@ -32,9 +32,13 @@ const Slider = React.forwardRef<
         </TooltipTrigger>
         {value && (
           <TooltipContent 
-            className="bg-sensa-purple text-white text-xs font-medium px-2 py-1"
+            className="bg-sensa-purple text-white text-xs font-medium px-2 py-1 -translate-y-2"
             side="bottom"
-            sideOffset={5}
+            sideOffset={0}
+            style={{
+              transform: 'translateY(-8px)',
+              WebkitTransform: 'translateY(-8px)',
+            }}
           >
             {value[0]}
           </TooltipContent>
