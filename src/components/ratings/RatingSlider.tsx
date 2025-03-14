@@ -11,7 +11,7 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
   const [rating, setRating] = useState<number>(5);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       <div className="space-y-2">
         <div className="flex justify-between text-sm text-gray-600 mb-2">
           <span>Fácil</span>
@@ -38,3 +38,4 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
     </div>
   );
 };
+
