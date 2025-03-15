@@ -43,9 +43,11 @@ const Slider = React.forwardRef<
             </TooltipTrigger>
             {value && (
               <TooltipContent 
-                className="bg-violet-500 text-white text-xs font-medium px-2 py-1"
+                className="bg-violet-500 text-white text-xs font-medium px-2 py-1 -translate-y-2"
                 side="top"
-                sideOffset={5}
+                align="center"
+                sideOffset={2}
+                alignOffset={0}
                 forceMount
               >
                 {value[0]}
@@ -60,3 +62,4 @@ const Slider = React.forwardRef<
 Slider.displayName = SliderPrimitive.Root.displayName
 
 export { Slider }
+
