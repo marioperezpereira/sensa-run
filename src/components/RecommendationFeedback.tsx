@@ -10,6 +10,7 @@ interface RecommendationFeedbackProps {
 
 export const RecommendationFeedback = ({ onFeedbackProvided }: RecommendationFeedbackProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const { toast } = useToast();
 
   const handleFeedback = async (feedback: string) => {
@@ -37,6 +38,7 @@ export const RecommendationFeedback = ({ onFeedbackProvided }: RecommendationFee
         description: "Tu opinión nos ayuda a mejorar las recomendaciones.",
       });
 
+      setIsVisible(false);
       onFeedbackProvided();
     } catch (error) {
       console.error('Error saving feedback:', error);
@@ -50,17 +52,19 @@ export const RecommendationFeedback = ({ onFeedbackProvided }: RecommendationFee
     }
   };
 
+  if (!isVisible) return null;
+
   return (
-    <div className="mt-8 space-y-4">
+    <div className="mt-8 px-2 sm:px-4 space-y-4">
       <p className="text-lg font-medium text-center text-gray-700">
         ¿Qué te ha parecido mi recomendación de hoy?
       </p>
-      <div className="grid grid-cols-1 gap-3">
+      <div className="flex flex-col gap-3">
         <Button
           onClick={() => handleFeedback('like')}
           disabled={isSubmitting}
           variant="outline"
-          className="text-lg py-4 hover:bg-green-50"
+          className="text-base sm:text-lg py-3 hover:bg-green-50 min-h-[3rem]"
         >
           😄 ¡Me gusta! Voy a hacer el entrenamiento
         </Button>
@@ -68,7 +72,7 @@ export const RecommendationFeedback = ({ onFeedbackProvided }: RecommendationFee
           onClick={() => handleFeedback('alternative')}
           disabled={isSubmitting}
           variant="outline"
-          className="text-lg py-4 hover:bg-yellow-50"
+          className="text-base sm:text-lg py-3 hover:bg-yellow-50 min-h-[3rem]"
         >
           😏 Creo que me convence más la sesión alternativa
         </Button>
@@ -76,7 +80,7 @@ export const RecommendationFeedback = ({ onFeedbackProvided }: RecommendationFee
           onClick={() => handleFeedback('dislike')}
           disabled={isSubmitting}
           variant="outline"
-          className="text-lg py-4 hover:bg-red-50"
+          className="text-base sm:text-lg py-3 hover:bg-red-50 min-h-[3rem]"
         >
           🙄 No creo que ninguna se adapte a lo que necesito...
         </Button>
@@ -84,3 +88,4 @@ export const RecommendationFeedback = ({ onFeedbackProvided }: RecommendationFee
     </div>
   );
 };
+
