@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogOut, RefreshCcw, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { registerPushNotifications } from "@/utils/notifications";
+import { useEffect, useState } from "react";
 
 interface ProfileActionsProps {
   userId: string | undefined;
@@ -14,6 +15,20 @@ interface ProfileActionsProps {
 const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [showNotificationButton, setShowNotificationButton] = useState(false);
+
+  useEffect(() => {
+    // Check if notifications are supported
+    const checkNotificationSupport = async () => {
+      const hasNotificationSupport = 'Notification' in window;
+      const currentPermission = await Notification.permission;
+      
+      // Only show button if notifications are supported and not already granted
+      setShowNotificationButton(hasNotificationSupport && currentPermission !== 'granted');
+    };
+
+    checkNotificationSupport();
+  }, []);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -30,17 +45,7 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
 
   const handleEnableNotifications = async () => {
     try {
-      // Check if service worker is supported
-      if (!('serviceWorker' in navigator)) {
-        toast({
-          title: "Error",
-          description: "Tu navegador no soporta notificaciones push",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Request notification permission
+      // Request notification permission first
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
         toast({
@@ -51,22 +56,30 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
         return;
       }
 
-      // Register for push notifications
-      const subscription = await registerPushNotifications();
-      
-      if (!subscription) {
-        toast({
-          title: "Error",
-          description: "No se pudieron habilitar las notificaciones",
-          variant: "destructive"
-        });
-        return;
+      // Try PWA push notifications first if service worker is available
+      if ('serviceWorker' in navigator) {
+        const subscription = await registerPushNotifications();
+        if (subscription) {
+          toast({
+            title: "¡Éxito!",
+            description: "Las notificaciones push han sido habilitadas",
+          });
+          setShowNotificationButton(false);
+          return;
+        }
       }
+
+      // Fallback to regular web notifications
+      const notification = new Notification("Sensa.run", {
+        body: "Las notificaciones han sido habilitadas",
+        icon: "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png"
+      });
 
       toast({
         title: "¡Éxito!",
-        description: "Las notificaciones han sido habilitadas",
+        description: "Las notificaciones web han sido habilitadas",
       });
+      setShowNotificationButton(false);
 
     } catch (error) {
       console.error('Error enabling notifications:', error);
@@ -89,14 +102,16 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
         Personalizar experiencia
       </Button>
 
-      <Button 
-        variant="outline" 
-        className="w-full rounded-[42px] border-sensa-purple text-sensa-purple hover:bg-sensa-purple/10"
-        onClick={handleEnableNotifications}
-      >
-        <Bell className="mr-2 h-4 w-4" />
-        Habilitar notificaciones
-      </Button>
+      {showNotificationButton && (
+        <Button 
+          variant="outline" 
+          className="w-full rounded-[42px] border-sensa-purple text-sensa-purple hover:bg-sensa-purple/10"
+          onClick={handleEnableNotifications}
+        >
+          <Bell className="mr-2 h-4 w-4" />
+          Habilitar notificaciones
+        </Button>
+      )}
 
       <Button 
         variant="outline" 
