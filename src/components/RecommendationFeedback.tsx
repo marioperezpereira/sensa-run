@@ -64,28 +64,33 @@ export const RecommendationFeedback = ({ onFeedbackProvided }: RecommendationFee
           onClick={() => handleFeedback('like')}
           disabled={isSubmitting}
           variant="outline"
-          className="text-base sm:text-lg py-3 hover:bg-green-50 min-h-[3rem]"
+          className="text-base sm:text-lg py-3 px-4 hover:bg-green-50 whitespace-normal h-auto min-h-[3.5rem] leading-tight"
         >
-          😄 ¡Me gusta! Voy a hacer el entrenamiento
+          <span className="flex items-center gap-2">
+            😄 ¡Me gusta!<br className="sm:hidden" /> Voy a hacer el entrenamiento
+          </span>
         </Button>
         <Button
           onClick={() => handleFeedback('alternative')}
           disabled={isSubmitting}
           variant="outline"
-          className="text-base sm:text-lg py-3 hover:bg-yellow-50 min-h-[3rem]"
+          className="text-base sm:text-lg py-3 px-4 hover:bg-yellow-50 whitespace-normal h-auto min-h-[3.5rem] leading-tight"
         >
-          😏 Creo que me convence más la sesión alternativa
+          <span className="flex items-center gap-2">
+            😏 Creo que me convence más<br className="sm:hidden" /> la sesión alternativa
+          </span>
         </Button>
         <Button
           onClick={() => handleFeedback('dislike')}
           disabled={isSubmitting}
           variant="outline"
-          className="text-base sm:text-lg py-3 hover:bg-red-50 min-h-[3rem]"
+          className="text-base sm:text-lg py-3 px-4 hover:bg-red-50 whitespace-normal h-auto min-h-[3.5rem] leading-tight"
         >
-          🙄 No creo que ninguna se adapte a lo que necesito...
+          <span className="flex items-center gap-2">
+            🙄 No creo que ninguna se adapte<br className="sm:hidden" /> a lo que necesito...
+          </span>
         </Button>
       </div>
     </div>
   );
 };
-
