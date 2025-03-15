@@ -23,43 +23,44 @@ const Slider = React.forwardRef<
         <span>{labels.min}</span>
         <span>{labels.max}</span>
       </div>
-      <SliderPrimitive.Root
-        ref={ref}
-        defaultValue={defaultValue}
-        value={value}
-        className={cn(
-          "relative flex w-full touch-none select-none items-center",
-          className
-        )}
-        {...props}
-      >
-        <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-violet-100">
-          <SliderPrimitive.Range className="absolute h-full bg-violet-500" />
-        </SliderPrimitive.Track>
-        <TooltipProvider>
-          <Tooltip defaultOpen>
-            <TooltipTrigger asChild>
-              <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-violet-500 bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
-            </TooltipTrigger>
-            {value && (
-              <TooltipContent 
-                className="bg-violet-500 text-white text-xs font-medium px-2 py-1 -translate-y-2"
-                side="top"
-                align="center"
-                sideOffset={2}
-                alignOffset={0}
-                forceMount
-              >
-                {value[0]}
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-      </SliderPrimitive.Root>
+      <div className="relative">
+        <SliderPrimitive.Root
+          ref={ref}
+          defaultValue={defaultValue}
+          value={value}
+          className={cn(
+            "relative flex w-full touch-none select-none items-center",
+            className
+          )}
+          {...props}
+        >
+          <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-violet-100">
+            <SliderPrimitive.Range className="absolute h-full bg-violet-500" />
+          </SliderPrimitive.Track>
+          <TooltipProvider>
+            <Tooltip defaultOpen>
+              <TooltipTrigger asChild>
+                <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-violet-500 bg-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
+              </TooltipTrigger>
+              {value && (
+                <TooltipContent 
+                  className="absolute bg-violet-500 text-white text-xs font-medium px-2 py-1 -translate-y-6 -translate-x-1/2 left-1/2 top-0 transform"
+                  side="top"
+                  align="center"
+                  sideOffset={0}
+                  alignOffset={0}
+                  forceMount
+                >
+                  {value[0]}
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </SliderPrimitive.Root>
+      </div>
     </div>
   );
 })
 Slider.displayName = SliderPrimitive.Root.displayName
 
 export { Slider }
-
