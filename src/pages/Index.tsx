@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,7 +52,7 @@ const Index = () => {
   // Show loading state while checking session or fetching onboarding data
   if (isOnboardingLoading || session === null) {
     return (
-      <div className="h-screen grid place-items-center bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
+      <div className="min-h-screen grid place-items-center bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
         <div className="flex flex-col items-center gap-4">
           <img 
             src="/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png" 
@@ -67,17 +66,14 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
       {onboardingData && <ChatHeader />}
-      
-      <main className="relative min-h-screen pt-20"> {/* Changed padding and made relative */}
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          {!onboardingData ? (
-            <OnboardingQuestion onComplete={() => window.location.reload()} />
-          ) : (
-            <RatingFlow key="rating-flow" />
-          )}
-        </div>
+      <main className="flex-1 container max-w-2xl mx-auto px-4 py-6">
+        {!onboardingData ? (
+          <OnboardingQuestion onComplete={() => window.location.reload()} />
+        ) : (
+          <RatingFlow key="rating-flow" />
+        )}
       </main>
     </div>
   );
