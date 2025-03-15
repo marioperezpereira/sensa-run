@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,10 +22,18 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
+    const getSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+      } catch (error) {
+        console.error('Error checking session:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getSession();
 
     const {
       data: { subscription },
@@ -37,7 +46,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (loading) {
     return (
-      <div className="h-screen grid place-items-center">
+      <div className="min-h-screen grid place-items-center bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
         <div className="flex flex-col items-center gap-4">
           <img 
             src="/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png" 

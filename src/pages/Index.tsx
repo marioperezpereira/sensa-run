@@ -1,3 +1,4 @@
+
 import { useRef, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,9 +11,12 @@ const Index = () => {
   const [session, setSession] = useState<boolean | null>(null);
   
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(!!session);
-    });
+    };
+
+    checkSession();
 
     const {
       data: { subscription },
@@ -44,13 +48,8 @@ const Index = () => {
     enabled: session !== null && session !== false,
   });
 
-  // Show landing page for non-authenticated users
-  if (session === false) {
-    return <Landing />;
-  }
-
   // Show loading state while checking session or fetching onboarding data
-  if (isOnboardingLoading || session === null) {
+  if (session === null || isOnboardingLoading) {
     return (
       <div className="min-h-screen grid place-items-center bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
         <div className="flex flex-col items-center gap-4">
@@ -64,6 +63,9 @@ const Index = () => {
       </div>
     );
   }
+
+  // Note: We don't need to check for session === false here anymore
+  // as ProtectedRoute will handle the redirect to /auth
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
