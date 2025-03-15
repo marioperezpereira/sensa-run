@@ -5,10 +5,22 @@ import { Slider } from '../ui/slider';
 
 interface RatingSliderProps {
   onSubmit: (rating: number) => void;
+  context?: 'energy' | 'effort';
 }
 
-export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
+export const RatingSlider = ({ onSubmit, context = 'effort' }: RatingSliderProps) => {
   const [rating, setRating] = useState<number>(5);
+
+  const labels = {
+    energy: {
+      min: "Estoy agotado",
+      max: "Lleno de energía"
+    },
+    effort: {
+      min: "Fácil",
+      max: "Máximo"
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -20,6 +32,7 @@ export const RatingSlider = ({ onSubmit }: RatingSliderProps) => {
         min={1}
         step={1}
         className="py-4"
+        labels={labels[context]}
       />
       
       <Button

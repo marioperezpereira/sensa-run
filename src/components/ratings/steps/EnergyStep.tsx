@@ -47,7 +47,7 @@ export const EnergyStep = ({ onCompleted }: EnergyStepProps) => {
         En una escala del 1 al 10, ¿cómo calificarías tu nivel de energía hoy?
         Donde 1 es completamente agotado y 10 es lleno de energía.
       </p>
-      <RatingSlider onSubmit={handleSubmit} />
+      <RatingSlider onSubmit={handleSubmit} context="energy" />
     </div>
   );
 };
