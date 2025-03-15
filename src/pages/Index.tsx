@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,19 +63,18 @@ const Index = () => {
     );
   }
 
-  // Note: We don't need to check for session === false here anymore
-  // as ProtectedRoute will handle the redirect to /auth
-
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
-      {onboardingData && <ChatHeader />}
-      <main className="flex-1 container max-w-2xl mx-auto px-4 py-6">
-        {!onboardingData ? (
-          <OnboardingQuestion onComplete={() => window.location.reload()} />
-        ) : (
-          <RatingFlow key="rating-flow" />
-        )}
-      </main>
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
+      <div className="flex flex-col min-h-screen">
+        {onboardingData && <ChatHeader />}
+        <main className="flex-1 container max-w-2xl mx-auto px-4 py-6">
+          {!onboardingData ? (
+            <OnboardingQuestion onComplete={() => window.location.reload()} />
+          ) : (
+            <RatingFlow key="rating-flow" />
+          )}
+        </main>
+      </div>
     </div>
   );
 };

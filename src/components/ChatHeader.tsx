@@ -7,7 +7,7 @@ export const ChatHeader = () => {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white/80 backdrop-blur-sm border-b">
+    <div className="bg-white/80 backdrop-blur-sm border-b">
       <div className="container max-w-2xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
@@ -34,6 +34,6 @@ export const ChatHeader = () => {
           </Button>
         </div>
       </div>
-    </header>
+    </div>
   );
 };
