@@ -1,6 +1,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import webPush from 'https://esm.sh/web-push@3.6.4'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,7 +32,7 @@ serve(async (req) => {
     )
     
     // Parse the request body
-    const { userId, title, message, tag, userIds, subscriptions } = await req.json()
+    const { userId, title, message, tag, url, userIds, subscriptions } = await req.json()
     
     // Initialize Supabase client with admin privileges
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
@@ -92,7 +93,9 @@ serve(async (req) => {
     const payload = JSON.stringify({
       title: title || 'Sensa.run',
       message: message || 'Tienes una notificación nueva',
+      body: message || 'Tienes una notificación nueva', // Include both for compatibility
       tag: tag || 'default',
+      url: url || '/',
       timestamp: new Date().getTime()
     })
     
@@ -133,32 +136,3 @@ serve(async (req) => {
     )
   }
 })
-
-// Simple Supabase client for the edge function context
-function createClient(supabaseUrl: string, supabaseKey: string) {
-  return {
-    from: (table: string) => ({
-      select: (columns: string) => ({
-        eq: (column: string, value: any) => {
-          const url = `${supabaseUrl}/rest/v1/${table}?select=${columns}&${column}=eq.${value}`
-          return fetch(url, {
-            headers: {
-              'Authorization': `Bearer ${supabaseKey}`,
-              'apikey': supabaseKey
-            }
-          }).then(res => res.json().then(data => ({ data, error: null })))
-        },
-        in: (column: string, values: any[]) => {
-          const valuesStr = values.join(',')
-          const url = `${supabaseUrl}/rest/v1/${table}?select=${columns}&${column}=in.(${valuesStr})`
-          return fetch(url, {
-            headers: {
-              'Authorization': `Bearer ${supabaseKey}`,
-              'apikey': supabaseKey
-            }
-          }).then(res => res.json().then(data => ({ data, error: null })))
-        }
-      })
-    })
-  }
-}

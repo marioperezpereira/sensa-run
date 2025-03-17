@@ -72,7 +72,7 @@ async function savePushSubscription(subscription: PushSubscription) {
       await supabase
         .from('push_subscriptions')
         .update({
-          subscription: subscription,
+          subscription: JSON.parse(JSON.stringify(subscription)),
           updated_at: new Date().toISOString()
         })
         .eq('id', existingSubscriptions[0].id);
@@ -87,7 +87,7 @@ async function savePushSubscription(subscription: PushSubscription) {
       .insert({
         user_id: user.id,
         endpoint: subscription.endpoint,
-        subscription: subscription
+        subscription: JSON.parse(JSON.stringify(subscription))
       });
       
     if (error) {
