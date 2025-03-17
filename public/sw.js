@@ -19,35 +19,61 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('push', (event) => {
   if (!event.data) return;
-
+  
+  let data;
+  try {
+    data = event.data.json();
+  } catch (e) {
+    data = {
+      title: 'Sensa.run',
+      message: event.data.text()
+    };
+  }
+  
   const options = {
-    body: event.data.text(),
+    body: data.message || data.body || 'Has recibido una notificación',
     icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
     badge: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: '1'
+      primaryKey: data.tag || '1',
+      url: data.url || '/'
     },
     actions: [
       {
         action: 'explore',
-        title: 'View App',
+        title: 'Ver App',
       }
     ]
   };
 
   event.waitUntil(
-    self.registration.showNotification('Sensa.run', options)
+    self.registration.showNotification(data.title || 'Sensa.run', options)
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  if (event.action === 'explore') {
+  let targetUrl = '/';
+  
+  if (event.notification.data && event.notification.data.url) {
+    targetUrl = event.notification.data.url;
+  }
+
+  if (event.action === 'explore' || !event.action) {
     event.waitUntil(
-      clients.openWindow('/')
+      clients.matchAll({type: 'window'}).then((clientList) => {
+        // If a tab is already open, focus it
+        for (const client of clientList) {
+          if (client.url === targetUrl && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Otherwise open a new tab
+        return clients.openWindow(targetUrl);
+      })
     );
   }
 });

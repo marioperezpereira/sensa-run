@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export async function registerPushNotifications() {
@@ -15,6 +16,7 @@ export async function registerPushNotifications() {
     // If a subscription already exists, return it
     if (subscription) {
       console.log('Push notification subscription exists');
+      await savePushSubscription(subscription);
       return subscription;
     }
 
@@ -36,11 +38,65 @@ export async function registerPushNotifications() {
     });
 
     console.log('Push notification subscription created:', subscription);
+    
+    // Save the subscription to the database
+    await savePushSubscription(subscription);
+    
     return subscription;
     
   } catch (err) {
     console.error('Error setting up push notifications:', err);
     return null;
+  }
+}
+
+// Save push subscription to the database
+async function savePushSubscription(subscription: PushSubscription) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.error('No user found when saving push subscription');
+      return;
+    }
+    
+    // Check if subscription already exists for this user
+    const { data: existingSubscriptions } = await supabase
+      .from('push_subscriptions')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('endpoint', subscription.endpoint);
+    
+    if (existingSubscriptions && existingSubscriptions.length > 0) {
+      // Update existing subscription
+      await supabase
+        .from('push_subscriptions')
+        .update({
+          subscription: subscription,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingSubscriptions[0].id);
+        
+      console.log('Updated existing push subscription');
+      return;
+    }
+    
+    // Save new subscription
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .insert({
+        user_id: user.id,
+        endpoint: subscription.endpoint,
+        subscription: subscription
+      });
+      
+    if (error) {
+      console.error('Error saving push subscription:', error);
+    } else {
+      console.log('Saved new push subscription');
+    }
+  } catch (error) {
+    console.error('Error in savePushSubscription:', error);
   }
 }
 
