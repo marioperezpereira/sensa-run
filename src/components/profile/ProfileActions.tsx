@@ -1,10 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, RefreshCcw, Bell } from "lucide-react";
+import { LogOut, RefreshCcw, Bell, Send } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { registerPushNotifications } from "@/utils/notifications";
+import { checkAndSaveExistingSubscription, sendTestNotification } from "@/utils/sendNotification";
 import { useEffect, useState } from "react";
 
 interface ProfileActionsProps {
@@ -16,12 +16,25 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showNotificationButton, setShowNotificationButton] = useState(false);
+  const [isRecovering, setIsRecovering] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   useEffect(() => {
     // Check if notifications are supported
     const checkNotificationSupport = async () => {
       const hasNotificationSupport = 'Notification' in window;
-      const currentPermission = await Notification.permission;
+      let currentPermission = "default";
+      
+      if (hasNotificationSupport) {
+        currentPermission = Notification.permission;
+        
+        // Try to recover any existing subscription
+        if (currentPermission === 'granted') {
+          setIsRecovering(true);
+          await checkAndSaveExistingSubscription();
+          setIsRecovering(false);
+        }
+      }
       
       // Only show button if notifications are supported and not already granted
       setShowNotificationButton(hasNotificationSupport && currentPermission !== 'granted');
@@ -91,6 +104,35 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
     }
   };
 
+  const handleSendTestNotification = async () => {
+    try {
+      setIsSendingTest(true);
+      const result = await sendTestNotification();
+      
+      if (result.success) {
+        toast({
+          title: "¡Éxito!",
+          description: "Notificación de prueba enviada correctamente",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo enviar la notificación de prueba",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error sending test notification:', error);
+      toast({
+        title: "Error",
+        description: "Hubo un error al enviar la notificación de prueba",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <Button 
@@ -107,9 +149,22 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
           variant="outline" 
           className="w-full rounded-[42px] border-sensa-purple text-sensa-purple hover:bg-sensa-purple/10"
           onClick={handleEnableNotifications}
+          disabled={isRecovering}
         >
           <Bell className="mr-2 h-4 w-4" />
-          Habilitar notificaciones
+          {isRecovering ? 'Comprobando notificaciones...' : 'Habilitar notificaciones'}
+        </Button>
+      )}
+
+      {!showNotificationButton && userId && (
+        <Button 
+          variant="outline" 
+          className="w-full rounded-[42px] border-sensa-purple text-sensa-purple hover:bg-sensa-purple/10"
+          onClick={handleSendTestNotification}
+          disabled={isSendingTest}
+        >
+          <Send className="mr-2 h-4 w-4" />
+          {isSendingTest ? 'Enviando...' : 'Enviar notificación de prueba'}
         </Button>
       )}
 
