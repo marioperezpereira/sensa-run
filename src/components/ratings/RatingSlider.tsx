@@ -31,7 +31,6 @@ export const RatingSlider = ({ onSubmit, context = 'effort' }: RatingSliderProps
         max={10}
         min={1}
         step={1}
-        className="py-4"
         labels={labels[context]}
       />
       
