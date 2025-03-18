@@ -2,6 +2,7 @@
 // Import the required dependencies
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import * as base64 from "https://deno.land/std@0.167.0/encoding/base64.ts";
 
 // Define CORS headers
 const corsHeaders = {
@@ -28,12 +29,6 @@ async function generateVAPIDAuthHeader(
   expiration: number = 12 * 60 * 60
 ): Promise<string> {
   try {
-    // Remove any trailing newlines or whitespace
-    audience = audience.trim();
-    vapidPrivateKey = vapidPrivateKey.trim();
-    vapidPublicKey = vapidPublicKey.trim();
-    subject = subject.trim();
-
     // Create the JWT header and payload
     const header = {
       typ: "JWT",
@@ -58,7 +53,7 @@ async function generateVAPIDAuthHeader(
     const signatureBase = `${encodeHeader}.${encodePayload}`;
     
     // Convert the VAPID private key from base64 to raw private key for signing
-    const keyData = Uint8Array.from(atob(vapidPrivateKey), c => c.charCodeAt(0));
+    const keyData = base64.decode(vapidPrivateKey);
     
     // Import the private key for signing
     const key = await crypto.subtle.importKey(
@@ -105,9 +100,10 @@ serve(async (req) => {
 
   try {
     // Get VAPID keys from environment variables
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
-    const vapidSubject = Deno.env.get('VAPID_SUBJECT');
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')?.trim();
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')?.trim();
+    const vapidSubject = Deno.env.get('VAPID_SUBJECT')?.trim();
+    const fcmServerKey = Deno.env.get('FCM_SERVER_KEY')?.trim();
     
     if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
       throw new Error('[Web Push] VAPID configuration is missing');
@@ -128,8 +124,8 @@ serve(async (req) => {
     });
     
     // Initialize Supabase client with admin privileges
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')?.trim();
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.trim();
     
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('[Web Push] Supabase configuration is missing');
@@ -208,16 +204,16 @@ serve(async (req) => {
     const sendResults = await Promise.allSettled(
       targetSubscriptions.map(async (subscription, index) => {
         try {
-          // Make sure to trim any whitespace including newlines
+          // Make sure to trim any whitespace including newlines from endpoint
           const endpoint = subscription.endpoint.trim();
           console.log(`[Web Push] Processing subscription ${index + 1}:`, endpoint);
+          
+          // Check if this is a Google FCM endpoint
+          const isFCM = endpoint.includes('fcm.googleapis.com');
           
           // Extract the origin for the audience in the JWT
           const audienceURL = new URL(endpoint);
           const audience = `${audienceURL.protocol}//${audienceURL.host}`;
-
-          // Check if this is a Google FCM endpoint
-          const isFCM = endpoint.includes('fcm.googleapis.com');
           
           let result;
           
@@ -225,16 +221,24 @@ serve(async (req) => {
             // FCM needs a special format
             console.log(`[Web Push] Subscription ${index + 1} is FCM, using FCM format`);
             
+            if (!fcmServerKey) {
+              throw new Error('[Web Push] FCM_SERVER_KEY is required for FCM endpoints');
+            }
+            
             // Extract the FCM token from the endpoint URL
             // FCM endpoint format: https://fcm.googleapis.com/fcm/send/DEVICE_TOKEN
             const fcmToken = endpoint.split('/').pop();
+            
+            if (!fcmToken) {
+              throw new Error('[Web Push] Invalid FCM endpoint format');
+            }
             
             // Send to FCM endpoint with the FCM-specific format
             result = await fetch('https://fcm.googleapis.com/fcm/send', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `key=${Deno.env.get('FCM_SERVER_KEY') || ''}`,
+                'Authorization': `key=${fcmServerKey}`,
               },
               body: JSON.stringify({
                 to: fcmToken,
@@ -243,6 +247,9 @@ serve(async (req) => {
                   body: message || 'Tienes una notificación nueva',
                   icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
                   click_action: url || '/'
+                },
+                data: {
+                  url: url || '/'
                 }
               })
             });
@@ -277,13 +284,9 @@ serve(async (req) => {
           console.log(`[Web Push] Push service response for ${index + 1}:`, result.status);
           
           if (result.status >= 400) {
-            try {
-              const responseText = await result.text();
-              console.error(`[Web Push] Error response from push service ${index + 1}:`, responseText);
-            } catch (textError) {
-              console.error(`[Web Push] Could not get response text for error:`, textError);
-            }
-            return { success: false, statusCode: result.status };
+            const responseText = await result.text();
+            console.error(`[Web Push] Error response from push service ${index + 1}:`, responseText);
+            return { success: false, statusCode: result.status, response: responseText };
           }
           
           return { success: result.status < 400, statusCode: result.status };
@@ -314,6 +317,9 @@ serve(async (req) => {
           console.error(`[Web Push] Notification ${index} failed with error:`, result.reason);
         } else {
           console.error(`[Web Push] Notification ${index} failed with status code:`, result.value.statusCode);
+          if (result.value.response) {
+            console.error(`[Web Push] Error response:`, result.value.response);
+          }
         }
       });
     
