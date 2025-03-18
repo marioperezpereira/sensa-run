@@ -1,4 +1,3 @@
-
 const CACHE_VERSION = '5';
 const CACHE_NAME = `sensa-cache-v${CACHE_VERSION}`;
 

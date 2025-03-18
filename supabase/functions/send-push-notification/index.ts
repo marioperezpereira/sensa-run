@@ -3,7 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import webPush from 'https://esm.sh/web-push@3.6.4'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
-// Define CORS headers - ensure they allow requests from sensa.run
+// Define CORS headers with explicit configuration for production
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -14,13 +14,13 @@ const corsHeaders = {
 serve(async (req) => {
   console.log('Push notification request received:', req.method);
   
-  // Handle CORS preflight requests - this is critical for production domains
+  // Handle CORS preflight requests properly
   if (req.method === 'OPTIONS') {
     console.log('Handling OPTIONS request for CORS');
     return new Response(null, { 
-      status: 204, 
+      status: 204, // Use 204 No Content for OPTIONS
       headers: corsHeaders 
-    })
+    });
   }
 
   try {
