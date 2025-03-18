@@ -45,6 +45,7 @@ export async function checkAndSaveExistingSubscription() {
   try {
     // Check if service worker is registered
     if (!('serviceWorker' in navigator)) {
+      console.log('Service Worker not supported');
       return null;
     }
 
@@ -53,6 +54,7 @@ export async function checkAndSaveExistingSubscription() {
     
     // Check if push is supported
     if (!('pushManager' in registration)) {
+      console.log('Push notifications not supported');
       return null;
     }
 
@@ -61,6 +63,7 @@ export async function checkAndSaveExistingSubscription() {
     
     // No subscription found
     if (!subscription) {
+      console.log('No push subscription found');
       return null;
     }
     
@@ -73,16 +76,21 @@ export async function checkAndSaveExistingSubscription() {
     }
     
     // Try to save the subscription to the database
-    const { data: existingSubscriptions } = await supabase
+    const { data: existingSubscriptions, error: selectError } = await supabase
       .from('push_subscriptions')
       .select('*')
       .eq('user_id', user.id)
       .eq('endpoint', subscription.endpoint);
     
+    if (selectError) {
+      console.error('Error checking for existing subscription:', selectError);
+      return subscription;
+    }
+    
     // Only save if not already in database
     if (!existingSubscriptions || existingSubscriptions.length === 0) {
       // Save new subscription
-      const { error } = await supabase
+      const { error: insertError } = await supabase
         .from('push_subscriptions')
         .insert({
           user_id: user.id,
@@ -90,11 +98,13 @@ export async function checkAndSaveExistingSubscription() {
           subscription: JSON.parse(JSON.stringify(subscription))
         });
         
-      if (error) {
-        console.error('Error saving push subscription:', error);
+      if (insertError) {
+        console.error('Error saving push subscription:', insertError);
       } else {
         console.log('Recovered and saved existing push subscription');
       }
+    } else {
+      console.log('Subscription already exists in database');
     }
     
     return subscription;
@@ -118,7 +128,12 @@ export async function sendTestNotification() {
     }
     
     // First check and save any existing subscription
-    await checkAndSaveExistingSubscription();
+    const subscription = await checkAndSaveExistingSubscription();
+    
+    if (!subscription) {
+      console.error('No push subscription available');
+      return { success: false, error: 'No push subscription available' };
+    }
     
     // Send the notification
     return await sendNotificationToUser(

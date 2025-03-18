@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,8 +32,13 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
         // Try to recover any existing subscription
         if (currentPermission === 'granted') {
           setIsRecovering(true);
-          await checkAndSaveExistingSubscription();
-          setIsRecovering(false);
+          try {
+            await checkAndSaveExistingSubscription();
+          } catch (error) {
+            console.error('Error recovering subscription:', error);
+          } finally {
+            setIsRecovering(false);
+          }
         }
       }
       
@@ -115,17 +121,18 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
           description: "Notificación de prueba enviada correctamente",
         });
       } else {
+        console.error('Error result:', result.error);
         toast({
           title: "Error",
-          description: "No se pudo enviar la notificación de prueba",
+          description: result.error ? String(result.error) : "No se pudo enviar la notificación de prueba",
           variant: "destructive"
         });
       }
     } catch (error) {
-      console.error('Error sending test notification:', error);
+      console.error('Exception sending test notification:', error);
       toast({
         title: "Error",
-        description: "Hubo un error al enviar la notificación de prueba",
+        description: String(error) || "Hubo un error al enviar la notificación de prueba",
         variant: "destructive"
       });
     } finally {
