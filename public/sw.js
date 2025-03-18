@@ -1,5 +1,4 @@
-
-const CACHE_VERSION = '12';
+const CACHE_VERSION = '13';
 const CACHE_NAME = `sensa-cache-v${CACHE_VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -11,7 +10,7 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing with cache version:', CACHE_VERSION);
+  console.log('[Service Worker] Installing with cache version:', CACHE_VERSION);
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
@@ -21,80 +20,83 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Push received:', event);
+  console.log('[Service Worker] Push event received');
   
-  // Improved handling of push data
-  let notificationData;
-  
+  let payload;
   try {
     if (event.data) {
+      console.log('[Service Worker] Push event has data');
       try {
-        // Try to parse as JSON first
-        notificationData = event.data.json();
-        console.log('[Service Worker] Push data parsed as JSON:', notificationData);
+        // Try to parse the data as JSON
+        payload = event.data.json();
+        console.log('[Service Worker] Successfully parsed push data as JSON:', payload);
       } catch (e) {
-        // If JSON parsing fails, try using text
-        const text = event.data.text();
-        console.log('[Service Worker] Push data as text:', text);
+        console.error('[Service Worker] Error parsing push data as JSON:', e);
+        
+        // If JSON parsing fails, get it as text
+        const textData = event.data.text();
+        console.log('[Service Worker] Push data as text:', textData);
         
         try {
-          // Try to parse text as JSON
-          notificationData = JSON.parse(text);
-          console.log('[Service Worker] Text successfully parsed as JSON:', notificationData);
+          // Try to parse the text as JSON
+          payload = JSON.parse(textData);
+          console.log('[Service Worker] Successfully parsed text data as JSON:', payload);
         } catch (e) {
-          // If that fails too, use text as is
-          notificationData = {
+          console.error('[Service Worker] Error parsing text as JSON:', e);
+          // Use text data directly
+          payload = {
             title: 'Sensa.run',
-            message: text,
-            body: text
+            body: textData
           };
-          console.log('[Service Worker] Using raw text for notification:', notificationData);
         }
       }
     } else {
-      // No data in the push
-      notificationData = {
+      console.log('[Service Worker] Push event has no data, using default');
+      payload = {
         title: 'Sensa.run',
-        message: 'Tienes una notificación nueva'
+        body: 'Tienes una notificación nueva'
       };
-      console.log('[Service Worker] No data in push, using default message');
     }
     
-    // Ensure we have the required fields
-    const title = notificationData.title || 'Sensa.run';
-    const body = notificationData.message || notificationData.body || 'Tienes una notificación nueva';
-    const tag = notificationData.tag || `sensa-${Date.now()}`;
-    const url = notificationData.url || '/';
+    const title = payload.title || 'Sensa.run';
+    const body = payload.body || payload.message || 'Tienes una notificación nueva';
+    const icon = payload.icon || '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png';
+    const badge = payload.badge || '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png';
+    const tag = payload.tag || 'sensa-notification';
+    const url = payload.url || '/';
     
-    const options = {
+    // Create the notification options
+    const notificationOptions = {
       body: body,
-      icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
-      badge: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
-      vibrate: [200, 100, 200, 100, 200],
+      icon: icon,
+      badge: badge,
+      vibrate: [200, 100, 200],
       tag: tag,
       renotify: true,
+      requireInteraction: true,
       data: {
-        dateOfArrival: Date.now(),
-        primaryKey: tag,
-        url: url
+        url: url,
+        dateOfArrival: Date.now()
       },
       actions: [
         {
-          action: 'explore',
-          title: 'Ver App',
+          action: 'open',
+          title: 'Ver ahora',
         }
-      ],
-      // Make notifications more visible
-      requireInteraction: true,
-      silent: false
+      ]
     };
     
-    console.log('[Service Worker] Showing notification with title:', title, 'and options:', options);
+    console.log('[Service Worker] Showing notification with title:', title);
+    console.log('[Service Worker] Notification options:', notificationOptions);
     
     event.waitUntil(
-      self.registration.showNotification(title, options)
-        .then(() => console.log('[Service Worker] Notification shown successfully'))
-        .catch(error => console.error('[Service Worker] Error showing notification:', error))
+      self.registration.showNotification(title, notificationOptions)
+        .then(() => {
+          console.log('[Service Worker] Notification shown successfully');
+        })
+        .catch((error) => {
+          console.error('[Service Worker] Error showing notification:', error);
+        })
     );
   } catch (error) {
     console.error('[Service Worker] Error handling push event:', error);
@@ -111,6 +113,8 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   console.log('[Service Worker] Notification clicked:', event);
+  
+  // Close the notification
   event.notification.close();
 
   let targetUrl = '/';
@@ -119,7 +123,10 @@ self.addEventListener('notificationclick', (event) => {
     targetUrl = event.notification.data.url;
   }
 
-  if (event.action === 'explore' || !event.action) {
+  // Handle action clicks
+  if (event.action === 'open' || !event.action) {
+    console.log('[Service Worker] Opening URL:', targetUrl);
+    
     event.waitUntil(
       clients.matchAll({type: 'window'}).then((clientList) => {
         // If a tab is already open, focus it
@@ -129,6 +136,7 @@ self.addEventListener('notificationclick', (event) => {
           }
         }
         // Otherwise open a new tab
+        console.log('[Service Worker] Opening new window with URL:', targetUrl);
         return clients.openWindow(targetUrl);
       })
     );
