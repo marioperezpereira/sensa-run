@@ -3,11 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function registerPushNotifications() {
   try {
+    console.log("Starting push notification registration");
     const registration = await navigator.serviceWorker.ready;
     
     // Check if push is supported
     if (!('pushManager' in registration)) {
-      console.log('Push notifications not supported');
+      console.error('Push notifications not supported by this browser');
       return null;
     }
 
@@ -15,34 +16,43 @@ export async function registerPushNotifications() {
     
     // If a subscription already exists, return it
     if (subscription) {
-      console.log('Push notification subscription exists');
+      console.log('Existing push subscription found:', subscription);
       await savePushSubscription(subscription);
       return subscription;
     }
 
     // Get VAPID public key from backend
-    const { data: { publicKey } } = await supabase.functions.invoke('get-vapid-key');
+    console.log("Fetching VAPID public key");
+    const { data, error } = await supabase.functions.invoke('get-vapid-key');
     
-    if (!publicKey) {
-      console.error('Could not get VAPID public key');
+    if (error || !data || !data.publicKey) {
+      console.error('Could not get VAPID public key:', error || 'No key returned');
       return null;
     }
 
+    console.log("VAPID public key received:", data.publicKey);
+
     // Convert base64 string to Uint8Array
-    const applicationServerKey = urlB64ToUint8Array(publicKey);
+    const applicationServerKey = urlB64ToUint8Array(data.publicKey);
 
-    // Create new subscription
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey
-    });
-
-    console.log('Push notification subscription created:', subscription);
-    
-    // Save the subscription to the database
-    await savePushSubscription(subscription);
-    
-    return subscription;
+    // Create new subscription with user visible only set to true
+    console.log("Creating new push subscription");
+    try {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey
+      });
+      
+      console.log('Push notification subscription created:', subscription);
+      
+      // Save the subscription to the database
+      await savePushSubscription(subscription);
+      
+      return subscription;
+    } catch (subscribeError) {
+      console.error('Error subscribing to push notifications:', subscribeError);
+      return null;
+    }
     
   } catch (err) {
     console.error('Error setting up push notifications:', err);
@@ -59,6 +69,8 @@ async function savePushSubscription(subscription: PushSubscription) {
       console.error('No user found when saving push subscription');
       return;
     }
+    
+    console.log('Saving push subscription for user:', user.id);
     
     // Check if subscription already exists for this user
     const { data: existingSubscriptions } = await supabase

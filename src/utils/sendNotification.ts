@@ -24,7 +24,8 @@ export async function sendNotificationToUser(
         userId,
         title, 
         message,
-        url: url || '/'
+        url: url || '/',
+        tag: `test-${Date.now()}` // Adding a unique tag to avoid notification coalescing
       }
     });
 
@@ -148,7 +149,8 @@ export async function sendTestNotification() {
     return await sendNotificationToUser(
       user.id, 
       '¡Prueba de notificación!', 
-      'Las notificaciones están funcionando correctamente'
+      'Las notificaciones están funcionando correctamente. ' + new Date().toLocaleTimeString(),
+      '/profile'
     );
   } catch (err) {
     console.error('Error sending test notification:', err);

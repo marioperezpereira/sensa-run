@@ -1,5 +1,5 @@
 
-const CACHE_VERSION = '10';
+const CACHE_VERSION = '11';
 const CACHE_NAME = `sensa-cache-v${CACHE_VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -48,11 +48,19 @@ self.addEventListener('push', (event) => {
     }
   }
   
+  // Log the data we're going to use for the notification
+  console.log('Showing notification with data:', data);
+  
+  const title = data.title || 'Sensa.run';
+  const message = data.message || data.body || 'Tienes una notificación nueva';
+  
   const options = {
-    body: data.message || data.body || 'Has recibido una notificación',
+    body: message,
     icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
     badge: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
-    vibrate: [100, 50, 100],
+    vibrate: [200, 100, 200, 100, 200],
+    tag: data.tag || 'default-tag',
+    renotify: true,
     data: {
       dateOfArrival: Date.now(),
       primaryKey: data.tag || '1',
@@ -64,13 +72,15 @@ self.addEventListener('push', (event) => {
         title: 'Ver App',
       }
     ],
-    // Make notification require interaction to prevent it from disappearing
     requireInteraction: true
   };
 
-  console.log('Showing notification with options:', options);
+  console.log('Showing notification with title:', title, 'and options:', options);
+  
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Sensa.run', options)
+    self.registration.showNotification(title, options)
+      .then(() => console.log('Notification shown successfully'))
+      .catch(error => console.error('Error showing notification:', error))
   );
 });
 

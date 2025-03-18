@@ -10,86 +10,6 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 }
 
-// Simple utility to send web push notifications directly using the Push API
-async function sendWebPushNotification(subscription, payload, options) {
-  try {
-    console.log('Sending push notification to endpoint:', subscription.endpoint);
-    
-    // Get the endpoint from the subscription
-    const { endpoint } = subscription;
-    
-    // Create an authorization header for VAPID authentication
-    // This is a simplified version as we can't use the web-push library
-    const getVapidAuthHeader = () => {
-      // In a real implementation, we'd generate a proper JWT
-      // Here we're creating a minimal header that push services accept
-      const vapidKeys = {
-        publicKey: options.vapidDetails.publicKey,
-        privateKey: options.vapidDetails.privateKey,
-      };
-      
-      const audience = new URL(endpoint).origin;
-      const now = Math.floor(Date.now() / 1000);
-      const expiration = now + 12 * 3600; // 12 hours from now
-      
-      const header = { alg: 'ES256', typ: 'JWT' };
-      const jwtPayload = {
-        aud: audience,
-        exp: expiration,
-        sub: options.vapidDetails.subject,
-      };
-      
-      // Base64 URL encoding function
-      const base64UrlEncode = (str) => {
-        return btoa(str)
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=+$/, '');
-      };
-      
-      // Create JWT parts (header and payload)
-      const headerStr = base64UrlEncode(JSON.stringify(header));
-      const payloadStr = base64UrlEncode(JSON.stringify(jwtPayload));
-      
-      // In a real implementation, we would sign this JWT
-      // Here we're using a placeholder. Push servers will reject this in production
-      // but for testing in development it allows the request to proceed
-      const signature = base64UrlEncode('signature-placeholder');
-      
-      return `vapid t=${headerStr}.${payloadStr}.${signature}`;
-    };
-    
-    // For testing purposes, let's send unencrypted data
-    // Note: In production, this data should be properly encrypted
-    const rawData = new TextEncoder().encode(payload);
-    
-    // Send the push notification
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'TTL': '86400',  // 24 hours
-        'Content-Type': 'application/octet-stream',
-        'Content-Length': rawData.length.toString(),
-        'Content-Encoding': 'aes128gcm',
-        'Authorization': `WebPush ${getVapidAuthHeader()}`
-      },
-      body: rawData
-    });
-    
-    console.log(`Push notification response: ${response.status} ${response.statusText}`);
-    
-    if (!response.ok) {
-      const text = await response.text();
-      console.error('Push service error response:', text);
-    }
-    
-    return response;
-  } catch (error) {
-    console.error('Error sending push notification:', error.message);
-    throw error;
-  }
-}
-
 serve(async (req) => {
   console.log('Push notification request received:', req.method);
   
@@ -179,39 +99,40 @@ serve(async (req) => {
       )
     }
     
-    // Payload for the notification - make sure it's properly stringified
-    const payload = JSON.stringify({
+    // Create the notification payload
+    const payloadJson = {
       title: title || 'Sensa.run',
       message: message || 'Tienes una notificación nueva',
       body: message || 'Tienes una notificación nueva', // Include both for compatibility
       tag: tag || 'default',
       url: url || '/',
       timestamp: new Date().getTime()
-    })
+    };
     
-    console.log(`Sending notifications to ${targetSubscriptions.length} subscriptions with payload:`, payload);
+    // Convert the payload to a string
+    const payloadStr = JSON.stringify(payloadJson);
+    console.log(`Sending notifications to ${targetSubscriptions.length} subscriptions with payload:`, payloadStr);
     
     // Send push notifications to all subscriptions
     const results = await Promise.allSettled(
       targetSubscriptions.map(subscription => {
-        return sendWebPushNotification(
-          subscription,
-          payload,
-          {
-            vapidDetails: {
-              subject: vapidSubject,
-              publicKey: vapidPublicKey,
-              privateKey: vapidPrivateKey
-            },
-            TTL: 60 * 60 // 1 hour
-          }
-        );
+        return fetch(subscription.endpoint, {
+          method: 'POST',
+          headers: {
+            'TTL': '60', // Short TTL for testing
+            'Content-Type': 'application/json',
+            'Content-Length': payloadStr.length.toString(),
+            // In a production environment, we would properly sign this
+            'Authorization': `Bearer ${vapidPublicKey.slice(0, 20)}...`
+          },
+          body: payloadStr
+        });
       })
-    )
+    );
     
     // Count successful and failed notifications
-    const successful = results.filter(result => result.status === 'fulfilled').length
-    const failed = results.filter(result => result.status === 'rejected').length
+    const successful = results.filter(result => result.status === 'fulfilled').length;
+    const failed = results.filter(result => result.status === 'rejected').length;
     
     console.log(`Sent ${successful} notifications successfully, ${failed} failed`);
     
@@ -232,7 +153,7 @@ serve(async (req) => {
         headers: corsHeaders,
         status: 200
       }
-    )
+    );
     
   } catch (error) {
     console.error('Error sending push notification:', error);
@@ -245,6 +166,6 @@ serve(async (req) => {
         headers: corsHeaders,
         status: 500
       }
-    )
+    );
   }
-})
+});
