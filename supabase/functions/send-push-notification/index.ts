@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
@@ -11,11 +10,11 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  console.log('Push notification request received:', req.method);
+  console.log('[Edge Function] Push notification request received:', req.method);
   
   // Handle CORS preflight requests properly
   if (req.method === 'OPTIONS') {
-    console.log('Handling OPTIONS request for CORS');
+    console.log('[Edge Function] Handling OPTIONS request for CORS');
     return new Response(null, { 
       status: 204, // Use 204 No Content for OPTIONS
       headers: corsHeaders 
@@ -29,21 +28,22 @@ serve(async (req) => {
     const vapidSubject = Deno.env.get('VAPID_SUBJECT')
     
     if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
-      throw new Error('VAPID configuration is missing')
+      throw new Error('[Edge Function] VAPID configuration is missing')
     }
     
     // Parse the request body
-    const { userId, title, message, tag, url, userIds, subscriptions } = await req.json()
+    const requestData = await req.json();
+    const { userId, title, message, tag, url, userIds, subscriptions } = requestData;
     
-    console.log('Request data:', { userId, userIds, title, message, tag, url });
-    console.log('Subscriptions provided:', subscriptions ? subscriptions.length : 0);
+    console.log('[Edge Function] Request data:', { userId, userIds, title, message, tag, url });
+    console.log('[Edge Function] Subscriptions provided:', subscriptions ? subscriptions.length : 0);
     
     // Initialize Supabase client with admin privileges
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration is missing')
+      throw new Error('[Edge Function] Supabase configuration is missing')
     }
     
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey)
@@ -52,7 +52,7 @@ serve(async (req) => {
     
     // Case 1: Send to a specific user by ID
     if (userId) {
-      console.log('Fetching subscriptions for user:', userId);
+      console.log('[Edge Function] Fetching subscriptions for user:', userId);
       const { data, error } = await supabaseAdmin
         .from('push_subscriptions')
         .select('subscription')
@@ -61,11 +61,11 @@ serve(async (req) => {
       if (error) throw error
       
       targetSubscriptions = data?.map(item => item.subscription) || []
-      console.log(`Found ${targetSubscriptions.length} subscriptions for user`);
+      console.log(`[Edge Function] Found ${targetSubscriptions.length} subscriptions for user`);
     }
     // Case 2: Send to multiple users by ID
     else if (userIds && Array.isArray(userIds)) {
-      console.log('Fetching subscriptions for multiple users');
+      console.log('[Edge Function] Fetching subscriptions for multiple users');
       const { data, error } = await supabaseAdmin
         .from('push_subscriptions')
         .select('subscription')
@@ -74,20 +74,20 @@ serve(async (req) => {
       if (error) throw error
       
       targetSubscriptions = data?.map(item => item.subscription) || []
-      console.log(`Found ${targetSubscriptions.length} subscriptions for users`);
+      console.log(`[Edge Function] Found ${targetSubscriptions.length} subscriptions for users`);
     }
     // Case 3: Send to provided subscription objects directly
     else if (subscriptions && Array.isArray(subscriptions)) {
-      console.log('Using provided subscriptions directly');
+      console.log('[Edge Function] Using provided subscriptions directly');
       targetSubscriptions = subscriptions
     }
     // No valid target specified
     else {
-      throw new Error('No valid notification target specified')
+      throw new Error('[Edge Function] No valid notification target specified')
     }
     
     if (targetSubscriptions.length === 0) {
-      console.log('No subscriptions found');
+      console.log('[Edge Function] No subscriptions found');
       return new Response(
         JSON.stringify({
           message: 'No subscriptions found for the specified target(s)'
@@ -99,34 +99,39 @@ serve(async (req) => {
       )
     }
     
-    // Create the notification payload
-    const payloadJson = {
+    // Create the notification payload - keep it very simple for maximum compatibility
+    const payload = JSON.stringify({
       title: title || 'Sensa.run',
       message: message || 'Tienes una notificación nueva',
-      body: message || 'Tienes una notificación nueva', // Include both for compatibility
-      tag: tag || 'default',
+      tag: tag || `sensa-${Date.now()}`,
       url: url || '/',
-      timestamp: new Date().getTime()
-    };
+      timestamp: Date.now()
+    });
     
-    // Convert the payload to a string
-    const payloadStr = JSON.stringify(payloadJson);
-    console.log(`Sending notifications to ${targetSubscriptions.length} subscriptions with payload:`, payloadStr);
+    console.log(`[Edge Function] Sending notifications to ${targetSubscriptions.length} subscriptions with payload:`, payload);
     
-    // Send push notifications to all subscriptions
+    // Send push notifications to all subscriptions - simple approach without web-push library
     const results = await Promise.allSettled(
-      targetSubscriptions.map(subscription => {
-        return fetch(subscription.endpoint, {
-          method: 'POST',
-          headers: {
-            'TTL': '60', // Short TTL for testing
-            'Content-Type': 'application/json',
-            'Content-Length': payloadStr.length.toString(),
-            // In a production environment, we would properly sign this
-            'Authorization': `Bearer ${vapidPublicKey.slice(0, 20)}...`
-          },
-          body: payloadStr
-        });
+      targetSubscriptions.map(async (subscription, index) => {
+        try {
+          console.log(`[Edge Function] Sending to subscription ${index + 1}:`, subscription.endpoint);
+          
+          // Keep the call as simple as possible
+          const response = await fetch(subscription.endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'TTL': '86400'
+            },
+            body: payload
+          });
+          
+          console.log(`[Edge Function] Push service response for ${index + 1}:`, response.status);
+          return response;
+        } catch (err) {
+          console.error(`[Edge Function] Error sending to subscription ${index + 1}:`, err);
+          throw err;
+        }
       })
     );
     
@@ -134,20 +139,24 @@ serve(async (req) => {
     const successful = results.filter(result => result.status === 'fulfilled').length;
     const failed = results.filter(result => result.status === 'rejected').length;
     
-    console.log(`Sent ${successful} notifications successfully, ${failed} failed`);
+    console.log(`[Edge Function] Sent ${successful} notifications successfully, ${failed} failed`);
     
     // Log any rejection reasons for debugging
     results
       .filter(result => result.status === 'rejected')
       .forEach((result, index) => {
-        console.error(`Notification ${index} failed:`, result.reason);
+        console.error(`[Edge Function] Notification ${index} failed:`, result.reason);
       });
     
     return new Response(
       JSON.stringify({
         message: `Sent ${successful} notifications, ${failed} failed`,
         successful,
-        failed
+        failed,
+        debug: {
+          subscriptionCount: targetSubscriptions.length,
+          payloadSize: payload.length,
+        }
       }),
       { 
         headers: corsHeaders,
@@ -156,7 +165,7 @@ serve(async (req) => {
     );
     
   } catch (error) {
-    console.error('Error sending push notification:', error);
+    console.error('[Edge Function] Error sending push notification:', error);
     
     return new Response(
       JSON.stringify({

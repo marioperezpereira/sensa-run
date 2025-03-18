@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /**
  * Sends a push notification to a specific user
@@ -16,7 +17,10 @@ export async function sendNotificationToUser(
   url?: string
 ) {
   try {
-    console.log('Sending notification to user:', userId);
+    console.log('[SendNotification] Sending notification to user:', userId);
+    
+    // Add a toast notification to provide immediate feedback
+    toast.info("Enviando notificación...");
     
     // Add some logging to help with debugging
     const response = await supabase.functions.invoke('send-push-notification', {
@@ -25,20 +29,23 @@ export async function sendNotificationToUser(
         title, 
         message,
         url: url || '/',
-        tag: `test-${Date.now()}` // Adding a unique tag to avoid notification coalescing
+        tag: `sensa-${Date.now()}` // Adding a unique tag to avoid notification coalescing
       }
     });
 
     // Improved error handling
     if (response.error) {
-      console.error('Error sending notification:', response.error);
+      console.error('[SendNotification] Error sending notification:', response.error);
+      toast.error("Error al enviar la notificación");
       return { success: false, error: response.error };
     }
 
-    console.log('Notification sent successfully:', response.data);
+    console.log('[SendNotification] Notification sent successfully:', response.data);
+    toast.success("Notificación enviada correctamente");
     return { success: true, data: response.data };
   } catch (err) {
-    console.error('Exception sending notification:', err);
+    console.error('[SendNotification] Exception sending notification:', err);
+    toast.error("Error al enviar la notificación");
     return { success: false, error: err };
   }
 }
@@ -51,7 +58,7 @@ export async function checkAndSaveExistingSubscription() {
   try {
     // Check if service worker is registered
     if (!('serviceWorker' in navigator)) {
-      console.log('Service Worker not supported');
+      console.log('[SendNotification] Service Worker not supported');
       return null;
     }
 
@@ -60,7 +67,7 @@ export async function checkAndSaveExistingSubscription() {
     
     // Check if push is supported
     if (!('pushManager' in registration)) {
-      console.log('Push notifications not supported');
+      console.log('[SendNotification] Push notifications not supported');
       return null;
     }
 
@@ -69,7 +76,7 @@ export async function checkAndSaveExistingSubscription() {
     
     // No subscription found
     if (!subscription) {
-      console.log('No push subscription found');
+      console.log('[SendNotification] No push subscription found');
       return null;
     }
     
@@ -77,11 +84,11 @@ export async function checkAndSaveExistingSubscription() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      console.log('No user found, cannot save subscription');
+      console.log('[SendNotification] No user found, cannot save subscription');
       return subscription; // Return subscription anyway for potential anonymous use
     }
     
-    console.log('Found existing push subscription:', subscription);
+    console.log('[SendNotification] Found existing push subscription:', subscription);
     
     // Try to save the subscription to the database
     const { data: existingSubscriptions, error: selectError } = await supabase
@@ -91,7 +98,7 @@ export async function checkAndSaveExistingSubscription() {
       .eq('endpoint', subscription.endpoint);
     
     if (selectError) {
-      console.error('Error checking for existing subscription:', selectError);
+      console.error('[SendNotification] Error checking for existing subscription:', selectError);
       return subscription;
     }
     
@@ -107,17 +114,17 @@ export async function checkAndSaveExistingSubscription() {
         });
         
       if (insertError) {
-        console.error('Error saving push subscription:', insertError);
+        console.error('[SendNotification] Error saving push subscription:', insertError);
       } else {
-        console.log('Recovered and saved existing push subscription');
+        console.log('[SendNotification] Recovered and saved existing push subscription');
       }
     } else {
-      console.log('Subscription already exists in database');
+      console.log('[SendNotification] Subscription already exists in database');
     }
     
     return subscription;
   } catch (err) {
-    console.error('Error checking for existing subscription:', err);
+    console.error('[SendNotification] Error checking for existing subscription:', err);
     return null;
   }
 }
@@ -127,12 +134,12 @@ export async function checkAndSaveExistingSubscription() {
  */
 export async function sendTestNotification() {
   try {
-    console.log('Starting test notification process');
+    console.log('[SendNotification] Starting test notification process');
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      console.error('No authenticated user');
+      console.error('[SendNotification] No authenticated user');
       return { success: false, error: 'No authenticated user' };
     }
     
@@ -140,11 +147,11 @@ export async function sendTestNotification() {
     const subscription = await checkAndSaveExistingSubscription();
     
     if (!subscription) {
-      console.error('No push subscription available');
+      console.error('[SendNotification] No push subscription available');
       return { success: false, error: 'No push subscription available' };
     }
     
-    console.log('Sending test notification to user:', user.id);
+    console.log('[SendNotification] Sending test notification to user:', user.id);
     // Send the notification
     return await sendNotificationToUser(
       user.id, 
@@ -153,7 +160,7 @@ export async function sendTestNotification() {
       '/profile'
     );
   } catch (err) {
-    console.error('Error sending test notification:', err);
+    console.error('[SendNotification] Error sending test notification:', err);
     return { success: false, error: err };
   }
 }

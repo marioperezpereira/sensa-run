@@ -1,5 +1,5 @@
 
-const CACHE_VERSION = '11';
+const CACHE_VERSION = '12';
 const CACHE_NAME = `sensa-cache-v${CACHE_VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -21,71 +21,96 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  console.log('Push event received:', event);
-  if (!event.data) {
-    console.log('No data in push event');
-    return;
-  }
+  console.log('[Service Worker] Push received:', event);
   
-  let data;
+  // Improved handling of push data
+  let notificationData;
+  
   try {
-    data = event.data.json();
-    console.log('Parsed push data:', data);
-  } catch (e) {
-    console.log('Failed to parse JSON, using text instead:', e);
-    const text = event.data.text();
-    console.log('Raw text:', text);
-    try {
-      // Try parsing the text as JSON
-      data = JSON.parse(text);
-      console.log('Parsed text as JSON:', data);
-    } catch (jsonError) {
-      console.log('Text is not JSON either, using as plain text');
-      data = {
-        title: 'Sensa.run',
-        message: text
-      };
-    }
-  }
-  
-  // Log the data we're going to use for the notification
-  console.log('Showing notification with data:', data);
-  
-  const title = data.title || 'Sensa.run';
-  const message = data.message || data.body || 'Tienes una notificación nueva';
-  
-  const options = {
-    body: message,
-    icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
-    badge: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
-    vibrate: [200, 100, 200, 100, 200],
-    tag: data.tag || 'default-tag',
-    renotify: true,
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: data.tag || '1',
-      url: data.url || '/'
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'Ver App',
+    if (event.data) {
+      try {
+        // Try to parse as JSON first
+        notificationData = event.data.json();
+        console.log('[Service Worker] Push data parsed as JSON:', notificationData);
+      } catch (e) {
+        // If JSON parsing fails, try using text
+        const text = event.data.text();
+        console.log('[Service Worker] Push data as text:', text);
+        
+        try {
+          // Try to parse text as JSON
+          notificationData = JSON.parse(text);
+          console.log('[Service Worker] Text successfully parsed as JSON:', notificationData);
+        } catch (e) {
+          // If that fails too, use text as is
+          notificationData = {
+            title: 'Sensa.run',
+            message: text,
+            body: text
+          };
+          console.log('[Service Worker] Using raw text for notification:', notificationData);
+        }
       }
-    ],
-    requireInteraction: true
-  };
-
-  console.log('Showing notification with title:', title, 'and options:', options);
-  
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-      .then(() => console.log('Notification shown successfully'))
-      .catch(error => console.error('Error showing notification:', error))
-  );
+    } else {
+      // No data in the push
+      notificationData = {
+        title: 'Sensa.run',
+        message: 'Tienes una notificación nueva'
+      };
+      console.log('[Service Worker] No data in push, using default message');
+    }
+    
+    // Ensure we have the required fields
+    const title = notificationData.title || 'Sensa.run';
+    const body = notificationData.message || notificationData.body || 'Tienes una notificación nueva';
+    const tag = notificationData.tag || `sensa-${Date.now()}`;
+    const url = notificationData.url || '/';
+    
+    const options = {
+      body: body,
+      icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
+      badge: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
+      vibrate: [200, 100, 200, 100, 200],
+      tag: tag,
+      renotify: true,
+      data: {
+        dateOfArrival: Date.now(),
+        primaryKey: tag,
+        url: url
+      },
+      actions: [
+        {
+          action: 'explore',
+          title: 'Ver App',
+        }
+      ],
+      // Make notifications more visible
+      requireInteraction: true,
+      silent: false
+    };
+    
+    console.log('[Service Worker] Showing notification with title:', title, 'and options:', options);
+    
+    event.waitUntil(
+      self.registration.showNotification(title, options)
+        .then(() => console.log('[Service Worker] Notification shown successfully'))
+        .catch(error => console.error('[Service Worker] Error showing notification:', error))
+    );
+  } catch (error) {
+    console.error('[Service Worker] Error handling push event:', error);
+    
+    // Fallback notification in case of errors
+    event.waitUntil(
+      self.registration.showNotification('Sensa.run', {
+        body: 'Tienes una notificación nueva',
+        icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png'
+      })
+    );
+  }
 });
 
 self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked:', event);
+  console.log('[Service Worker] Notification clicked:', event);
   event.notification.close();
 
   let targetUrl = '/';
@@ -136,19 +161,19 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating, clearing old caches');
+  console.log('[Service Worker] Activating, clearing old caches');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName.startsWith('sensa-cache-') && cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
+            console.log('[Service Worker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('Service Worker now controlling the page');
+      console.log('[Service Worker] Now controlling the page');
       return clients.claim();
     })
   );

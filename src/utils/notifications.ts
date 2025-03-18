@@ -3,59 +3,81 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function registerPushNotifications() {
   try {
-    console.log("Starting push notification registration");
-    const registration = await navigator.serviceWorker.ready;
+    console.log("[Notifications] Starting push notification registration");
     
-    // Check if push is supported
-    if (!('pushManager' in registration)) {
-      console.error('Push notifications not supported by this browser');
+    // Check for service worker support
+    if (!('serviceWorker' in navigator)) {
+      console.error("[Notifications] Service Workers not supported by this browser");
+      return null;
+    }
+    
+    // Check for Push API support
+    if (!('PushManager' in window)) {
+      console.error("[Notifications] Push notifications not supported by this browser");
       return null;
     }
 
-    let subscription = await registration.pushManager.getSubscription();
+    // Check for notification permission
+    if (Notification.permission !== 'granted') {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        console.error("[Notifications] Notification permission denied");
+        return null;
+      }
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    console.log("[Notifications] ServiceWorker ready:", registration);
     
     // If a subscription already exists, return it
+    let subscription = await registration.pushManager.getSubscription();
     if (subscription) {
-      console.log('Existing push subscription found:', subscription);
+      console.log('[Notifications] Existing push subscription found:', subscription);
       await savePushSubscription(subscription);
       return subscription;
     }
 
     // Get VAPID public key from backend
-    console.log("Fetching VAPID public key");
+    console.log("[Notifications] Fetching VAPID public key");
     const { data, error } = await supabase.functions.invoke('get-vapid-key');
     
     if (error || !data || !data.publicKey) {
-      console.error('Could not get VAPID public key:', error || 'No key returned');
+      console.error('[Notifications] Could not get VAPID public key:', error || 'No key returned');
       return null;
     }
 
-    console.log("VAPID public key received:", data.publicKey);
+    console.log("[Notifications] VAPID public key received:", data.publicKey);
 
     // Convert base64 string to Uint8Array
     const applicationServerKey = urlB64ToUint8Array(data.publicKey);
 
-    // Create new subscription with user visible only set to true
-    console.log("Creating new push subscription");
+    // Create new subscription with proper userVisibleOnly
+    console.log("[Notifications] Creating new push subscription");
     try {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey
       });
       
-      console.log('Push notification subscription created:', subscription);
+      console.log('[Notifications] Push notification subscription created:', subscription);
       
       // Save the subscription to the database
       await savePushSubscription(subscription);
       
+      // Display a test notification to confirm permission
+      new Notification('Sensa.run', {
+        body: 'Las notificaciones están funcionando correctamente',
+        icon: "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png",
+      });
+      
       return subscription;
     } catch (subscribeError) {
-      console.error('Error subscribing to push notifications:', subscribeError);
+      console.error('[Notifications] Error subscribing to push notifications:', subscribeError);
       return null;
     }
     
   } catch (err) {
-    console.error('Error setting up push notifications:', err);
+    console.error('[Notifications] Error setting up push notifications:', err);
     return null;
   }
 }
@@ -66,11 +88,14 @@ async function savePushSubscription(subscription: PushSubscription) {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
-      console.error('No user found when saving push subscription');
+      console.error('[Notifications] No user found when saving push subscription');
       return;
     }
     
-    console.log('Saving push subscription for user:', user.id);
+    console.log('[Notifications] Saving push subscription for user:', user.id);
+    
+    // Clean the subscription object to ensure it can be serialized properly
+    const cleanedSubscription = JSON.parse(JSON.stringify(subscription));
     
     // Check if subscription already exists for this user
     const { data: existingSubscriptions } = await supabase
@@ -84,12 +109,12 @@ async function savePushSubscription(subscription: PushSubscription) {
       await supabase
         .from('push_subscriptions')
         .update({
-          subscription: JSON.parse(JSON.stringify(subscription)),
+          subscription: cleanedSubscription,
           updated_at: new Date().toISOString()
         })
         .eq('id', existingSubscriptions[0].id);
         
-      console.log('Updated existing push subscription');
+      console.log('[Notifications] Updated existing push subscription');
       return;
     }
     
@@ -99,16 +124,16 @@ async function savePushSubscription(subscription: PushSubscription) {
       .insert({
         user_id: user.id,
         endpoint: subscription.endpoint,
-        subscription: JSON.parse(JSON.stringify(subscription))
+        subscription: cleanedSubscription
       });
       
     if (error) {
-      console.error('Error saving push subscription:', error);
+      console.error('[Notifications] Error saving push subscription:', error);
     } else {
-      console.log('Saved new push subscription');
+      console.log('[Notifications] Saved new push subscription');
     }
   } catch (error) {
-    console.error('Error in savePushSubscription:', error);
+    console.error('[Notifications] Error in savePushSubscription:', error);
   }
 }
 
