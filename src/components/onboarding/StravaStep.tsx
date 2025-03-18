@@ -24,14 +24,18 @@ export const StravaStep = ({ onSkip, onNext }: StravaStepProps) => {
         return;
       }
 
+      console.log("Invoking strava-oauth edge function for user:", user.id);
       const { data, error } = await supabase.functions.invoke('strava-oauth', {
         body: { user_id: user.id }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Strava OAuth error:", error);
+        throw error;
+      }
       if (!data?.url) throw new Error('No se recibió la URL de autorización');
 
-      console.log('Redirecting to Strava authorization URL...');
+      console.log('Redirecting to Strava authorization URL:', data.url);
       window.location.href = data.url;
 
     } catch (error: any) {
