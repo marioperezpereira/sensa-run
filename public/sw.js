@@ -1,5 +1,5 @@
 
-const CACHE_VERSION = '6';
+const CACHE_VERSION = '7';
 const CACHE_NAME = `sensa-cache-v${CACHE_VERSION}`;
 
 const ASSETS_TO_CACHE = [

@@ -2,8 +2,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
-// Use web-push from skypack instead of esm.sh to avoid the module loading issues
-import webPush from 'https://cdn.skypack.dev/web-push@3.6.4?dts'
+// Import a simpler version of web-push that works with Deno
+import * as webpushES from 'https://deno.land/x/webpush@v0.2.5/mod.ts'
 
 // Define CORS headers with explicit configuration for production
 const corsHeaders = {
@@ -34,13 +34,6 @@ serve(async (req) => {
     if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
       throw new Error('VAPID configuration is missing')
     }
-    
-    // Set up web-push with our VAPID keys
-    webPush.setVapidDetails(
-      vapidSubject,
-      vapidPublicKey,
-      vapidPrivateKey
-    )
     
     // Parse the request body
     const { userId, title, message, tag, url, userIds, subscriptions } = await req.json()
@@ -122,9 +115,28 @@ serve(async (req) => {
     
     // Send push notifications to all subscriptions
     const results = await Promise.allSettled(
-      targetSubscriptions.map(subscription => 
-        webPush.sendNotification(subscription, payload)
-      )
+      targetSubscriptions.map(subscription => {
+        const pushSubscription = {
+          endpoint: subscription.endpoint,
+          keys: {
+            p256dh: subscription.keys.p256dh,
+            auth: subscription.keys.auth
+          }
+        };
+        
+        return webpushES.sendNotification(
+          pushSubscription, 
+          payload, 
+          {
+            vapidDetails: {
+              subject: vapidSubject,
+              publicKey: vapidPublicKey,
+              privateKey: vapidPrivateKey
+            },
+            TTL: 60 * 60 // 1 hour
+          }
+        );
+      })
     )
     
     // Count successful and failed notifications
