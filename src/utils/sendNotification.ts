@@ -17,7 +17,9 @@ export async function sendNotificationToUser(
 ) {
   try {
     console.log('Sending notification to user:', userId);
-    const { data, error } = await supabase.functions.invoke('send-push-notification', {
+    
+    // Add some logging to help with debugging
+    const response = await supabase.functions.invoke('send-push-notification', {
       body: {
         userId,
         title, 
@@ -26,13 +28,14 @@ export async function sendNotificationToUser(
       }
     });
 
-    if (error) {
-      console.error('Error sending notification:', error);
-      return { success: false, error };
+    // Improved error handling
+    if (response.error) {
+      console.error('Error sending notification:', response.error);
+      return { success: false, error: response.error };
     }
 
-    console.log('Notification sent successfully:', data);
-    return { success: true, data };
+    console.log('Notification sent successfully:', response.data);
+    return { success: true, data: response.data };
   } catch (err) {
     console.error('Exception sending notification:', err);
     return { success: false, error: err };
