@@ -16,6 +16,7 @@ export async function sendNotificationToUser(
   url?: string
 ) {
   try {
+    console.log('Sending notification to user:', userId);
     const { data, error } = await supabase.functions.invoke('send-push-notification', {
       body: {
         userId,
@@ -30,6 +31,7 @@ export async function sendNotificationToUser(
       return { success: false, error };
     }
 
+    console.log('Notification sent successfully:', data);
     return { success: true, data };
   } catch (err) {
     console.error('Exception sending notification:', err);
@@ -119,6 +121,7 @@ export async function checkAndSaveExistingSubscription() {
  */
 export async function sendTestNotification() {
   try {
+    console.log('Starting test notification process');
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -135,6 +138,7 @@ export async function sendTestNotification() {
       return { success: false, error: 'No push subscription available' };
     }
     
+    console.log('Sending test notification to user:', user.id);
     // Send the notification
     return await sendNotificationToUser(
       user.id, 

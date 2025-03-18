@@ -12,8 +12,11 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('Push notification request received:', req.method);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS request for CORS');
     return new Response(null, { 
       status: 204, 
       headers: corsHeaders 
@@ -40,6 +43,8 @@ serve(async (req) => {
     // Parse the request body
     const { userId, title, message, tag, url, userIds, subscriptions } = await req.json()
     
+    console.log('Request data:', { userId, userIds, title, message, tag, url });
+    
     // Initialize Supabase client with admin privileges
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
@@ -54,6 +59,7 @@ serve(async (req) => {
     
     // Case 1: Send to a specific user by ID
     if (userId) {
+      console.log('Fetching subscriptions for user:', userId);
       const { data, error } = await supabaseAdmin
         .from('push_subscriptions')
         .select('subscription')
@@ -62,9 +68,11 @@ serve(async (req) => {
       if (error) throw error
       
       targetSubscriptions = data?.map(item => item.subscription) || []
+      console.log(`Found ${targetSubscriptions.length} subscriptions for user`);
     }
     // Case 2: Send to multiple users by ID
     else if (userIds && Array.isArray(userIds)) {
+      console.log('Fetching subscriptions for multiple users');
       const { data, error } = await supabaseAdmin
         .from('push_subscriptions')
         .select('subscription')
@@ -73,9 +81,11 @@ serve(async (req) => {
       if (error) throw error
       
       targetSubscriptions = data?.map(item => item.subscription) || []
+      console.log(`Found ${targetSubscriptions.length} subscriptions for users`);
     }
     // Case 3: Send to provided subscription objects directly
     else if (subscriptions && Array.isArray(subscriptions)) {
+      console.log('Using provided subscriptions directly');
       targetSubscriptions = subscriptions
     }
     // No valid target specified
@@ -84,6 +94,7 @@ serve(async (req) => {
     }
     
     if (targetSubscriptions.length === 0) {
+      console.log('No subscriptions found');
       return new Response(
         JSON.stringify({
           message: 'No subscriptions found for the specified target(s)'
@@ -105,6 +116,8 @@ serve(async (req) => {
       timestamp: new Date().getTime()
     })
     
+    console.log(`Sending notifications to ${targetSubscriptions.length} subscriptions`);
+    
     // Send push notifications to all subscriptions
     const results = await Promise.allSettled(
       targetSubscriptions.map(subscription => 
@@ -115,6 +128,15 @@ serve(async (req) => {
     // Count successful and failed notifications
     const successful = results.filter(result => result.status === 'fulfilled').length
     const failed = results.filter(result => result.status === 'rejected').length
+    
+    console.log(`Sent ${successful} notifications successfully, ${failed} failed`);
+    
+    // Log any rejection reasons for debugging
+    results
+      .filter(result => result.status === 'rejected')
+      .forEach((result, index) => {
+        console.error(`Notification ${index} failed:`, result);
+      });
     
     return new Response(
       JSON.stringify({
@@ -129,7 +151,7 @@ serve(async (req) => {
     )
     
   } catch (error) {
-    console.error('Error sending push notification:', error)
+    console.error('Error sending push notification:', error);
     
     return new Response(
       JSON.stringify({

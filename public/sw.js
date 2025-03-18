@@ -1,5 +1,5 @@
 
-const CACHE_VERSION = '3';
+const CACHE_VERSION = '4';
 const CACHE_NAME = `sensa-cache-v${CACHE_VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -11,6 +11,7 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
+  console.log('Service Worker installing with cache version:', CACHE_VERSION);
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
@@ -20,12 +21,15 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('push', (event) => {
+  console.log('Push event received:', event);
   if (!event.data) return;
   
   let data;
   try {
     data = event.data.json();
+    console.log('Parsed push data:', data);
   } catch (e) {
+    console.log('Failed to parse JSON, using text instead');
     data = {
       title: 'Sensa.run',
       message: event.data.text()
@@ -50,12 +54,14 @@ self.addEventListener('push', (event) => {
     ]
   };
 
+  console.log('Showing notification with options:', options);
   event.waitUntil(
     self.registration.showNotification(data.title || 'Sensa.run', options)
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event);
   event.notification.close();
 
   let targetUrl = '/';
@@ -106,16 +112,19 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating, clearing old caches');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName.startsWith('sensa-cache-') && cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
+      console.log('Service Worker now controlling the page');
       return clients.claim();
     })
   );
