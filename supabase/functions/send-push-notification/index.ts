@@ -2,8 +2,9 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
-// Import a simpler version of web-push that works with Deno
-import * as webpushES from 'https://deno.land/x/webpush@v0.2.5/mod.ts'
+// Import the web-push library from a valid Deno source
+// Using version v0.3.0 which is available
+import * as webpush from 'https://deno.land/x/web_push@v0.3.0/mod.ts'
 
 // Define CORS headers with explicit configuration for production
 const corsHeaders = {
@@ -116,6 +117,7 @@ serve(async (req) => {
     // Send push notifications to all subscriptions
     const results = await Promise.allSettled(
       targetSubscriptions.map(subscription => {
+        // Create a push subscription object in the format expected by the library
         const pushSubscription = {
           endpoint: subscription.endpoint,
           keys: {
@@ -124,9 +126,10 @@ serve(async (req) => {
           }
         };
         
-        return webpushES.sendNotification(
-          pushSubscription, 
-          payload, 
+        // Use the new webpush library's sendNotification method with proper options
+        return webpush.sendNotification(
+          pushSubscription,
+          payload,
           {
             vapidDetails: {
               subject: vapidSubject,
