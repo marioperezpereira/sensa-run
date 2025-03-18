@@ -6,6 +6,7 @@ import { useState } from "react";
 export const Landing = () => {
   const navigate = useNavigate();
   const [showAnimation, setShowAnimation] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const handleAnimateClick = () => {
     setShowAnimation(true);
@@ -52,11 +53,18 @@ export const Landing = () => {
               />
             </div>
             <div className="pt-4">
-              <img 
-                src="/lovable-uploads/b5c87f98-f07e-494a-a9f1-4c9ee5f239c8.png" 
-                alt="New Feature" 
-                className="h-20 mx-auto rounded-lg shadow-md"
-              />
+              {imageError ? (
+                <div className="h-20 mx-auto rounded-lg shadow-md bg-gray-100 flex items-center justify-center">
+                  <p className="text-sm text-gray-500">Nueva función pronto disponible</p>
+                </div>
+              ) : (
+                <img 
+                  src="/lovable-uploads/b5c87f98-f07e-494a-a9f1-4c9ee5f239c8.png" 
+                  alt="New Feature" 
+                  className="h-20 mx-auto rounded-lg shadow-md"
+                  onError={() => setImageError(true)}
+                />
+              )}
             </div>
           </div>
         </div>
