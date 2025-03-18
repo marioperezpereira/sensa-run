@@ -1,7 +1,9 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import webPush from 'https://esm.sh/web-push@3.6.4'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+
+// Use web-push from skypack instead of esm.sh to avoid the module loading issues
+import webPush from 'https://cdn.skypack.dev/web-push@3.6.4?dts'
 
 // Define CORS headers with explicit configuration for production
 const corsHeaders = {
