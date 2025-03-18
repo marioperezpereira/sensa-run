@@ -1,5 +1,5 @@
 
-const CACHE_VERSION = '9';
+const CACHE_VERSION = '10';
 const CACHE_NAME = `sensa-cache-v${CACHE_VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -22,18 +22,30 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('push', (event) => {
   console.log('Push event received:', event);
-  if (!event.data) return;
+  if (!event.data) {
+    console.log('No data in push event');
+    return;
+  }
   
   let data;
   try {
     data = event.data.json();
     console.log('Parsed push data:', data);
   } catch (e) {
-    console.log('Failed to parse JSON, using text instead');
-    data = {
-      title: 'Sensa.run',
-      message: event.data.text()
-    };
+    console.log('Failed to parse JSON, using text instead:', e);
+    const text = event.data.text();
+    console.log('Raw text:', text);
+    try {
+      // Try parsing the text as JSON
+      data = JSON.parse(text);
+      console.log('Parsed text as JSON:', data);
+    } catch (jsonError) {
+      console.log('Text is not JSON either, using as plain text');
+      data = {
+        title: 'Sensa.run',
+        message: text
+      };
+    }
   }
   
   const options = {
@@ -51,7 +63,9 @@ self.addEventListener('push', (event) => {
         action: 'explore',
         title: 'Ver App',
       }
-    ]
+    ],
+    // Make notification require interaction to prevent it from disappearing
+    requireInteraction: true
   };
 
   console.log('Showing notification with options:', options);

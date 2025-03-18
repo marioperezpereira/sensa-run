@@ -80,6 +80,8 @@ export async function checkAndSaveExistingSubscription() {
       return subscription; // Return subscription anyway for potential anonymous use
     }
     
+    console.log('Found existing push subscription:', subscription);
+    
     // Try to save the subscription to the database
     const { data: existingSubscriptions, error: selectError } = await supabase
       .from('push_subscriptions')
