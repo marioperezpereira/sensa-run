@@ -1,5 +1,5 @@
 
-const CACHE_VERSION = '4';
+const CACHE_VERSION = '3';
 const CACHE_NAME = `sensa-cache-v${CACHE_VERSION}`;
 
 const ASSETS_TO_CACHE = [
@@ -7,15 +7,12 @@ const ASSETS_TO_CACHE = [
   '/index.html',
   '/manifest.json',
   '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
-  '/lovable-uploads/ad9bf09c-d585-4525-90d8-155a9006ca68.png',
   '/lovable-uploads/b5c87f98-f07e-494a-a9f1-4c9ee5f239c8.png'
 ];
 
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching app assets');
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
@@ -109,19 +106,16 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName.startsWith('sensa-cache-') && cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     }).then(() => {
-      console.log('Service Worker now controls the page');
       return clients.claim();
     })
   );
