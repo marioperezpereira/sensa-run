@@ -11,6 +11,85 @@ const corsHeaders = {
   'Content-Type': 'application/json'
 };
 
+// Helper function to encode base64url 
+function base64UrlEncode(arrayBuffer: ArrayBuffer): string {
+  return btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+// Generate the VAPID authentication header for Web Push
+async function generateVAPIDAuthHeader(
+  audience: string,
+  vapidPrivateKey: string,
+  vapidPublicKey: string,
+  subject: string,
+  expiration: number = 12 * 60 * 60
+): Promise<string> {
+  try {
+    // Remove any trailing newlines or whitespace
+    audience = audience.trim();
+    vapidPrivateKey = vapidPrivateKey.trim();
+    vapidPublicKey = vapidPublicKey.trim();
+    subject = subject.trim();
+
+    // Create the JWT header and payload
+    const header = {
+      typ: "JWT",
+      alg: "ES256"
+    };
+
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      aud: audience,
+      exp: now + expiration,
+      sub: subject
+    };
+
+    // Base64 encode the header and payload
+    const encodeHeader = base64UrlEncode(
+      new TextEncoder().encode(JSON.stringify(header))
+    );
+    const encodePayload = base64UrlEncode(
+      new TextEncoder().encode(JSON.stringify(payload))
+    );
+    
+    const signatureBase = `${encodeHeader}.${encodePayload}`;
+    
+    // Convert the VAPID private key from base64 to raw private key for signing
+    const keyData = Uint8Array.from(atob(vapidPrivateKey), c => c.charCodeAt(0));
+    
+    // Import the private key for signing
+    const key = await crypto.subtle.importKey(
+      "pkcs8",
+      keyData,
+      {
+        name: "ECDSA",
+        namedCurve: "P-256",
+      },
+      false,
+      ["sign"]
+    );
+    
+    // Sign the data
+    const signature = await crypto.subtle.sign(
+      { name: "ECDSA", hash: { name: "SHA-256" } },
+      key,
+      new TextEncoder().encode(signatureBase)
+    );
+    
+    // Combine all parts to create the JWT token
+    const jwt = `${signatureBase}.${base64UrlEncode(signature)}`;
+    
+    // Return the full Authorization header
+    return `vapid t=${jwt}, k=${vapidPublicKey}`;
+  } catch (error) {
+    console.error("[Web Push] Error generating VAPID auth header:", error);
+    throw error;
+  }
+}
+
 // Main handler function
 serve(async (req) => {
   console.log('[Web Push] Request received:', req.method);
@@ -129,26 +208,36 @@ serve(async (req) => {
     const sendResults = await Promise.allSettled(
       targetSubscriptions.map(async (subscription, index) => {
         try {
-          const endpoint = subscription.endpoint.trim(); // Remove any trailing whitespace including \n
-          console.log(`[Web Push] Sending to subscription ${index + 1}:`, endpoint);
+          // Make sure to trim any whitespace including newlines
+          const endpoint = subscription.endpoint.trim();
+          console.log(`[Web Push] Processing subscription ${index + 1}:`, endpoint);
           
+          // Extract the origin for the audience in the JWT
+          const audienceURL = new URL(endpoint);
+          const audience = `${audienceURL.protocol}//${audienceURL.host}`;
+
           // Check if this is a Google FCM endpoint
           const isFCM = endpoint.includes('fcm.googleapis.com');
           
           let result;
           
           if (isFCM) {
-            // Special handling for FCM endpoints
-            // For FCM, we need a different authorization approach
-            // FCM requires a server key instead of VAPID for older implementations
-            result = await fetch(endpoint, {
+            // FCM needs a special format
+            console.log(`[Web Push] Subscription ${index + 1} is FCM, using FCM format`);
+            
+            // Extract the FCM token from the endpoint URL
+            // FCM endpoint format: https://fcm.googleapis.com/fcm/send/DEVICE_TOKEN
+            const fcmToken = endpoint.split('/').pop();
+            
+            // Send to FCM endpoint with the FCM-specific format
+            result = await fetch('https://fcm.googleapis.com/fcm/send', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `key=${vapidPublicKey}`, // Use the vapidPublicKey as the FCM auth key
-                'TTL': '86400'
+                'Authorization': `key=${Deno.env.get('FCM_SERVER_KEY') || ''}`,
               },
               body: JSON.stringify({
+                to: fcmToken,
                 notification: {
                   title: title || 'Sensa.run',
                   body: message || 'Tienes una notificación nueva',
@@ -158,23 +247,43 @@ serve(async (req) => {
               })
             });
           } else {
-            // For other push services (like Firefox, Safari, etc.)
+            // Standard Web Push
+            console.log(`[Web Push] Subscription ${index + 1} is standard Web Push`);
+            
+            // Generate VAPID Authorization header
+            const authHeader = await generateVAPIDAuthHeader(
+              audience,
+              vapidPrivateKey,
+              vapidPublicKey,
+              vapidSubject
+            );
+            
+            // Add encryption headers based on the subscription
+            const encHeaders = {
+              'TTL': '86400',
+              'Content-Type': 'application/json',
+              'Content-Encoding': 'aes128gcm',
+              'Authorization': authHeader
+            };
+            
+            // Send to standard web push endpoint
             result = await fetch(endpoint, {
               method: 'POST',
-              headers: {
-                'TTL': '86400',
-                'Content-Type': 'application/json',
-                'Content-Length': notificationPayload.length.toString(),
-                'Authorization': `Bearer ${vapidPublicKey}`
-              },
+              headers: encHeaders,
               body: notificationPayload
             });
           }
           
           console.log(`[Web Push] Push service response for ${index + 1}:`, result.status);
+          
           if (result.status >= 400) {
-            const responseText = await result.text();
-            console.error(`[Web Push] Error response from push service ${index + 1}:`, responseText);
+            try {
+              const responseText = await result.text();
+              console.error(`[Web Push] Error response from push service ${index + 1}:`, responseText);
+            } catch (textError) {
+              console.error(`[Web Push] Could not get response text for error:`, textError);
+            }
+            return { success: false, statusCode: result.status };
           }
           
           return { success: result.status < 400, statusCode: result.status };
@@ -186,7 +295,7 @@ serve(async (req) => {
             console.log(`[Web Push] Subscription ${index + 1} is no longer valid, should be removed`);
           }
           
-          throw err;
+          return { success: false, error: err.message };
         }
       })
     );
