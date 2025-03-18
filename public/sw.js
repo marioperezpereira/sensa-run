@@ -1,11 +1,13 @@
-const CACHE_VERSION = '2';
+
+const CACHE_VERSION = '3';
 const CACHE_NAME = `sensa-cache-v${CACHE_VERSION}`;
 
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png'
+  '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
+  '/lovable-uploads/b5c87f98-f07e-494a-a9f1-4c9ee5f239c8.png'
 ];
 
 self.addEventListener('install', (event) => {
