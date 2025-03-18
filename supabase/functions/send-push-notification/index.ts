@@ -22,8 +22,11 @@ function base64UrlEncode(arrayBuffer: ArrayBuffer): string {
 
 // Function to convert base64 to Uint8Array properly handling URL-safe variants
 function base64ToUint8Array(base64String: string): Uint8Array {
+  // First ensure we have a clean string with no whitespace
+  const cleanedString = base64String.trim();
+  
   // Convert base64 URL safe to standard base64
-  const standardBase64 = base64String
+  const standardBase64 = cleanedString
     .replace(/-/g, '+')
     .replace(/_/g, '/');
   
@@ -32,7 +35,12 @@ function base64ToUint8Array(base64String: string): Uint8Array {
   const base64WithPadding = standardBase64 + padding;
   
   // Decode base64
-  return base64.decode(base64WithPadding);
+  try {
+    return base64.decode(base64WithPadding);
+  } catch (error) {
+    console.error('[Web Push] Error decoding base64:', error);
+    throw new Error(`Failed to decode base64 string: ${error.message}`);
+  }
 }
 
 // Generate the VAPID authentication header for Web Push
@@ -69,45 +77,43 @@ async function generateVAPIDAuthHeader(
     
     const signatureBase = `${encodeHeader}.${encodePayload}`;
     
-    // Convert the VAPID private key from base64 to raw private key for signing
-    // First convert from URL-safe base64 if needed
-    const keyData = base64ToUint8Array(vapidPrivateKey);
+    // Clean the key - make sure there are no newlines or whitespace
+    const cleanPrivateKey = vapidPrivateKey.trim();
+    console.log('[Web Push] Private key length after cleaning:', cleanPrivateKey.length);
     
+    // Convert the VAPID private key from base64 to raw private key for signing
+    let keyData;
     try {
-      // Import the private key for signing
-      const key = await crypto.subtle.importKey(
-        "pkcs8",
-        keyData,
-        {
-          name: "ECDSA",
-          namedCurve: "P-256",
-        },
-        false,
-        ["sign"]
-      );
-      
-      // Sign the data
-      const signature = await crypto.subtle.sign(
-        { name: "ECDSA", hash: { name: "SHA-256" } },
-        key,
-        new TextEncoder().encode(signatureBase)
-      );
-      
-      // Combine all parts to create the JWT token
-      const jwt = `${signatureBase}.${base64UrlEncode(signature)}`;
-      
-      // Return the full Authorization header
-      return `vapid t=${jwt}, k=${vapidPublicKey}`;
-    } catch (cryptoError) {
-      console.error('[Web Push] Crypto error when importing key or signing:', cryptoError);
-      
-      // Check if the VAPID private key is in raw format instead of PKCS#8
-      console.log('[Web Push] Trying alternative key format...');
-      
-      // Try with raw key format as fallback
+      keyData = base64ToUint8Array(cleanPrivateKey);
+      console.log('[Web Push] Successfully decoded private key to Uint8Array, length:', keyData.length);
+    } catch (decodeError) {
+      console.error('[Web Push] Failed to decode private key:', decodeError);
+      throw decodeError;
+    }
+    
+    // Here's the key: we need to try different import formats because VAPID keys can be in different formats
+    const importFormats = [
+      { format: "pkcs8", name: "PKCS#8 format" },
+      { format: "raw", name: "Raw key format" }, 
+      { format: "jwk", name: "JWK format", convertToJWK: true }
+    ];
+    
+    let key = null;
+    let error = null;
+    
+    // Try each format until one works
+    for (const formatInfo of importFormats) {
       try {
-        const rawKey = await crypto.subtle.importKey(
-          "raw",
+        console.log(`[Web Push] Trying to import key as ${formatInfo.name}`);
+        
+        if (formatInfo.convertToJWK) {
+          // This is a more complex case for JWK format
+          // In a real implementation we would convert the key to JWK format
+          continue; // Skip for now
+        }
+        
+        key = await crypto.subtle.importKey(
+          formatInfo.format as any,
           keyData,
           {
             name: "ECDSA",
@@ -117,21 +123,32 @@ async function generateVAPIDAuthHeader(
           ["sign"]
         );
         
-        // Sign with raw key
-        const signature = await crypto.subtle.sign(
-          { name: "ECDSA", hash: { name: "SHA-256" } },
-          rawKey,
-          new TextEncoder().encode(signatureBase)
-        );
-        
-        // Create JWT
-        const jwt = `${signatureBase}.${base64UrlEncode(signature)}`;
-        return `vapid t=${jwt}, k=${vapidPublicKey}`;
-      } catch (fallbackError) {
-        console.error('[Web Push] Fallback key format also failed:', fallbackError);
-        throw new Error(`VAPID key import failed: ${cryptoError.message}`);
+        console.log(`[Web Push] Successfully imported key as ${formatInfo.name}`);
+        break; // If we got here, the import worked, so exit the loop
+      } catch (importError) {
+        console.error(`[Web Push] Failed to import key as ${formatInfo.name}:`, importError);
+        error = importError;
       }
     }
+    
+    if (!key) {
+      // If we tried all formats and none worked, create a friendly error with details
+      console.error('[Web Push] Failed to import private key in any format');
+      throw new Error(`Unable to import VAPID private key in any format: ${error?.message || 'Unknown error'}`);
+    }
+    
+    // Sign the data
+    const signature = await crypto.subtle.sign(
+      { name: "ECDSA", hash: { name: "SHA-256" } },
+      key,
+      new TextEncoder().encode(signatureBase)
+    );
+    
+    // Combine all parts to create the JWT token
+    const jwt = `${signatureBase}.${base64UrlEncode(signature)}`;
+    
+    // Return the full Authorization header
+    return `vapid t=${jwt}, k=${vapidPublicKey}`;
   } catch (error) {
     console.error("[Web Push] Error generating VAPID auth header:", error);
     throw error;
@@ -166,6 +183,14 @@ serve(async (req) => {
     console.log(`[Web Push] VAPID_PUBLIC_KEY length: ${vapidPublicKey.length}`);
     console.log(`[Web Push] VAPID_PRIVATE_KEY length: ${vapidPrivateKey.length}`);
     console.log(`[Web Push] VAPID_SUBJECT: ${vapidSubject}`);
+    
+    // Validate VAPID key formats
+    if (vapidPublicKey.length < 20) {
+      throw new Error('[Web Push] VAPID_PUBLIC_KEY appears to be invalid (too short)');
+    }
+    if (vapidPrivateKey.length < 20) {
+      throw new Error('[Web Push] VAPID_PRIVATE_KEY appears to be invalid (too short)');
+    }
 
     // Parse the request body
     const requestData = await req.json();
@@ -322,6 +347,10 @@ serve(async (req) => {
               vapidPublicKey,
               vapidSubject
             );
+            
+            // For debugging
+            console.log(`[Web Push] Generated auth header for subscription ${index + 1} (truncated):`, 
+              authHeader.substring(0, 40) + '...');
             
             // Add encryption headers based on the subscription
             const encHeaders = {
