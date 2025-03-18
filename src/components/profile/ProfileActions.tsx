@@ -113,6 +113,25 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
   const handleSendTestNotification = async () => {
     try {
       setIsSendingTest(true);
+      
+      // Ensure we have service worker support
+      if (!('serviceWorker' in navigator)) {
+        throw new Error("El navegador no soporta Service Workers");
+      }
+
+      // Ensure we have push notification support
+      if (!('PushManager' in window)) {
+        throw new Error("El navegador no soporta notificaciones push");
+      }
+      
+      // Make sure the registration is ready
+      const registration = await navigator.serviceWorker.ready;
+      
+      if (!registration) {
+        throw new Error("El Service Worker no está registrado");
+      }
+      
+      // Try to send the notification
       const result = await sendTestNotification();
       
       if (result.success) {
@@ -124,7 +143,7 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
         console.error('Error result:', result.error);
         toast({
           title: "Error",
-          description: result.error ? String(result.error) : "No se pudo enviar la notificación de prueba",
+          description: "No se pudo enviar la notificación de prueba. Por favor, intenta habilitar las notificaciones nuevamente.",
           variant: "destructive"
         });
       }
@@ -132,7 +151,7 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
       console.error('Exception sending test notification:', error);
       toast({
         title: "Error",
-        description: String(error) || "Hubo un error al enviar la notificación de prueba",
+        description: "Hubo un problema al enviar la notificación. Por favor, actualiza la página e intenta de nuevo.",
         variant: "destructive"
       });
     } finally {

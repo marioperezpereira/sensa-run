@@ -3,10 +3,12 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import webPush from 'https://esm.sh/web-push@3.6.4'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
+// Define CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Type': 'application/json'
 }
 
 serve(async (req) => {
@@ -88,7 +90,7 @@ serve(async (req) => {
         }),
         { 
           status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: corsHeaders
         }
       )
     }
@@ -121,7 +123,7 @@ serve(async (req) => {
         failed
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: corsHeaders,
         status: 200
       }
     )
@@ -134,7 +136,7 @@ serve(async (req) => {
         error: error.message
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: corsHeaders,
         status: 500
       }
     )
