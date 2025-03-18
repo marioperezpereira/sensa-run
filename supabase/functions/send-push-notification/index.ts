@@ -20,6 +20,21 @@ function base64UrlEncode(arrayBuffer: ArrayBuffer): string {
     .replace(/=+$/, '');
 }
 
+// Function to convert base64 to Uint8Array properly handling URL-safe variants
+function base64ToUint8Array(base64String: string): Uint8Array {
+  // Convert base64 URL safe to standard base64
+  const standardBase64 = base64String
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  
+  // Add padding if needed
+  const padding = '='.repeat((4 - standardBase64.length % 4) % 4);
+  const base64WithPadding = standardBase64 + padding;
+  
+  // Decode base64
+  return base64.decode(base64WithPadding);
+}
+
 // Generate the VAPID authentication header for Web Push
 async function generateVAPIDAuthHeader(
   audience: string,
@@ -29,6 +44,8 @@ async function generateVAPIDAuthHeader(
   expiration: number = 12 * 60 * 60
 ): Promise<string> {
   try {
+    console.log('[Web Push] Generating VAPID auth header for audience:', audience);
+    
     // Create the JWT header and payload
     const header = {
       typ: "JWT",
@@ -53,32 +70,68 @@ async function generateVAPIDAuthHeader(
     const signatureBase = `${encodeHeader}.${encodePayload}`;
     
     // Convert the VAPID private key from base64 to raw private key for signing
-    const keyData = base64.decode(vapidPrivateKey);
+    // First convert from URL-safe base64 if needed
+    const keyData = base64ToUint8Array(vapidPrivateKey);
     
-    // Import the private key for signing
-    const key = await crypto.subtle.importKey(
-      "pkcs8",
-      keyData,
-      {
-        name: "ECDSA",
-        namedCurve: "P-256",
-      },
-      false,
-      ["sign"]
-    );
-    
-    // Sign the data
-    const signature = await crypto.subtle.sign(
-      { name: "ECDSA", hash: { name: "SHA-256" } },
-      key,
-      new TextEncoder().encode(signatureBase)
-    );
-    
-    // Combine all parts to create the JWT token
-    const jwt = `${signatureBase}.${base64UrlEncode(signature)}`;
-    
-    // Return the full Authorization header
-    return `vapid t=${jwt}, k=${vapidPublicKey}`;
+    try {
+      // Import the private key for signing
+      const key = await crypto.subtle.importKey(
+        "pkcs8",
+        keyData,
+        {
+          name: "ECDSA",
+          namedCurve: "P-256",
+        },
+        false,
+        ["sign"]
+      );
+      
+      // Sign the data
+      const signature = await crypto.subtle.sign(
+        { name: "ECDSA", hash: { name: "SHA-256" } },
+        key,
+        new TextEncoder().encode(signatureBase)
+      );
+      
+      // Combine all parts to create the JWT token
+      const jwt = `${signatureBase}.${base64UrlEncode(signature)}`;
+      
+      // Return the full Authorization header
+      return `vapid t=${jwt}, k=${vapidPublicKey}`;
+    } catch (cryptoError) {
+      console.error('[Web Push] Crypto error when importing key or signing:', cryptoError);
+      
+      // Check if the VAPID private key is in raw format instead of PKCS#8
+      console.log('[Web Push] Trying alternative key format...');
+      
+      // Try with raw key format as fallback
+      try {
+        const rawKey = await crypto.subtle.importKey(
+          "raw",
+          keyData,
+          {
+            name: "ECDSA",
+            namedCurve: "P-256",
+          },
+          false,
+          ["sign"]
+        );
+        
+        // Sign with raw key
+        const signature = await crypto.subtle.sign(
+          { name: "ECDSA", hash: { name: "SHA-256" } },
+          rawKey,
+          new TextEncoder().encode(signatureBase)
+        );
+        
+        // Create JWT
+        const jwt = `${signatureBase}.${base64UrlEncode(signature)}`;
+        return `vapid t=${jwt}, k=${vapidPublicKey}`;
+      } catch (fallbackError) {
+        console.error('[Web Push] Fallback key format also failed:', fallbackError);
+        throw new Error(`VAPID key import failed: ${cryptoError.message}`);
+      }
+    }
   } catch (error) {
     console.error("[Web Push] Error generating VAPID auth header:", error);
     throw error;
@@ -108,6 +161,11 @@ serve(async (req) => {
     if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
       throw new Error('[Web Push] VAPID configuration is missing');
     }
+
+    // Log key lengths for debugging (don't log full keys for security)
+    console.log(`[Web Push] VAPID_PUBLIC_KEY length: ${vapidPublicKey.length}`);
+    console.log(`[Web Push] VAPID_PRIVATE_KEY length: ${vapidPrivateKey.length}`);
+    console.log(`[Web Push] VAPID_SUBJECT: ${vapidSubject}`);
 
     // Parse the request body
     const requestData = await req.json();
