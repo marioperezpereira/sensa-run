@@ -1,3 +1,4 @@
+
 const CACHE_VERSION = '2';
 const CACHE_NAME = `sensa-cache-v${CACHE_VERSION}`;
 
@@ -78,7 +79,13 @@ self.addEventListener('notificationclick', (event) => {
   }
 });
 
+// Improved fetch event handler that doesn't fail on network errors
 self.addEventListener('fetch', (event) => {
+  // Skip cross-origin requests like the ones to Edge Functions
+  if (new URL(event.request.url).origin !== self.location.origin) {
+    return;
+  }
+  
   event.respondWith(
     fetch(event.request)
       .then((response) => {
