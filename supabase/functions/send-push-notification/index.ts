@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { base64ToUint8Array, uint8ArrayToBase64Url, formatVapidKey } from './utils.ts'
@@ -222,82 +221,80 @@ serve(async (req) => {
               const formattedKey = formatVapidKey(vapidPrivateKey);
               
               console.log('[PushNotification] Importing VAPID private key for signing');
+              console.log(`[PushNotification] Key length: ${formattedKey.length} bytes`);
               
-              try {
-                // Import the key
-                const privateKey = await crypto.subtle.importKey(
-                  'pkcs8',
-                  formattedKey.buffer,
-                  {
-                    name: 'ECDSA',
-                    namedCurve: 'P-256',
-                  },
-                  false,
-                  ['sign']
-                );
-                
-                console.log('[PushNotification] Successfully imported key, signing JWT');
-                
-                // Sign the token
-                const encoder = new TextEncoder();
-                const signatureBuffer = await crypto.subtle.sign(
-                  { name: 'ECDSA', hash: { name: 'SHA-256' } },
-                  privateKey,
-                  encoder.encode(unsignedToken)
-                );
-                
-                // Convert the signature to base64url
-                const signature = uint8ArrayToBase64Url(new Uint8Array(signatureBuffer));
-                
-                // Create the complete JWT token
-                const jwtToken = `${unsignedToken}.${signature}`;
-                
-                console.log('[PushNotification] JWT token created, sending push notification');
-                
-                // Send the push notification with the proper headers
-                const response = await fetch(subscription.endpoint, {
-                  method: 'POST',
-                  headers: {
-                    'TTL': '86400',
-                    'Content-Type': 'application/octet-stream',
-                    'Authorization': `vapid t=${jwtToken}, k=${vapidPublicKey}`
-                  },
-                  body: payload
+              // Try to debug the key format
+              let keyHexString = '';
+              for (let i = 0; i < Math.min(16, formattedKey.length); i++) {
+                keyHexString += formattedKey[i].toString(16).padStart(2, '0') + ' ';
+              }
+              console.log(`[PushNotification] Key prefix (hex): ${keyHexString}...`);
+              
+              // Import the key with explicit settings
+              const privateKey = await crypto.subtle.importKey(
+                'pkcs8',
+                formattedKey,
+                {
+                  name: 'ECDSA',
+                  namedCurve: 'P-256',
+                },
+                false,
+                ['sign']
+              );
+              
+              console.log('[PushNotification] Successfully imported key, signing JWT');
+              
+              // Sign the token
+              const encoder = new TextEncoder();
+              const signatureBuffer = await crypto.subtle.sign(
+                { name: 'ECDSA', hash: { name: 'SHA-256' } },
+                privateKey,
+                encoder.encode(unsignedToken)
+              );
+              
+              // Convert the signature to base64url
+              const signature = uint8ArrayToBase64Url(new Uint8Array(signatureBuffer));
+              
+              // Create the complete JWT token
+              const jwtToken = `${unsignedToken}.${signature}`;
+              
+              console.log('[PushNotification] JWT token created, sending push notification');
+              
+              // Send the push notification with the proper headers
+              const response = await fetch(subscription.endpoint, {
+                method: 'POST',
+                headers: {
+                  'TTL': '86400',
+                  'Content-Type': 'application/octet-stream',
+                  'Authorization': `vapid t=${jwtToken}, k=${vapidPublicKey}`
+                },
+                body: payload
+              });
+              
+              if (response.ok) {
+                console.log('[PushNotification] Apple Web Push notification sent successfully');
+                results.push({ 
+                  success: true,
+                  endpoint: subscription.endpoint,
+                  provider: 'apple' 
                 });
-                
-                if (response.ok) {
-                  console.log('[PushNotification] Apple Web Push notification sent successfully');
-                  results.push({ 
-                    success: true,
-                    endpoint: subscription.endpoint,
-                    provider: 'apple' 
-                  });
-                } else {
-                  const responseText = await response.text();
-                  console.error(`[PushNotification] Apple Web Push error: ${response.status} ${responseText}`);
-                  results.push({ 
-                    success: false, 
-                    error: `Apple Web Push error: ${response.status} ${responseText}`,
-                    endpoint: subscription.endpoint 
-                  });
-                }
-              } catch (keyError) {
-                console.error('[PushNotification] Error during key operations:', keyError);
-                results.push({
-                  success: false,
-                  error: `Error during key operations: ${keyError instanceof Error ? keyError.message : String(keyError)}`,
-                  endpoint: subscription.endpoint
+              } else {
+                const responseText = await response.text();
+                console.error(`[PushNotification] Apple Web Push error: ${response.status} ${responseText}`);
+                results.push({ 
+                  success: false, 
+                  error: `Apple Web Push error: ${response.status} ${responseText}`,
+                  endpoint: subscription.endpoint 
                 });
               }
-            } catch (error) {
-              console.error('[PushNotification] Error with Apple Web Push:', error);
+            } catch (keyError) {
+              console.error('[PushNotification] Error during key operations:', keyError);
               results.push({
                 success: false,
-                error: `Apple Web Push error: ${error instanceof Error ? error.message : String(error)}`,
+                error: `Error during key operations: ${keyError instanceof Error ? keyError.message : String(keyError)}`,
                 endpoint: subscription.endpoint
               });
             }
-            continue;
           }
           
           // For all other Push Service endpoints (Firefox, etc.)
@@ -346,7 +343,7 @@ serve(async (req) => {
           results.push({ 
             success: false, 
             error: pushError instanceof Error ? pushError.message : String(pushError),
-            endpoint: subscription.endpoint 
+            endpoint: item.subscription?.endpoint || 'unknown'
           });
         }
       } catch (error) {
