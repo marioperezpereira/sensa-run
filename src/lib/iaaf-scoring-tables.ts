@@ -484,20 +484,22 @@ export const calculateIAAFPoints = (
     return scoringTable[0].score;
   }
   
-  // If the time is greater than the slowest time in the table, return 0 or interpolate below minimum
+  // If the time is greater than the slowest time in the table, calculate points below 500
   const lastIndex = scoringTable.length - 1;
   if (totalSeconds >= scoringTable[lastIndex].time) {
-    // For times slower than the slowest in the table, calculate points below 500
-    // using the same rate of decline as between the last two entries in the table
+    // Calculate how many seconds over the slowest time in the table
+    const secondsOver = totalSeconds - scoringTable[lastIndex].time;
+    
+    // Calculate the rate of decline between the last two entries
     const secondLastIndex = lastIndex - 1;
     const timeDiff = scoringTable[lastIndex].time - scoringTable[secondLastIndex].time;
     const scoreDiff = scoringTable[secondLastIndex].score - scoringTable[lastIndex].score;
     const pointsPerSecond = scoreDiff / timeDiff;
     
-    const secondsOver = totalSeconds - scoringTable[lastIndex].time;
-    const pointsBelow500 = Math.max(0, scoringTable[lastIndex].score - (secondsOver * pointsPerSecond));
+    // Apply the same rate of decline to calculate points below 500
+    const calculatedPoints = Math.max(0, scoringTable[lastIndex].score - (secondsOver * pointsPerSecond));
     
-    return Math.floor(pointsBelow500); // Round down to be conservative
+    return Math.floor(calculatedPoints); // Round down to be conservative
   }
   
   // Find the two entries that bracket the time and interpolate
