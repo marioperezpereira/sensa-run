@@ -1,7 +1,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { WebPushFactory } from 'https://deno.land/x/web_push@0.1.0/mod.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import webpush from 'https://esm.sh/web-push@3.6.6'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -65,12 +65,12 @@ serve(async (req) => {
 
     console.log(`[PushNotification] Found ${subscriptions.length} subscription(s) for user: ${user_id}`);
 
-    // Initialize the WebPush client with VAPID keys
-    const webpush = WebPushFactory.create({
-      subject: vapidSubject,
-      publicKey: vapidPublicKey,
-      privateKey: vapidPrivateKey
-    });
+    // Set VAPID details
+    webpush.setVapidDetails(
+      vapidSubject,
+      vapidPublicKey,
+      vapidPrivateKey
+    );
 
     // Send notification to each subscription
     const results = await Promise.all(
@@ -84,7 +84,7 @@ serve(async (req) => {
           });
           
           console.log(`[PushNotification] Sending to endpoint: ${subscription.endpoint.substring(0, 50)}...`);
-          await webpush.send(subscription, payload);
+          await webpush.sendNotification(subscription, payload);
           console.log(`[PushNotification] Successfully sent notification to endpoint: ${subscription.endpoint.substring(0, 50)}...`);
           return { success: true, endpoint: subscription.endpoint };
         } catch (error) {

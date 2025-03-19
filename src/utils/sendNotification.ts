@@ -22,11 +22,26 @@ export async function sendNotificationToUser(
     // Add a toast notification to provide immediate feedback
     toast.info("Enviando notificación...");
     
-    // This functionality has been removed
-    console.log('[SendNotification] Push notification functionality has been removed');
-    toast.error("Funcionalidad de notificaciones no disponible");
+    // Call our Supabase Edge Function to send the push notification
+    const { data, error } = await supabase.functions.invoke('send-push-notification', {
+      body: { user_id: userId, title, message, url }
+    });
     
-    return { success: false, error: "Functionality removed" };
+    if (error) {
+      console.error('[SendNotification] Error invoking function:', error);
+      toast.error("Error al enviar la notificación");
+      return { success: false, error };
+    }
+    
+    console.log('[SendNotification] Push notification result:', data);
+    
+    if (data.success) {
+      toast.success("Notificación enviada correctamente");
+      return data;
+    } else {
+      toast.error(data.error || "Error al enviar la notificación");
+      return data;
+    }
   } catch (err) {
     console.error('[SendNotification] Exception sending notification:', err);
     toast.error("Error al enviar la notificación");
