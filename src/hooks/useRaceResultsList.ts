@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { RaceResult } from "@/components/personal-bests/race-results/types";
-import { calculateIAAFPoints } from "@/lib/iaaf-scoring-tables";
+import { calculateIAAFPoints } from "@/lib/iaaf";
 
 interface ResultsByDistance {
   distance: string;
