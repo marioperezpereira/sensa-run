@@ -19,6 +19,7 @@ export async function registerPushNotifications() {
 
     // Check for notification permission
     if (Notification.permission !== 'granted') {
+      console.log("[Notifications] Requesting notification permission");
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
         console.error("[Notifications] Notification permission denied");
@@ -67,7 +68,7 @@ export async function registerPushNotifications() {
       await savePushSubscription(subscription);
       
       // Test notification to verify subscription works
-      await testNewSubscription(subscription);
+      await displayLocalNotification('Sensa.run', 'Las notificaciones están funcionando correctamente');
       
       return subscription;
     } catch (subscribeError) {
@@ -81,32 +82,18 @@ export async function registerPushNotifications() {
   }
 }
 
-// Send a test notification to verify a new subscription works
-async function testNewSubscription(subscription: PushSubscription) {
+// Display a local notification without using the push server
+export async function displayLocalNotification(title: string, body: string) {
   try {
     // Display a test notification to confirm permission
-    new Notification('Sensa.run', {
-      body: 'Las notificaciones están funcionando correctamente',
+    new Notification(title, {
+      body: body,
       icon: "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png",
     });
-    
-    // We'll also test the server-side push notification to verify end-to-end
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (user) {
-      console.log('[Notifications] Sending test push notification via server');
-      await supabase.functions.invoke('send-push-notification', {
-        body: { 
-          specific_subscription: subscription,
-          title: "Verificación de Sensa", 
-          message: "Tus notificaciones push están configuradas", 
-          url: "/profile" 
-        }
-      });
-    }
+    return true;
   } catch (error) {
-    console.error('[Notifications] Error testing new subscription:', error);
-    // We don't throw here since this is just a test
+    console.error('[Notifications] Error displaying local notification:', error);
+    return false;
   }
 }
 

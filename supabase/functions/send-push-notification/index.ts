@@ -1,6 +1,7 @@
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { base64ToUint8Array, uint8ArrayToBase64Url, generateAppleJWT } from './utils.ts'
+import { base64ToUint8Array, uint8ArrayToBase64Url, generateWebPushJWT } from './utils.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,16 +29,15 @@ serve(async (req) => {
       throw new Error('Supabase connection details not configured');
     }
 
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+    // We'll get the VAPID subject, but we'll generate fresh keys for each notification
+    // instead of trying to reuse the stored VAPID keys which might be in an incompatible format
     const vapidSubject = Deno.env.get('VAPID_SUBJECT');
 
-    if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
-      throw new Error('VAPID configuration missing');
+    if (!vapidSubject) {
+      throw new Error('VAPID_SUBJECT environment variable is missing');
     }
 
-    console.log(`[PushNotification] VAPID details - Subject: ${vapidSubject}`);
-    console.log(`[PushNotification] Public key exists: ${!!vapidPublicKey}, Private key exists: ${!!vapidPrivateKey}`);
+    console.log(`[PushNotification] VAPID subject: ${vapidSubject}`);
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
     
@@ -175,12 +175,10 @@ serve(async (req) => {
           try {
             console.log('[PushNotification] Detected Apple Web Push endpoint');
             
-            // Log VAPID key details (length only for security)
-            console.log(`[PushNotification] VAPID key details - Public key length: ${vapidPublicKey.length}, Private key length: ${vapidPrivateKey.length}`);
-            
-            // Generate JWT token for Apple Web Push using the updated function
-            const jwt = await generateAppleJWT(vapidSubject, vapidPrivateKey, vapidPublicKey);
+            // Generate fresh JWT and keys for this request
+            const { jwt, publicKeyBase64 } = await generateWebPushJWT(vapidSubject);
             console.log('[PushNotification] Generated JWT for Apple Web Push (length):', jwt.length);
+            console.log('[PushNotification] Using fresh public key (length):', publicKeyBase64.length);
             
             // Apple requires a specific JSON payload format
             const applePayload = JSON.stringify({
@@ -196,7 +194,7 @@ serve(async (req) => {
             // Ensure all required headers are present for Apple Web Push
             const appleHeaders = {
               'Content-Type': 'application/json',
-              'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
+              'Authorization': `vapid t=${jwt}, k=${publicKeyBase64}`,
               'Content-Length': `${applePayload.length}`,
               'TTL': '2419200',
               'Topic': 'web.push',  // Apple requires this to be exactly 'web.push'
@@ -208,7 +206,7 @@ serve(async (req) => {
             console.log('[PushNotification] Apple Web Push Request Headers:', 
               JSON.stringify({
                 ...appleHeaders, 
-                'Authorization': 'vapid t=[JWT_TOKEN_HIDDEN], k=[VAPID_KEY_HIDDEN]'
+                'Authorization': 'vapid t=[JWT_TOKEN_HIDDEN], k=[PUBLIC_KEY_HIDDEN]'
               }, null, 2)
             );
             console.log('[PushNotification] Apple Web Push Payload:', applePayload);
@@ -245,15 +243,13 @@ serve(async (req) => {
               
               // Check for specific error codes and give more helpful messages
               if (appleResponse.status === 403) {
-                errorDetails = `BadJwtToken: ${appleResponseText} - Likely causes: 1) Incorrect VAPID key format, 2) JWT signing issue, 3) Expired token`;
-                // Fix: Use vapidSubject directly instead of formattedSubject which is not defined here
-                console.error(`[PushNotification] JWT Error Details: Subject: "${vapidSubject}", JWT Length: ${jwt.length}, VAPID Subject: "${vapidSubject}"`);
+                errorDetails = `Authorization error (403): ${appleResponseText} - Check JWT token and key format`;
               } else if (appleResponse.status === 404) {
-                errorDetails = `Subscription not found: ${appleResponseText} - Device may have unsubscribed`;
+                errorDetails = `Subscription not found (404): ${appleResponseText} - Device may have unsubscribed`;
               } else if (appleResponse.status === 400) {
-                errorDetails = `Bad Request: ${appleResponseText} - Check payload format and headers`;
+                errorDetails = `Bad Request (400): ${appleResponseText} - Check payload format and headers`;
               } else if (appleResponse.status === 429) {
-                errorDetails = `Rate Limited: ${appleResponseText} - Too many requests to Apple Push service`;
+                errorDetails = `Rate Limited (429): ${appleResponseText} - Too many requests to Apple Push service`;
               }
               
               console.error(`[PushNotification] Apple Web Push error: ${appleResponse.status} ${errorDetails}`);
@@ -282,14 +278,19 @@ serve(async (req) => {
         try {
           console.log(`[PushNotification] Using standard Web Push for: ${subscription.endpoint}`);
           
-          // For standard Web Push, just try sending the notification directly
+          // For standard Web Push, generate fresh keys
+          const { jwt, publicKeyBase64 } = await generateWebPushJWT(vapidSubject);
+          
+          // Standard Web Push headers
           const standardPushHeaders = {
-            'TTL': '60'
+            'TTL': '60',
+            'Content-Type': 'application/json',
+            'Authorization': `vapid t=${jwt}, k=${publicKeyBase64}`,
           };
           
           console.log(`[PushNotification] Standard Web Push Request:
             URL: ${subscription.endpoint}
-            Headers: ${JSON.stringify(standardPushHeaders)}
+            Headers: ${JSON.stringify({...standardPushHeaders, 'Authorization': 'vapid t=[JWT_TOKEN_HIDDEN], k=[PUBLIC_KEY_HIDDEN]'})}
             Payload: ${notificationPayload.length} bytes
           `);
           

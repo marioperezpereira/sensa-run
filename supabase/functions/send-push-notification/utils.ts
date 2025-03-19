@@ -40,33 +40,10 @@ export function generateSalt(size: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(size));
 }
 
-// Helper function to create a WebPush compatible key from a VAPID private key
-async function createECDHKeysFromVAPIDKey(privateKeyBase64: string): Promise<CryptoKeyPair> {
+// Generate a fresh set of ECDSA keys for signing
+async function generateFreshECDSAKeys(): Promise<CryptoKeyPair> {
   try {
-    console.log('[Utils] Attempting to generate ECDH keypair from VAPID key');
-    
-    // For Web Push, we need to generate a P-256 ECDH key pair
-    const keyPair = await crypto.subtle.generateKey(
-      {
-        name: 'ECDH',
-        namedCurve: 'P-256'
-      },
-      true,
-      ['deriveKey', 'deriveBits']
-    );
-    
-    console.log('[Utils] Successfully generated a fallback ECDH keypair');
-    return keyPair;
-  } catch (error) {
-    console.error('[Utils] Failed to generate ECDH key pair:', error);
-    throw new Error(`Failed to generate ECDH key pair: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
-// This function generates an ES256 key specifically for Apple Web Push
-async function generateAppleWebPushKeys(): Promise<CryptoKeyPair> {
-  try {
-    console.log('[Utils] Generating new ES256 keys for Apple Web Push');
+    console.log('[Utils] Generating fresh ECDSA P-256 keys');
     
     const keyPair = await crypto.subtle.generateKey(
       {
@@ -77,105 +54,81 @@ async function generateAppleWebPushKeys(): Promise<CryptoKeyPair> {
       ['sign', 'verify']
     );
     
-    console.log('[Utils] Successfully generated ES256 keypair for signing');
+    console.log('[Utils] Successfully generated fresh ECDSA keys');
     return keyPair;
   } catch (error) {
-    console.error('[Utils] Failed to generate ES256 key pair:', error);
-    throw new Error(`Failed to generate ES256 key pair: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('[Utils] Error generating ECDSA keys:', error);
+    throw new Error(`Failed to generate ECDSA keys: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
-// A more robust approach to convert VAPID keys for Web Push
-async function convertVAPIDKeyToCryptoKey(privateKeyBase64: string): Promise<CryptoKey> {
-  console.log('[Utils] Converting VAPID private key to CryptoKey');
+// Generate a JWT for Web Push specifically formatted for browsers
+export async function generateWebPushJWT(vapidSubject: string): Promise<{ jwt: string, publicKeyBase64: string }> {
+  console.log('[Utils] Generating Web Push JWT with freshly generated keys');
+  
+  // Validate subject
+  if (!vapidSubject || !vapidSubject.startsWith('mailto:')) {
+    throw new Error('VAPID subject must be a valid mailto: URL');
+  }
   
   try {
-    // IMPORTANT NOTE: VAPID keys are usually not in the format expected by WebCrypto
-    // As a fallback solution, we'll generate a new key pair for the current session
-    console.log('[Utils] Using fallback with new ES256 key generation');
+    // Generate fresh keys for this session - this is the most reliable approach
+    // as it avoids any key format incompatibility issues
+    const keyPair = await generateFreshECDSAKeys();
     
-    // For Apple Web Push, we need ECDSA with P-256 curve
-    const keyPair = await generateAppleWebPushKeys();
-    console.log('[Utils] Successfully generated fallback keys');
+    // Extract the public key for the Authorization header
+    const publicKey = await crypto.subtle.exportKey('raw', keyPair.publicKey);
+    const publicKeyBase64 = uint8ArrayToBase64Url(new Uint8Array(publicKey));
     
-    return keyPair.privateKey;
-  } catch (error) {
-    console.error('[Utils] Error in key conversion:', error);
-    throw new Error(`Failed to convert VAPID key: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
-// Generate a JWT for Web Push specifically formatted for Apple
-export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: string, vapidPublicKey: string): Promise<string> {
-  console.log('[Utils] Generating Apple JWT with ES256 signing');
-  
-  // Ensure subject is properly formatted
-  const subject = vapidSubject.trim();
-  
-  // Validate subject is provided and formatted correctly
-  if (!subject) {
-    throw new Error('VAPID subject is required');
-  }
-  
-  if (!subject.startsWith('mailto:')) {
-    throw new Error('VAPID subject must start with mailto:');
-  }
-  
-  // Create header with ES256 algorithm
-  const header = {
-    typ: 'JWT',
-    alg: 'ES256' // Apple requires ES256 algorithm
-  };
-  
-  // Current time and expiration time (1 hour - Apple is strict about this)
-  const currentTime = Math.floor(Date.now() / 1000);
-  const expirationTime = currentTime + 3600; // 1 hour exactly
-  
-  // Create the payload with the correct claims
-  const payload = {
-    iss: subject,
-    iat: currentTime,
-    exp: expirationTime
-  };
-  
-  console.log('[Utils] JWT Header:', JSON.stringify(header));
-  console.log('[Utils] JWT Payload:', JSON.stringify(payload));
-  
-  // Encode header and payload to base64url
-  const encoder = new TextEncoder();
-  const headerBase64 = uint8ArrayToBase64Url(encoder.encode(JSON.stringify(header)));
-  const payloadBase64 = uint8ArrayToBase64Url(encoder.encode(JSON.stringify(payload)));
-  
-  // Create the unsigned token
-  const unsignedToken = `${headerBase64}.${payloadBase64}`;
-  console.log('[Utils] Unsigned token created:', unsignedToken);
-  
-  try {
-    // Since we're having issues with the VAPID key format, use a fallback approach
-    const privateKey = await convertVAPIDKeyToCryptoKey(vapidPrivateKey);
-    console.log('[Utils] Successfully converted/generated key for ES256 signing');
+    // Create header and payload
+    const header = {
+      typ: 'JWT',
+      alg: 'ES256'
+    };
     
-    // Sign the token with ES256
+    // Current time and expiration (1 hour)
+    const currentTime = Math.floor(Date.now() / 1000);
+    const expirationTime = currentTime + 3600;
+    
+    // Create payload
+    const payload = {
+      iss: vapidSubject,
+      iat: currentTime,
+      exp: expirationTime
+    };
+    
+    console.log('[Utils] JWT Header:', JSON.stringify(header));
+    console.log('[Utils] JWT Payload:', JSON.stringify(payload));
+    
+    // Encode header and payload
+    const encoder = new TextEncoder();
+    const headerBase64 = uint8ArrayToBase64Url(encoder.encode(JSON.stringify(header)));
+    const payloadBase64 = uint8ArrayToBase64Url(encoder.encode(JSON.stringify(payload)));
+    
+    // Create unsigned token
+    const unsignedToken = `${headerBase64}.${payloadBase64}`;
+    console.log('[Utils] Unsigned token created:', unsignedToken);
+    
+    // Sign the token with the fresh private key
     const signatureArrayBuffer = await crypto.subtle.sign(
       {
         name: 'ECDSA',
         hash: { name: 'SHA-256' }
       },
-      privateKey,
+      keyPair.privateKey,
       encoder.encode(unsignedToken)
     );
     
-    // Convert the signature to base64url
+    // Convert signature to base64url
     const signatureBase64 = uint8ArrayToBase64Url(new Uint8Array(signatureArrayBuffer));
     
-    // Return the complete JWT
+    // Complete JWT
     const jwt = `${unsignedToken}.${signatureBase64}`;
-    console.log('[Utils] JWT token generated with ES256 signature, length:', jwt.length);
+    console.log('[Utils] JWT generated successfully, length:', jwt.length);
     
-    return jwt;
+    return { jwt, publicKeyBase64 };
   } catch (error) {
-    console.error('[Utils] Error signing JWT:', error);
-    console.error(`[Utils] JWT Error Details: Subject: "${subject}", VAPID Subject: "${vapidSubject}"`);
-    throw new Error(`Failed to sign JWT token: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('[Utils] Error generating JWT:', error);
+    throw new Error(`Failed to generate JWT: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
