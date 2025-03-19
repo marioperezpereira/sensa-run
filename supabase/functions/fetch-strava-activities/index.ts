@@ -1,6 +1,9 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+// Import only what's necessary from Deno standard library
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
+
+// Direct import createClient without the problematic dependencies
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.24.0?dts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -95,7 +98,7 @@ serve(async (req) => {
     })
   } catch (error) {
     console.error('Error:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

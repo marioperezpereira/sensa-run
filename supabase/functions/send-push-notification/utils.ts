@@ -27,7 +27,7 @@ export function base64ToUint8Array(base64: string): Uint8Array {
 // Convert Uint8Array to base64 URL-safe string
 export function uint8ArrayToBase64Url(uint8Array: Uint8Array): string {
   // Convert to regular base64
-  let base64 = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+  let base64 = btoa(String.fromCharCode(...Array.from(uint8Array)));
   
   // Make URL-safe
   base64 = base64.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -70,27 +70,15 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
   console.log('[Utils] Generating Apple JWT with ES256 signing');
   
   // Ensure raw subject is properly formatted
-  let formattedSubject = vapidSubject.trim();
+  const formattedSubject = vapidSubject.trim();
   
-  // Validate subject is provided
+  // Validate subject is provided and formatted correctly
   if (!formattedSubject) {
     throw new Error('VAPID subject is required');
   }
   
-  // Ensure subject has proper format (mailto: or https://)
-  if (!formattedSubject.startsWith('mailto:') && 
-      !formattedSubject.startsWith('http://') && 
-      !formattedSubject.startsWith('https://')) {
-    
-    // If it has an @ sign, assume it's an email and add mailto:
-    if (formattedSubject.includes('@')) {
-      formattedSubject = `mailto:${formattedSubject}`;
-    } else if (formattedSubject.includes('.')) {
-      // If it has a dot, assume it's a domain and add https://
-      formattedSubject = `https://${formattedSubject}`;
-    } else {
-      throw new Error('VAPID subject must be a valid email or URL');
-    }
+  if (!formattedSubject.startsWith('mailto:')) {
+    throw new Error('VAPID subject must start with mailto:');
   }
   
   console.log('[Utils] Using formatted subject:', formattedSubject);
