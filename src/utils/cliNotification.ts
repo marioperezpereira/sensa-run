@@ -29,23 +29,23 @@ export async function sendNotificationByEmail(
   url?: string
 ) {
   try {
-    // Get the current session using the correct API
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData?.session?.access_token || '';
+    // Get the current session
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data?.session?.access_token || '';
 
-    const { data, error } = await supabase.functions.invoke('cli-push-notification', {
+    const response = await supabase.functions.invoke('cli-push-notification', {
       body: { email, title, message, url },
       headers: {
         Authorization: `Bearer ${accessToken}`
       }
     });
     
-    if (error) {
-      console.error('Error sending notification:', error);
-      return { success: false, error };
+    if (response.error) {
+      console.error('Error sending notification:', response.error);
+      return { success: false, error: response.error };
     }
     
-    return data;
+    return response.data;
   } catch (err) {
     console.error('Exception sending notification:', err);
     return { success: false, error: err };
@@ -62,23 +62,23 @@ export async function sendNotificationByUserId(
   url?: string
 ) {
   try {
-    // Get the current session using the correct API
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData?.session?.access_token || '';
+    // Get the current session
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data?.session?.access_token || '';
 
-    const { data, error } = await supabase.functions.invoke('cli-push-notification', {
+    const response = await supabase.functions.invoke('cli-push-notification', {
       body: { user_id: userId, title, message, url },
       headers: {
         Authorization: `Bearer ${accessToken}`
       }
     });
     
-    if (error) {
-      console.error('Error sending notification:', error);
-      return { success: false, error };
+    if (response.error) {
+      console.error('Error sending notification:', response.error);
+      return { success: false, error: response.error };
     }
     
-    return data;
+    return response.data;
   } catch (err) {
     console.error('Exception sending notification:', err);
     return { success: false, error: err };
