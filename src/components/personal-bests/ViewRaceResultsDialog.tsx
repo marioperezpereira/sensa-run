@@ -1,30 +1,12 @@
 
-import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { Pencil, Trash2, Clock, Award } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRaceResults } from "@/hooks/useRaceResults";
+import ResultsTable from "./race-results/ResultsTable";
+import DeleteConfirmationDialog from "./race-results/DeleteConfirmationDialog";
 import EditRaceResultDialog from "./EditRaceResultDialog";
 import { RaceResult } from "./race-results/types";
-import { calculateIAAFPoints } from "@/lib/iaaf-scoring-tables";
-
-// Import the enum type from types
-import { Enums } from "@/integrations/supabase/types";
-type PBRaceDistance = Enums<"pb_race_distance">;
 
 interface ViewRaceResultsDialogProps {
   open: boolean;
@@ -39,132 +21,42 @@ const ViewRaceResultsDialog = ({
   distance,
   refreshTrigger = 0 
 }: ViewRaceResultsDialogProps) => {
-  const [loading, setLoading] = useState(true);
-  const [results, setResults] = useState<RaceResult[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editResult, setEditResult] = useState<RaceResult | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [gender, setGender] = useState<'men' | 'women'>('men');
-  const { toast } = useToast();
-
-  // Convert string distance to PBRaceDistance enum
-  const getPBDistance = (dist: string): PBRaceDistance => {
-    if (dist === "5K" || dist === "10K") return dist;
-    if (dist === "Media maratón") return "Half Marathon";
-    if (dist === "Maratón") return "Marathon";
-    // Default fallback - should not happen with proper validation
-    return "5K";
-  };
-
-  useEffect(() => {
-    if (open) {
-      fetchResults();
-    }
-  }, [open, distance, refreshTrigger]);
-
-  const fetchResults = async () => {
-    setLoading(true);
-    try {
-      // First get the user's profile to determine gender
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-      
-      const { data: profile } = await supabase
-        .from('user_pb_profiles')
-        .select('gender')
-        .eq('user_id', user.id)
-        .single();
-        
-      // Set gender for IAAF point calculation
-      if (profile?.gender) {
-        setGender(profile.gender.toLowerCase() === 'female' ? 'women' : 'men');
-      }
-      
-      const { data, error } = await supabase
-        .from('race_results')
-        .select('*')
-        .eq('distance', getPBDistance(distance))
-        .order('race_date', { ascending: false });
-
-      if (error) throw error;
-      setResults(data || []);
-    } catch (error) {
-      console.error('Error fetching race results:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los resultados",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    
-    try {
-      const { error } = await supabase
-        .from('race_results')
-        .delete()
-        .eq('id', deleteId);
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Resultado eliminado",
-        description: "El resultado ha sido eliminado correctamente",
-      });
-      
-      // Refresh the list
-      setResults(results.filter(r => r.id !== deleteId));
-    } catch (error) {
-      console.error('Error deleting race result:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar el resultado",
-        variant: "destructive",
-      });
-    } finally {
-      setShowDeleteDialog(false);
-      setDeleteId(null);
-    }
-  };
+  
+  const { 
+    loading, 
+    results, 
+    gender,
+    deleteResult, 
+    updateResultInState,
+    getIAAFPoints
+  } = useRaceResults(distance, refreshTrigger);
 
   const handleEdit = (result: RaceResult) => {
     setEditResult(result);
     setShowEditDialog(true);
   };
 
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteId) {
+      await deleteResult(deleteId);
+      setShowDeleteDialog(false);
+      setDeleteId(null);
+    }
+  };
+
   const handleResultUpdated = (updatedResult: RaceResult) => {
-    setResults(results.map(r => r.id === updatedResult.id ? updatedResult : r));
+    updateResultInState(updatedResult);
     setShowEditDialog(false);
     setEditResult(null);
-  };
-
-  const formatTime = (hours: number, minutes: number, seconds: number) => {
-    if (hours > 0) {
-      return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "d MMM yyyy", { locale: es });
-  };
-
-  const getIAAFPoints = (result: RaceResult) => {
-    return calculateIAAFPoints(
-      result.distance, 
-      result.hours, 
-      result.minutes, 
-      result.seconds, 
-      gender
-    );
   };
 
   return (
@@ -179,88 +71,30 @@ const ViewRaceResultsDialog = ({
             <div className="flex justify-center p-8">
               <div className="animate-pulse space-y-4 w-full">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="bg-gray-200 h-10 rounded w-full"></div>
+                  <Skeleton key={i} className="h-10 w-full" />
                 ))}
               </div>
             </div>
           ) : results.length === 0 ? (
             <p className="text-center py-8 text-gray-500">No hay resultados para mostrar</p>
           ) : (
-            <div className="max-h-[60vh] overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Tiempo</TableHead>
-                    <TableHead>Puntos IAAF</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {results.map((result) => (
-                    <TableRow key={result.id}>
-                      <TableCell>{formatDate(result.race_date)}</TableCell>
-                      <TableCell>
-                        <span className="flex items-center">
-                          <Clock className="mr-1 h-4 w-4 text-gray-500" />
-                          {formatTime(result.hours, result.minutes, result.seconds)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center bg-amber-100 text-amber-800 font-medium px-2 py-1 rounded-full text-xs w-fit">
-                          <Award className="mr-1 h-3 w-3" />
-                          {getIAAFPoints(result)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(result)}
-                          className="h-8 w-8"
-                        >
-                          <Pencil className="h-4 w-4" />
-                          <span className="sr-only">Editar</span>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setDeleteId(result.id);
-                            setShowDeleteDialog(true);
-                          }}
-                          className="h-8 w-8 text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Eliminar</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <ResultsTable 
+              results={results}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              gender={gender}
+              getIAAFPoints={getIAAFPoints}
+            />
           )}
         </DialogContent>
       </Dialog>
       
       {/* Delete confirmation dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar resultado?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. El resultado será eliminado permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={confirmDelete}
+      />
       
       {/* Edit dialog */}
       {editResult && (
