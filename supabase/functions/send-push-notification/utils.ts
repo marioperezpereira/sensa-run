@@ -208,6 +208,8 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
     return jwt;
   } catch (error) {
     console.error('[Utils] Error generating JWT signature:', error);
+    // Ensure we reference the local variable formattedSubject rather than a non-existent global
+    console.error(`[Utils] JWT Error Details: Subject: "${vapidSubject}", JWT Length: unknown, Formatted Subject Used: "${formattedSubject}"`);
     throw new Error(`Failed to sign JWT token: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

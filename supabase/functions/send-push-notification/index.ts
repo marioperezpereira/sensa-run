@@ -243,8 +243,8 @@ serve(async (req) => {
               // Check for specific error codes and give more helpful messages
               if (appleResponse.status === 403) {
                 errorDetails = `BadJwtToken: ${appleResponseText} - Likely causes: 1) Incorrect VAPID key format, 2) JWT signing issue, 3) Expired token`;
-                // Add more detailed debugging info for BadJwtToken error
-                console.error(`[PushNotification] JWT Error Details: Subject: "${vapidSubject}", JWT Length: ${jwt.length}, Formatted Subject Used: "${formattedSubject}"`);
+                // Add more detailed debugging info for BadJwtToken error - use correct vapidSubject variable
+                console.error(`[PushNotification] JWT Error Details: Subject: "${vapidSubject}", JWT Length: ${jwt.length}, VAPID Subject: "${vapidSubject}"`);
               } else if (appleResponse.status === 404) {
                 errorDetails = `Subscription not found: ${appleResponseText} - Device may have unsubscribed`;
               } else if (appleResponse.status === 400) {
