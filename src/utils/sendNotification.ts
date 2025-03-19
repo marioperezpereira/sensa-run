@@ -22,27 +22,11 @@ export async function sendNotificationToUser(
     // Add a toast notification to provide immediate feedback
     toast.info("Enviando notificación...");
     
-    // Add some logging to help with debugging
-    const response = await supabase.functions.invoke('send-push-notification', {
-      body: {
-        userId,
-        title, 
-        message,
-        url: url || '/',
-        tag: `sensa-${Date.now()}` // Adding a unique tag to avoid notification coalescing
-      }
-    });
-
-    // Improved error handling
-    if (response.error) {
-      console.error('[SendNotification] Error sending notification:', response.error);
-      toast.error("Error al enviar la notificación");
-      return { success: false, error: response.error };
-    }
-
-    console.log('[SendNotification] Notification sent successfully:', response.data);
-    toast.success("Notificación enviada correctamente");
-    return { success: true, data: response.data };
+    // This functionality has been removed
+    console.log('[SendNotification] Push notification functionality has been removed');
+    toast.error("Funcionalidad de notificaciones no disponible");
+    
+    return { success: false, error: "Functionality removed" };
   } catch (err) {
     console.error('[SendNotification] Exception sending notification:', err);
     toast.error("Error al enviar la notificación");
@@ -126,41 +110,5 @@ export async function checkAndSaveExistingSubscription() {
   } catch (err) {
     console.error('[SendNotification] Error checking for existing subscription:', err);
     return null;
-  }
-}
-
-/**
- * Send a test notification to the current user
- */
-export async function sendTestNotification() {
-  try {
-    console.log('[SendNotification] Starting test notification process');
-    // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      console.error('[SendNotification] No authenticated user');
-      return { success: false, error: 'No authenticated user' };
-    }
-    
-    // First check and save any existing subscription
-    const subscription = await checkAndSaveExistingSubscription();
-    
-    if (!subscription) {
-      console.error('[SendNotification] No push subscription available');
-      return { success: false, error: 'No push subscription available' };
-    }
-    
-    console.log('[SendNotification] Sending test notification to user:', user.id);
-    // Send the notification
-    return await sendNotificationToUser(
-      user.id, 
-      '¡Prueba de notificación!', 
-      'Las notificaciones están funcionando correctamente. ' + new Date().toLocaleTimeString(),
-      '/profile'
-    );
-  } catch (err) {
-    console.error('[SendNotification] Error sending test notification:', err);
-    return { success: false, error: err };
   }
 }
