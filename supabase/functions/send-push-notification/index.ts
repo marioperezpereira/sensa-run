@@ -1,7 +1,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { base64ToUint8Array, uint8ArrayToBase64Url } from './utils.ts'
+import { base64ToUint8Array, uint8ArrayToBase64Url, formatVapidKey } from './utils.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -226,17 +226,24 @@ async function sendPushNotification(
     headers.append('Content-Type', 'application/octet-stream');
     headers.append('TTL', '86400');  // 24 hours in seconds
     
-    // Create the JWT token for Authorization
-    const token = await createVapidAuthorizationToken(
-      audience,
-      vapidSubject,
-      vapidPublicKey,
-      vapidPrivateKey
-    );
+    try {
+      // Create the JWT token for Authorization
+      const token = await createVapidAuthorizationToken(
+        audience,
+        vapidSubject,
+        vapidPublicKey,
+        vapidPrivateKey
+      );
+      
+      headers.append('Authorization', `vapid t=${token}`);
+    } catch (authError) {
+      console.error('[PushNotification] Error creating authorization token:', authError);
+      throw authError;
+    }
     
-    headers.append('Authorization', `vapid t=${token}`);
-    
-    // Encrypt the payload
+    // Encrypt the payload - for now, using a simplified approach
+    // In a production environment, this would need proper encryption according to the Web Push Protocol
+    // https://developers.google.com/web/fundamentals/push-notifications/web-push-protocol
     const encryptedPayload = await encryptPayload(
       subscription.keys.p256dh,
       subscription.keys.auth,
@@ -295,31 +302,44 @@ async function createVapidAuthorizationToken(
     // Create the signing input
     const signingInput = `${encodedHeader}.${encodedPayload}`;
     
-    // Import the private key
-    const privateKeyDer = base64ToUint8Array(privateKey);
-    const cryptoKey = await crypto.subtle.importKey(
-      'pkcs8',
-      privateKeyDer,
-      {
-        name: 'ECDSA',
-        namedCurve: 'P-256',
-      },
-      false,
-      ['sign']
-    );
-    
-    // Sign the token
-    const signature = await crypto.subtle.sign(
-      { name: 'ECDSA', hash: { name: 'SHA-256' } },
-      cryptoKey,
-      new TextEncoder().encode(signingInput)
-    );
-    
-    // Encode the signature as base64url
-    const encodedSignature = uint8ArrayToBase64Url(new Uint8Array(signature));
-    
-    // Return the complete JWT token
-    return `${signingInput}.${encodedSignature}`;
+    try {
+      console.log('[PushNotification] Formatting VAPID private key for import');
+      
+      // Properly format the private key for import
+      const privateKeyBuffer = formatVapidKey(privateKey);
+      
+      console.log('[PushNotification] Importing private key for signing');
+      
+      // Import the private key
+      const cryptoKey = await crypto.subtle.importKey(
+        'pkcs8', 
+        privateKeyBuffer,
+        {
+          name: 'ECDSA',
+          namedCurve: 'P-256',
+        },
+        false,
+        ['sign']
+      );
+      
+      console.log('[PushNotification] Signing JWT token');
+      
+      // Sign the token
+      const signature = await crypto.subtle.sign(
+        { name: 'ECDSA', hash: { name: 'SHA-256' } },
+        cryptoKey,
+        new TextEncoder().encode(signingInput)
+      );
+      
+      // Encode the signature as base64url
+      const encodedSignature = uint8ArrayToBase64Url(new Uint8Array(signature));
+      
+      // Return the complete JWT token
+      return `${signingInput}.${encodedSignature}`;
+    } catch (error) {
+      console.error('[PushNotification] Error during key operations:', error);
+      throw new Error(`Key operation failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
   } catch (error) {
     console.error('[PushNotification] Error creating VAPID JWT token:', error);
     throw new Error(`Failed to create JWT token: ${error instanceof Error ? error.message : String(error)}`);

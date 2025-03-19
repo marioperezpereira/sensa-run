@@ -1,3 +1,4 @@
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
@@ -106,75 +107,52 @@ serve(async (req) => {
         }
 
         console.log(`[CLI-PushNotification] Processing subscription with endpoint: ${subscription.endpoint}`);
-        console.log(`[CLI-PushNotification] Subscription has keys: ${!!subscription.keys}, p256dh: ${!!subscription.keys?.p256dh}, auth: ${!!subscription.keys?.auth}`);
-        
-        // Validate subscription format before sending
-        if (!subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
-          console.error(`[CLI-PushNotification] Subscription is missing required keys:`, 
-            JSON.stringify({
-              hasKeys: !!subscription.keys,
-              hasP256dh: subscription.keys?.p256dh,
-              hasAuth: subscription.keys?.auth
-            }));
-          
-          results.push({ 
-            success: false, 
-            error: 'Subscription is missing required keys', 
-            endpoint: subscription.endpoint 
-          });
-          continue;
-        }
-        
-        // Use the fetch directly rather than invoking send-push-notification function to minimize layers
-        console.log(`[CLI-PushNotification] Sending push notification directly to endpoint`);
         
         try {
-          // Create a simple notification payload
-          const notificationPayload = {
-            title: notificationPayload.title,
-            body: notificationPayload.body,
-            url: notificationPayload.url
-          };
+          console.log(`[CLI-PushNotification] Sending push notification to endpoint via send-push-notification function`);
           
-          // Prepare the fetch request
-          const response = await fetch(subscription.endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${subscription.keys.auth}`
-            },
-            body: JSON.stringify(notificationPayload)
+          // Call the send-push-notification function to handle the actual sending
+          const { data: pushResult, error: pushError } = await supabase.functions.invoke('send-push-notification', {
+            body: { 
+              specific_subscription: subscription,
+              title: notificationPayload.title,
+              message: notificationPayload.body,
+              url: notificationPayload.url
+            }
           });
           
-          if (response.ok) {
+          if (pushError) {
+            console.error('[CLI-PushNotification] Error calling send-push-notification function:', pushError);
+            results.push({
+              success: false,
+              endpoint: subscription.endpoint,
+              error: pushError.message || 'Error invoking send-push-notification function'
+            });
+            continue;
+          }
+          
+          if (pushResult && pushResult.success) {
             console.log(`[CLI-PushNotification] Successfully sent notification to endpoint: ${subscription.endpoint}`);
             results.push({
               success: true,
               endpoint: subscription.endpoint,
             });
           } else {
-            console.error(`[CLI-PushNotification] Error response from push service: ${response.status}`);
-            
-            let responseText;
-            try {
-              responseText = await response.text();
-            } catch (e) {
-              responseText = 'Could not read response text';
-            }
+            const errorDetails = pushResult?.results?.[0]?.error || 'Unknown error from push service';
+            console.error(`[CLI-PushNotification] Error from send-push-notification:`, errorDetails);
             
             results.push({
               success: false,
               endpoint: subscription.endpoint,
-              status: response.status,
-              error: `Error from push service: ${response.status} - ${responseText}`
+              error: errorDetails
             });
           }
-        } catch (fetchError) {
-          console.error('[CLI-PushNotification] Error making direct push request:', fetchError);
+        } catch (invokeError) {
+          console.error('[CLI-PushNotification] Error invoking send-push-notification:', invokeError);
           results.push({
             success: false,
             endpoint: subscription.endpoint,
-            error: fetchError instanceof Error ? fetchError.message : String(fetchError)
+            error: invokeError instanceof Error ? invokeError.message : String(invokeError)
           });
         }
       } catch (error) {

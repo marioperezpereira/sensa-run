@@ -39,3 +39,25 @@ export function uint8ArrayToBase64Url(uint8Array: Uint8Array): string {
 export function generateSalt(size: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(size));
 }
+
+// Function to format the VAPID private key for JWT signing
+export function formatVapidKey(privateKey: string): ArrayBuffer {
+  try {
+    // Check if the key is already in raw base64 format (no BEGIN/END markers)
+    if (!privateKey.includes('-----BEGIN')) {
+      // Assume it's a raw base64 key
+      return base64ToUint8Array(privateKey).buffer;
+    }
+    
+    // Extract the base64 part from PEM format
+    const pemContent = privateKey
+      .replace('-----BEGIN PRIVATE KEY-----', '')
+      .replace('-----END PRIVATE KEY-----', '')
+      .replace(/\s/g, '');
+    
+    return base64ToUint8Array(pemContent).buffer;
+  } catch (error) {
+    console.error('Error formatting VAPID key:', error);
+    throw new Error(`Failed to format VAPID key: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
