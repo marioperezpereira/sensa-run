@@ -48,20 +48,91 @@ async function importVAPIDPrivateKey(vapidPrivateKey: string): Promise<CryptoKey
     // Convert the base64 private key to a Uint8Array
     const privateKeyBytes = base64ToUint8Array(vapidPrivateKey);
     
-    // Import the private key in the correct format for ECDSA with P-256 curve
-    return await crypto.subtle.importKey(
-      'pkcs8',      // PKCS#8 format for private keys
+    // For VAPID keys, we need to convert the raw key to PKCS#8 format
+    // For Web Push, typically the key is in raw format (just the key bits)
+    // But crypto.subtle.importKey expects PKCS#8 for private keys
+    
+    // Try importing with 'raw' format first and then converting to an ECDSA key
+    const rawKey = await crypto.subtle.importKey(
+      'raw',
       privateKeyBytes,
       {
-        name: 'ECDSA',
-        namedCurve: 'P-256'  // Apple requires P-256 curve
+        name: 'ECDH',
+        namedCurve: 'P-256'
       },
-      false,  // Not extractable
-      ['sign'] // Only need signing capability
+      false,
+      ['deriveBits']
     );
-  } catch (error) {
-    console.error('[Utils] Error importing private key:', error);
-    throw new Error(`Failed to import VAPID private key: ${error instanceof Error ? error.message : String(error)}`);
+    
+    // Export the key in PKCS#8 format
+    const pkcs8Key = await crypto.subtle.exportKey('pkcs8', rawKey);
+    
+    // Now import it back for signing
+    return await crypto.subtle.importKey(
+      'pkcs8',
+      pkcs8Key,
+      {
+        name: 'ECDSA',
+        namedCurve: 'P-256'
+      },
+      false,
+      ['sign']
+    );
+  } catch (rawImportError) {
+    console.log('[Utils] Raw key import failed, trying direct PKCS#8 import');
+    
+    try {
+      // If the above method fails, try direct import as PKCS#8
+      // This assumes the key might already be in PKCS#8 format
+      const privateKeyBytes = base64ToUint8Array(vapidPrivateKey);
+      
+      return await crypto.subtle.importKey(
+        'pkcs8',
+        privateKeyBytes,
+        {
+          name: 'ECDSA',
+          namedCurve: 'P-256'
+        },
+        false,
+        ['sign']
+      );
+    } catch (pkcs8Error) {
+      console.error('[Utils] PKCS#8 import also failed:', pkcs8Error);
+      
+      // As a fallback, try a different approach using JWK format
+      try {
+        // For Web Push VAPID keys, the private key is usually 32 bytes
+        // We can try to convert it to a JWK format
+        const privateKeyBytes = base64ToUint8Array(vapidPrivateKey);
+        
+        if (privateKeyBytes.length !== 32) {
+          throw new Error(`Expected 32 byte private key, got ${privateKeyBytes.length} bytes`);
+        }
+        
+        // Create a JWK formatted key
+        const jwk = {
+          kty: 'EC',
+          crv: 'P-256',
+          d: uint8ArrayToBase64Url(privateKeyBytes),
+          x: '',  // We don't have these values from just the private key
+          y: ''   // But we'll try anyway with the private component only
+        };
+        
+        return await crypto.subtle.importKey(
+          'jwk',
+          jwk,
+          {
+            name: 'ECDSA',
+            namedCurve: 'P-256'
+          },
+          false,
+          ['sign']
+        );
+      } catch (jwkError) {
+        console.error('[Utils] JWK import also failed:', jwkError);
+        throw new Error(`All key import methods failed. Please check the VAPID private key format: ${vapidPrivateKey.substring(0, 5)}...`);
+      }
+    }
   }
 }
 
