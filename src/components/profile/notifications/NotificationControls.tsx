@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,31 +16,37 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
   const [notificationsActive, setNotificationsActive] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const [isAppleDevice, setIsAppleDevice] = useState(false);
 
   useEffect(() => {
-    // Check if notifications are supported and if they are already registered
     const checkNotificationSupport = async () => {
       const hasNotificationSupport = 'Notification' in window && 'serviceWorker' in navigator;
       let currentPermission = "default";
       
+      const isApple = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) || 
+                     /iPad|iPhone|iPod/.test(navigator.userAgent);
+      setIsAppleDevice(isApple);
+      
       if (hasNotificationSupport) {
         currentPermission = Notification.permission;
         
-        // Check if we have an active service worker with push subscription
         if (currentPermission === 'granted') {
           setIsRecovering(true);
           try {
-            // Check if we have a registered service worker
             const registration = await navigator.serviceWorker.ready;
             const subscription = await registration.pushManager.getSubscription();
             
             if (subscription) {
               setNotificationsActive(true);
               
-              // Save debug info about the subscription
               const subscriptionJSON = JSON.stringify(subscription, null, 2);
               console.log('Current active subscription:', subscriptionJSON);
-              setDebugInfo(`Subscription endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+              
+              if (subscription.endpoint.includes('web.push.apple.com')) {
+                setDebugInfo(`Apple Web Push subscription: ${subscription.endpoint.substring(0, 50)}...`);
+              } else {
+                setDebugInfo(`Subscription endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+              }
               
               await checkAndSaveExistingSubscription();
             } else {
@@ -60,7 +65,6 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
         setDebugInfo('Notifications or Service Worker not supported');
       }
       
-      // Show notification button if supported
       setShowNotificationButton(hasNotificationSupport && currentPermission !== 'denied');
     };
 
@@ -69,7 +73,6 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
 
   const handleEnableNotifications = async () => {
     try {
-      // Request notification permission first
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
         toast({
@@ -81,7 +84,6 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
         return;
       }
 
-      // Try PWA push notifications first if service worker is available
       if ('serviceWorker' in navigator) {
         setDebugInfo('Registering push notifications...');
         const subscription = await registerPushNotifications();
@@ -101,7 +103,6 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
         }
       }
 
-      // Fallback to regular web notifications
       const notification = new Notification("Sensa.run", {
         body: "Las notificaciones han sido habilitadas",
         icon: "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png"
@@ -113,7 +114,6 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
       });
       setNotificationsActive(true);
       setDebugInfo('Using standard web notifications (not push)');
-
     } catch (error) {
       console.error('Error enabling notifications:', error);
       setDebugInfo(`Error enabling notifications: ${error instanceof Error ? error.message : String(error)}`);
@@ -132,7 +132,6 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
         const subscription = await registration.pushManager.getSubscription();
         
         if (subscription) {
-          // Unsubscribe from push notifications
           const successful = await subscription.unsubscribe();
           
           if (!successful) {
@@ -143,7 +142,6 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
           console.log('Successfully unsubscribed from push notifications');
           setDebugInfo('Successfully unsubscribed from push notifications');
           
-          // Remove subscription from database if user is logged in
           if (userId) {
             await supabase
               .from('push_subscriptions')
@@ -222,7 +220,19 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
       }
       
       console.log('Test notification result:', data);
-      setDebugInfo(`Test notification result: ${JSON.stringify(data, null, 2)}`);
+      
+      let debugStr = '';
+      if (data.results && Array.isArray(data.results)) {
+        debugStr = data.results.map(r => {
+          const endpoint = r.endpoint ? r.endpoint.split('/').pop() : 'unknown';
+          const status = r.success ? 'Success' : `Failed: ${r.error || 'unknown error'}`;
+          return `${r.method || 'unknown'} (${endpoint}): ${status}`;
+        }).join('\n');
+      } else {
+        debugStr = JSON.stringify(data, null, 2);
+      }
+      
+      setDebugInfo(debugStr);
       
       if (data.success) {
         toast({
@@ -242,6 +252,71 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
       toast({
         title: "Error",
         description: "Error al enviar la notificación de prueba",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleAppleTest = async () => {
+    try {
+      setDebugInfo('Getting current subscription for Apple test...');
+      
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      
+      if (!subscription) {
+        setDebugInfo('No subscription available for testing');
+        toast({
+          title: "Error",
+          description: "No hay suscripción activa para probar",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setDebugInfo(`Testing with specific subscription: ${subscription.endpoint}`);
+      
+      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+        body: { 
+          specific_subscription: subscription,
+          title: "Apple Push Test", 
+          message: "Esta es una prueba especial para Apple Web Push", 
+          url: "/profile" 
+        }
+      });
+      
+      if (error) {
+        console.error('Error with Apple test:', error);
+        setDebugInfo(`Error with Apple test: ${error.message}`);
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      console.log('Apple test result:', data);
+      setDebugInfo(`Apple test result: ${JSON.stringify(data, null, 2)}`);
+      
+      if (data.success) {
+        toast({
+          title: "Prueba enviada",
+          description: "Prueba para Apple enviada correctamente",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Error en prueba para Apple",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Exception in Apple test:', error);
+      setDebugInfo(`Exception in Apple test: ${error instanceof Error ? error.message : String(error)}`);
+      toast({
+        title: "Error",
+        description: "Error en prueba para Apple",
         variant: "destructive"
       });
     }
@@ -271,19 +346,32 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
       </Button>
       
       {notificationsActive && (
-        <Button
-          variant="outline"
-          className="w-full rounded-[42px] border-sensa-purple text-sensa-purple hover:bg-sensa-purple/10"
-          onClick={handleTest}
-        >
-          <Info className="mr-2 h-4 w-4" />
-          Probar notificación
-        </Button>
+        <>
+          <Button
+            variant="outline"
+            className="w-full rounded-[42px] border-sensa-purple text-sensa-purple hover:bg-sensa-purple/10"
+            onClick={handleTest}
+          >
+            <Info className="mr-2 h-4 w-4" />
+            Probar notificación
+          </Button>
+          
+          {isAppleDevice && (
+            <Button
+              variant="outline"
+              className="w-full rounded-[42px] border-orange-500 text-orange-500 hover:bg-orange-500/10"
+              onClick={handleAppleTest}
+            >
+              <Info className="mr-2 h-4 w-4" />
+              Probar notificación Apple
+            </Button>
+          )}
+        </>
       )}
       
       {debugInfo && (
-        <div className="mt-2 text-xs text-gray-500 bg-gray-100 p-2 rounded overflow-auto max-h-20">
-          <p className="font-mono">{debugInfo}</p>
+        <div className="mt-2 text-xs text-gray-500 bg-gray-100 p-2 rounded overflow-auto max-h-32">
+          <p className="font-mono whitespace-pre-wrap">{debugInfo}</p>
         </div>
       )}
     </div>

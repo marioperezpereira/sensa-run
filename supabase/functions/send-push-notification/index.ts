@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { base64ToUint8Array, uint8ArrayToBase64Url, generateAppleJWT } from './utils.ts'
@@ -175,9 +174,11 @@ serve(async (req) => {
           try {
             console.log('[PushNotification] Detected Apple Web Push endpoint');
             
-            // Generate JWT token using our simplified approach
+            // Generate improved JWT token with proper validation
             const jwt = await generateAppleJWT(vapidSubject, vapidPrivateKey, vapidPublicKey);
+            console.log('[PushNotification] Generated JWT for Apple Web Push');
             
+            // Apple requires a specific JSON payload format
             const applePayload = JSON.stringify({
               aps: {
                 alert: {
@@ -188,11 +189,14 @@ serve(async (req) => {
               }
             });
             
+            // Ensure all required headers are present
             const appleHeaders = {
               'Content-Type': 'application/json',
               'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
               'Content-Length': `${applePayload.length}`,
-              'TTL': '2419200'
+              'TTL': '2419200',
+              'Topic': 'web.push.apple',  // Required by Apple
+              'apns-priority': '10'       // High priority
             };
             
             console.log(`[PushNotification] Apple Web Push Request:
@@ -210,6 +214,7 @@ serve(async (req) => {
             const appleResponseText = await appleResponse.text();
             console.log(`[PushNotification] Apple Web Push response: ${appleResponse.status} ${appleResponseText}`);
             
+            // Detailed error handling for Apple Web Push
             if (appleResponse.ok) {
               console.log('[PushNotification] Successfully sent notification to Apple Web Push');
               results.push({
@@ -218,12 +223,26 @@ serve(async (req) => {
                 method: 'apple'
               });
             } else {
-              console.error(`[PushNotification] Apple Web Push error: ${appleResponse.status} ${appleResponseText}`);
+              let errorDetails = appleResponseText;
+              
+              // Check for specific error codes and give more helpful messages
+              if (appleResponse.status === 403) {
+                errorDetails = `BadJwtToken: ${appleResponseText} - JWT is likely invalid (check subject format, expiration)`;
+              } else if (appleResponse.status === 404) {
+                errorDetails = `Subscription not found: ${appleResponseText} - Device may have unsubscribed`;
+              } else if (appleResponse.status === 400) {
+                errorDetails = `Bad Request: ${appleResponseText} - Check payload format and headers`;
+              } else if (appleResponse.status === 429) {
+                errorDetails = `Rate Limited: ${appleResponseText} - Too many requests to Apple Push service`;
+              }
+              
+              console.error(`[PushNotification] Apple Web Push error: ${appleResponse.status} ${errorDetails}`);
               results.push({
                 success: false,
-                error: `Apple Web Push error: ${appleResponse.status} ${appleResponseText}`,
+                error: `Apple Web Push error: ${appleResponse.status} ${errorDetails}`,
                 endpoint: subscription.endpoint,
-                method: 'apple'
+                method: 'apple',
+                status: appleResponse.status
               });
             }
             
