@@ -1,7 +1,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import webpush from 'https://esm.sh/web-push@3.6.6'
+// Import web-push with a specific version that's compatible with Deno
+import webpush from 'https://esm.sh/web-push@3.5.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -91,18 +92,32 @@ serve(async (req) => {
 
     console.log(`[CLI-PushNotification] Found ${subscriptions.length} subscription(s) for user: ${targetUserId}`);
 
-    // Set VAPID details
-    webpush.setVapidDetails(
-      vapidSubject,
-      vapidPublicKey,
-      vapidPrivateKey
-    );
+    try {
+      // Set VAPID details
+      webpush.setVapidDetails(
+        vapidSubject,
+        vapidPublicKey,
+        vapidPrivateKey
+      );
+      
+      console.log('[CLI-PushNotification] Successfully set VAPID details');
+    } catch (error) {
+      console.error('[CLI-PushNotification] Error setting VAPID details:', error);
+      throw new Error(`Error setting VAPID details: ${error.message}`);
+    }
 
     // Send notification to each subscription
     const results = await Promise.all(
       subscriptions.map(async (item) => {
         try {
           const subscription = item.subscription;
+          
+          // Validate subscription object
+          if (!subscription || !subscription.endpoint) {
+            console.error('[CLI-PushNotification] Invalid subscription object:', subscription);
+            return { success: false, error: 'Invalid subscription object' };
+          }
+          
           const payload = JSON.stringify({
             title: title || 'Sensa.run',
             body: message || 'Tienes una notificación nueva',
