@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -13,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/components/ui/use-toast";
 
-// Updated schema to only allow Male or Female
 const formSchema = z.object({
   gender: z.enum(["Male", "Female"], {
     required_error: "Debes seleccionar el género",
@@ -87,12 +85,10 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
     }
   };
 
-  // Custom date picker component with year navigation
   const CustomDatePicker = ({ value, onChange }: { value?: Date, onChange: (date: Date) => void }) => {
     const [currentYear, setCurrentYear] = useState(value?.getFullYear() || new Date().getFullYear() - 30);
     const [currentMonth, setCurrentMonth] = useState(value?.getMonth() || new Date().getMonth());
     
-    // Generate days for the current month/year
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
     
@@ -148,28 +144,26 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
     return (
       <div className="p-3 bg-white">
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <Button variant="ghost" size="icon" onClick={handlePrevYears} className="h-7 w-7 p-0">
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handlePrevYear} className="h-7 w-7 p-0">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="mx-2 text-sm font-medium">{currentYear}</span>
-            <Button variant="ghost" size="icon" onClick={handleNextYear} className="h-7 w-7 p-0">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleNextYears} className="h-7 w-7 p-0">
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button variant="ghost" size="icon" onClick={handlePrevYears} className="h-7 w-7 p-0">
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handlePrevYear} className="h-7 w-7 p-0">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="mx-2 text-sm font-medium flex-1 text-center">{currentYear}</span>
+          <Button variant="ghost" size="icon" onClick={handleNextYear} className="h-7 w-7 p-0">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleNextYears} className="h-7 w-7 p-0">
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
         </div>
         
         <div className="flex items-center justify-between mb-2">
           <Button variant="ghost" size="icon" onClick={handlePrevMonth} className="h-7 w-7 p-0">
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm font-medium">{monthNames[currentMonth]}</span>
+          <span className="text-sm font-medium flex-1 text-center">{monthNames[currentMonth]}</span>
           <Button variant="ghost" size="icon" onClick={handleNextMonth} className="h-7 w-7 p-0">
             <ChevronRight className="h-4 w-4" />
           </Button>

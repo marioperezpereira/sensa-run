@@ -93,28 +93,26 @@ export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
         <PopoverContent className="w-auto p-0" align="start">
           <div className="p-3 bg-white">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <Button variant="ghost" size="icon" onClick={handlePrevYears} className="h-7 w-7 p-0">
-                  <ChevronsLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handlePrevYear} className="h-7 w-7 p-0">
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="mx-2 text-sm font-medium">{currentYear}</span>
-                <Button variant="ghost" size="icon" onClick={handleNextYear} className="h-7 w-7 p-0">
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={handleNextYears} className="h-7 w-7 p-0">
-                  <ChevronsRight className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button variant="ghost" size="icon" onClick={handlePrevYears} className="h-7 w-7 p-0">
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={handlePrevYear} className="h-7 w-7 p-0">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium flex-1 text-center">{currentYear}</span>
+              <Button variant="ghost" size="icon" onClick={handleNextYear} className="h-7 w-7 p-0">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={handleNextYears} className="h-7 w-7 p-0">
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
             </div>
             
             <div className="flex items-center justify-between mb-2">
               <Button variant="ghost" size="icon" onClick={handlePrevMonth} className="h-7 w-7 p-0">
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm font-medium">{monthNames[currentMonth]}</span>
+              <span className="text-sm font-medium flex-1 text-center">{monthNames[currentMonth]}</span>
               <Button variant="ghost" size="icon" onClick={handleNextMonth} className="h-7 w-7 p-0">
                 <ChevronRight className="h-4 w-4" />
               </Button>
