@@ -40,39 +40,36 @@ export function generateSalt(size: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(size));
 }
 
-// Convert a PEM private key to a CryptoKey object
-async function importPrivateKey(vapidPrivateKey: string): Promise<CryptoKey> {
-  console.log('[Utils] Importing VAPID private key');
-  
-  // Convert the base64 private key to a Uint8Array
-  const privateKeyBytes = base64ToUint8Array(vapidPrivateKey);
+// Convert a base64 VAPID private key to a CryptoKey object for ES256 signing
+async function importVAPIDPrivateKey(vapidPrivateKey: string): Promise<CryptoKey> {
+  console.log('[Utils] Importing VAPID private key for ES256 signing');
   
   try {
-    // Import the private key as a CryptoKey
+    // Convert the base64 private key to a Uint8Array
+    const privateKeyBytes = base64ToUint8Array(vapidPrivateKey);
+    
+    // Import the private key in the correct format for ECDSA with P-256 curve
     return await crypto.subtle.importKey(
-      'pkcs8',
+      'pkcs8',      // PKCS#8 format for private keys
       privateKeyBytes,
       {
         name: 'ECDSA',
-        namedCurve: 'P-256'
+        namedCurve: 'P-256'  // Apple requires P-256 curve
       },
-      false,
-      ['sign']
+      false,  // Not extractable
+      ['sign'] // Only need signing capability
     );
   } catch (error) {
     console.error('[Utils] Error importing private key:', error);
-    throw new Error(`Failed to import private key: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Failed to import VAPID private key: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
-// Generate a JWT for Apple Web Push
+// Generate a JWT for Web Push (especially for Apple)
 export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: string, vapidPublicKey: string): Promise<string> {
-  console.log('[Utils] Generating Apple JWT with proper ES256 signing');
+  console.log('[Utils] Generating Apple JWT with ES256 signing');
   
-  // Ensure raw subject is logged before any processing
-  console.log('[Utils] Raw VAPID subject before formatting:', vapidSubject);
-  
-  // Remove whitespace from subject
+  // Ensure raw subject is properly formatted
   let formattedSubject = vapidSubject.trim();
   
   // Validate subject is provided
@@ -80,7 +77,7 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
     throw new Error('VAPID subject is required');
   }
   
-  // Don't modify a subject that already has mailto: or http:// or https://
+  // Ensure subject has proper format (mailto: or https://)
   if (!formattedSubject.startsWith('mailto:') && 
       !formattedSubject.startsWith('http://') && 
       !formattedSubject.startsWith('https://')) {
@@ -88,80 +85,70 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
     // If it has an @ sign, assume it's an email and add mailto:
     if (formattedSubject.includes('@')) {
       formattedSubject = `mailto:${formattedSubject}`;
-      console.log('[Utils] Formatted as mailto:', formattedSubject);
     } else if (formattedSubject.includes('.')) {
       // If it has a dot, assume it's a domain and add https://
       formattedSubject = `https://${formattedSubject}`;
-      console.log('[Utils] Formatted as https URL:', formattedSubject);
     } else {
       throw new Error('VAPID subject must be a valid email or URL');
     }
   }
   
-  // Current time and expiration time (10 minutes from now, not more than 24h)
-  // A shorter expiration time helps ensure the token is valid
-  const currentTime = Math.floor(Date.now() / 1000);
-  const expirationTime = currentTime + (10 * 60); // 10 minutes
+  console.log('[Utils] Using formatted subject:', formattedSubject);
   
-  // Create header and payload with the right claims
+  // Create header with ES256 algorithm
   const header = {
-    alg: 'ES256',
-    typ: 'JWT'
+    typ: 'JWT',
+    alg: 'ES256' // Apple specifically requires ES256 algorithm
   };
   
-  // The payload must include iss (subject), iat (issued at) and exp (expiration)
-  // The payload should NOT include an aud (audience) claim - this is taken from the request URL
+  // Current time and expiration time (exactly 1 hour - Apple is strict about this)
+  const currentTime = Math.floor(Date.now() / 1000);
+  const expirationTime = currentTime + 3600; // 1 hour
+  
+  // Create the payload with the correct claims
   const payload = {
     iss: formattedSubject,
     iat: currentTime,
     exp: expirationTime
   };
   
-  // Log the exact values being used
   console.log('[Utils] JWT Header:', JSON.stringify(header));
-  console.log('[Utils] JWT Payload:', JSON.stringify(payload, null, 2));
-  console.log('[Utils] JWT Subject used in payload:', formattedSubject);
-  console.log('[Utils] JWT Current time:', currentTime, new Date(currentTime * 1000).toISOString());
-  console.log('[Utils] JWT Expiration:', expirationTime, new Date(expirationTime * 1000).toISOString());
+  console.log('[Utils] JWT Payload:', JSON.stringify(payload));
   
   // Encode header and payload to base64url
   const encoder = new TextEncoder();
-  const headerBuffer = encoder.encode(JSON.stringify(header));
-  const payloadBuffer = encoder.encode(JSON.stringify(payload));
-  
-  const headerBase64 = uint8ArrayToBase64Url(new Uint8Array(headerBuffer));
-  const payloadBase64 = uint8ArrayToBase64Url(new Uint8Array(payloadBuffer));
+  const headerBase64 = uint8ArrayToBase64Url(encoder.encode(JSON.stringify(header)));
+  const payloadBase64 = uint8ArrayToBase64Url(encoder.encode(JSON.stringify(payload)));
   
   // Create the unsigned token
   const unsignedToken = `${headerBase64}.${payloadBase64}`;
-  console.log('[Utils] Created unsigned token part of JWT:', unsignedToken);
+  console.log('[Utils] Unsigned token created:', unsignedToken);
   
   try {
-    // Import the private key
-    const privateKey = await importPrivateKey(vapidPrivateKey);
-    console.log('[Utils] Private key imported successfully');
+    // Import the private key in the correct format for ES256
+    const privateKey = await importVAPIDPrivateKey(vapidPrivateKey);
+    console.log('[Utils] Private key imported successfully for ES256');
     
-    // Convert the unsigned token to an ArrayBuffer for signing
-    const unsignedTokenBuffer = encoder.encode(unsignedToken);
-    
-    // Sign the token using ES256
+    // Sign the token with ES256
     const signatureArrayBuffer = await crypto.subtle.sign(
-      { name: 'ECDSA', hash: { name: 'SHA-256' } },
+      {
+        name: 'ECDSA',
+        hash: { name: 'SHA-256' }
+      },
       privateKey,
-      unsignedTokenBuffer
+      encoder.encode(unsignedToken)
     );
     
-    // Convert the signature to a base64url string
+    // Convert the signature to base64url
     const signatureBase64 = uint8ArrayToBase64Url(new Uint8Array(signatureArrayBuffer));
-    console.log('[Utils] Generated signature with proper ES256 signing');
     
     // Return the complete JWT
     const jwt = `${unsignedToken}.${signatureBase64}`;
-    console.log('[Utils] Final JWT token length:', jwt.length);
+    console.log('[Utils] JWT token generated with ES256 signature, length:', jwt.length);
     
     return jwt;
   } catch (error) {
     console.error('[Utils] Error generating JWT signature:', error);
-    throw new Error(`Failed to sign JWT: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`Failed to sign JWT token: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

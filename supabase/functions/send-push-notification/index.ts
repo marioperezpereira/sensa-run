@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { base64ToUint8Array, uint8ArrayToBase64Url, generateAppleJWT } from './utils.ts'
@@ -37,7 +36,8 @@ serve(async (req) => {
       throw new Error('VAPID configuration missing');
     }
 
-    console.log(`[PushNotification] VAPID details - Subject: ${vapidSubject}, Public key exists: ${!!vapidPublicKey}, Private key exists: ${!!vapidPrivateKey}`);
+    console.log(`[PushNotification] VAPID details - Subject: ${vapidSubject}`);
+    console.log(`[PushNotification] Public key exists: ${!!vapidPublicKey}, Private key exists: ${!!vapidPrivateKey}`);
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
     
@@ -174,9 +174,8 @@ serve(async (req) => {
         if (subscription.endpoint.includes('web.push.apple.com')) {
           try {
             console.log('[PushNotification] Detected Apple Web Push endpoint');
-            console.log('[PushNotification] Raw VAPID Subject:', vapidSubject);
             
-            // Generate JWT token for Apple Web Push
+            // Generate JWT token for Apple Web Push using the updated function
             const jwt = await generateAppleJWT(vapidSubject, vapidPrivateKey, vapidPublicKey);
             console.log('[PushNotification] Generated JWT for Apple Web Push (length):', jwt.length);
             
@@ -191,15 +190,16 @@ serve(async (req) => {
               }
             });
             
-            // Ensure all required headers are present
+            // Ensure all required headers are present for Apple Web Push
             const appleHeaders = {
               'Content-Type': 'application/json',
               'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
               'Content-Length': `${applePayload.length}`,
               'TTL': '2419200',
-              'Topic': 'web.push',  // Apple requires this to be 'web.push'
+              'Topic': 'web.push',  // Apple requires this to be exactly 'web.push'
               'apns-priority': '10', // High priority
-              'apns-push-type': 'alert' // Required for Safari 16+
+              'apns-push-type': 'alert',  // Required for Safari 16+
+              'apns-expiration': '0'  // '0' means the notification won't expire
             };
             
             console.log('[PushNotification] Apple Web Push Request Headers:', 
@@ -242,7 +242,9 @@ serve(async (req) => {
               
               // Check for specific error codes and give more helpful messages
               if (appleResponse.status === 403) {
-                errorDetails = `BadJwtToken: ${appleResponseText} - Check: 1) VAPID key format (base64), 2) Subject format "${vapidSubject}", 3) ES256 signing`;
+                errorDetails = `BadJwtToken: ${appleResponseText} - Likely causes: 1) Incorrect VAPID key format, 2) JWT signing issue, 3) Expired token`;
+                // Add more detailed debugging info for BadJwtToken error
+                console.error(`[PushNotification] JWT Error Details: Subject: "${vapidSubject}", JWT Length: ${jwt.length}, Formatted Subject Used: "${formattedSubject}"`);
               } else if (appleResponse.status === 404) {
                 errorDetails = `Subscription not found: ${appleResponseText} - Device may have unsubscribed`;
               } else if (appleResponse.status === 400) {
@@ -257,8 +259,7 @@ serve(async (req) => {
                 error: `Apple Web Push error: ${appleResponse.status} ${errorDetails}`,
                 endpoint: subscription.endpoint,
                 method: 'apple',
-                status: appleResponse.status,
-                jwt_length: jwt.length // Log JWT length for debugging
+                status: appleResponse.status
               });
             }
             

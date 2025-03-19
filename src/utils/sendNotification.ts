@@ -139,3 +139,65 @@ export async function checkAndSaveExistingSubscription() {
     return null;
   }
 }
+
+/**
+ * Sends a push notification to a specific device using its subscription
+ * Useful for testing specific browsers or devices
+ * @param subscription The push subscription object
+ * @param title Notification title
+ * @param message Notification message 
+ * @param url Optional URL to open when clicked
+ * @returns Promise that resolves with the result
+ */
+export async function sendNotificationToDevice(
+  subscription: PushSubscription,
+  title: string,
+  message: string,
+  url?: string
+) {
+  try {
+    console.log('[SendNotification] Sending notification to specific device');
+    toast.info("Enviando notificación al dispositivo...");
+    
+    // Call our Supabase Edge Function with the specific subscription
+    const { data, error } = await supabase.functions.invoke('send-push-notification', {
+      body: {
+        specific_subscription: JSON.parse(JSON.stringify(subscription)),
+        title,
+        message,
+        url
+      }
+    });
+    
+    if (error) {
+      console.error('[SendNotification] Error invoking function:', error);
+      toast.error(`Error al enviar la notificación: ${error.message}`);
+      return { success: false, error };
+    }
+    
+    console.log('[SendNotification] Push notification result:', data);
+    
+    if (data.success) {
+      toast.success("Notificación enviada correctamente");
+      return data;
+    } else {
+      let errorMessage = data.error || "Error al enviar la notificación";
+      if (data.results && Array.isArray(data.results)) {
+        const errors = data.results
+          .filter(r => !r.success && r.error)
+          .map(r => r.error);
+          
+        if (errors.length > 0) {
+          errorMessage = errors.join(', ');
+        }
+      }
+      
+      toast.error(errorMessage);
+      return data;
+    }
+  } catch (err) {
+    console.error('[SendNotification] Exception sending notification:', err);
+    toast.error("Error al enviar la notificación");
+    return { success: false, error: err };
+  }
+}
