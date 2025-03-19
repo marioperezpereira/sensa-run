@@ -92,6 +92,7 @@ export async function generateWebPushJWT(vapidSubject: string): Promise<{ jwt: s
     
     // Create payload
     const payload = {
+      aud: 'https://web.push.apple.com',  // Specifically for Apple Web Push
       iss: vapidSubject,
       iat: currentTime,
       exp: expirationTime

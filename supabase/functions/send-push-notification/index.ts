@@ -175,7 +175,7 @@ serve(async (req) => {
           try {
             console.log('[PushNotification] Detected Apple Web Push endpoint');
             
-            // Generate fresh JWT and keys for this request
+            // Generate fresh JWT and keys for this request - with specific audience for Apple
             const { jwt, publicKeyBase64 } = await generateWebPushJWT(vapidSubject);
             console.log('[PushNotification] Generated JWT for Apple Web Push (length):', jwt.length);
             console.log('[PushNotification] Using fresh public key (length):', publicKeyBase64.length);

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export async function registerPushNotifications() {
@@ -34,8 +33,25 @@ export async function registerPushNotifications() {
     let subscription = await registration.pushManager.getSubscription();
     if (subscription) {
       console.log('[Notifications] Existing push subscription found:', subscription);
-      await savePushSubscription(subscription);
-      return subscription;
+      
+      // Test the existing subscription to make sure it's valid
+      try {
+        const isValid = await testSubscription(subscription);
+        if (isValid) {
+          await savePushSubscription(subscription);
+          return subscription;
+        } else {
+          console.log('[Notifications] Existing subscription is invalid, will create a new one');
+          await subscription.unsubscribe();
+        }
+      } catch (error) {
+        console.error('[Notifications] Error testing existing subscription:', error);
+        try {
+          await subscription.unsubscribe();
+        } catch (unsubError) {
+          console.error('[Notifications] Error unsubscribing:', unsubError);
+        }
+      }
     }
 
     // Get VAPID public key from backend
@@ -64,6 +80,14 @@ export async function registerPushNotifications() {
       
       console.log('[Notifications] Push notification subscription created:', subscription);
       
+      // Test the new subscription to make sure it's valid
+      const isValid = await testSubscription(subscription);
+      if (!isValid) {
+        console.error('[Notifications] New subscription failed validation');
+        await subscription.unsubscribe();
+        return null;
+      }
+      
       // Save the subscription to the database
       await savePushSubscription(subscription);
       
@@ -79,6 +103,48 @@ export async function registerPushNotifications() {
   } catch (err) {
     console.error('[Notifications] Error setting up push notifications:', err);
     return null;
+  }
+}
+
+// Test if a subscription is valid by checking its properties
+async function testSubscription(subscription: PushSubscription): Promise<boolean> {
+  try {
+    console.log("[Notifications] Testing subscription validity");
+    
+    // Check if subscription has required properties
+    if (!subscription.endpoint) {
+      console.error("[Notifications] Invalid subscription: Missing endpoint");
+      return false;
+    }
+    
+    // Check if keys are present for Web Push
+    const subscriptionJSON = JSON.parse(JSON.stringify(subscription));
+    if (!subscriptionJSON.keys || !subscriptionJSON.keys.p256dh || !subscriptionJSON.keys.auth) {
+      console.error("[Notifications] Invalid subscription: Missing required encryption keys");
+      return false;
+    }
+    
+    // Additional test - obtain subscription again to see if it's still valid
+    try {
+      // For more thorough validation, we could send a test notification here
+      // but we'll keep it simple to avoid too many network requests
+      const registration = await navigator.serviceWorker.ready;
+      const currentSub = await registration.pushManager.getSubscription();
+      
+      if (!currentSub || currentSub.endpoint !== subscription.endpoint) {
+        console.error("[Notifications] Subscription validation failed: Current subscription doesn't match");
+        return false;
+      }
+    } catch (error) {
+      console.error("[Notifications] Error during subscription validation:", error);
+      return false;
+    }
+    
+    console.log("[Notifications] Subscription appears valid");
+    return true;
+  } catch (error) {
+    console.error("[Notifications] Error testing subscription:", error);
+    return false;
   }
 }
 
