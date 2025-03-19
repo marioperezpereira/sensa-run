@@ -125,7 +125,13 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
         
         if (subscription) {
           // Unsubscribe from push notifications
-          await subscription.unsubscribe();
+          const successful = await subscription.unsubscribe();
+          
+          if (!successful) {
+            throw new Error("Failed to unsubscribe from push notifications");
+          }
+          
+          console.log('Successfully unsubscribed from push notifications');
           
           // Remove subscription from database if user is logged in
           if (userId) {
@@ -134,6 +140,8 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
               .delete()
               .eq('user_id', userId)
               .eq('endpoint', subscription.endpoint);
+            
+            console.log('Successfully removed subscription from database');
           }
           
           toast({
@@ -143,11 +151,18 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
           
           setNotificationsActive(false);
         } else {
+          console.log('No active subscription found to disable');
           toast({
             title: "No hay notificaciones activas",
             description: "No se encontraron notificaciones activas para desactivar",
           });
+          setNotificationsActive(false);
         }
+      } else {
+        toast({
+          title: "No soportado",
+          description: "Tu navegador no soporta notificaciones push",
+        });
       }
     } catch (error) {
       console.error('Error disabling notifications:', error);
