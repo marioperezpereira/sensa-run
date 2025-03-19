@@ -1,9 +1,9 @@
 
 import { DISTANCE_MAPPINGS } from './types';
-import { iaafScoringTables } from './scoring-tables';
+import { iaafCoefficients } from './coefficients';
 
 /**
- * Calculate IAAF points for a race result
+ * Calculate IAAF points for a race result using the quadratic formula approach
  * 
  * @param distance - Race distance (e.g., "5K", "10K", "Half Marathon", "Marathon")
  * @param hours - Hours component of the time
@@ -21,58 +21,24 @@ export const calculateIAAFPoints = (
 ): number => {
   const totalSeconds = hours * 3600 + minutes * 60 + seconds;
   
-  // Map the distance to the corresponding key in the scoring table
+  // Map the distance to the corresponding key in the coefficients table
   const mappedDistance = DISTANCE_MAPPINGS[distance];
   if (!mappedDistance) {
     return 0; // Return 0 if the distance is not recognized
   }
   
-  // Get the scoring table for the gender and distance
-  const scoringTable = iaafScoringTables[gender][mappedDistance];
-  if (!scoringTable) {
-    return 0; // Return 0 if the scoring table is not found
+  // Get the coefficients for the gender and distance
+  const coefficients = iaafCoefficients[gender][mappedDistance];
+  if (!coefficients) {
+    return 0; // Return 0 if the coefficients are not found
   }
   
-  // Find the points by comparing the time with the scoring table entries
-  // If the time is less than the fastest time in the table, return the highest score
-  if (totalSeconds <= scoringTable[0].time) {
-    return scoringTable[0].score;
-  }
+  // Apply the quadratic formula: points = a*t² + b*t + c
+  // where t is the time in seconds, and a, b, c are the coefficients
+  const { a, b, c } = coefficients;
+  const points = a * Math.pow(totalSeconds, 2) + b * totalSeconds + c;
   
-  // If the time is greater than the slowest time in the table, calculate points below 500
-  const lastIndex = scoringTable.length - 1;
-  if (totalSeconds >= scoringTable[lastIndex].time) {
-    // Calculate how many seconds over the slowest time in the table
-    const secondsOver = totalSeconds - scoringTable[lastIndex].time;
-    
-    // Calculate the rate of decline based on the last two entries in the table
-    const secondLastIndex = lastIndex - 1;
-    const timeDiff = scoringTable[lastIndex].time - scoringTable[secondLastIndex].time;
-    const scoreDiff = scoringTable[secondLastIndex].score - scoringTable[lastIndex].score;
-    const pointsPerSecond = scoreDiff / timeDiff;
-    
-    // Apply the same rate of decline to calculate points below 500
-    const calculatedPoints = Math.max(0, scoringTable[lastIndex].score - (secondsOver * pointsPerSecond));
-    
-    return Math.floor(calculatedPoints); // Round down to be conservative
-  }
-  
-  // Find the two entries that bracket the time and interpolate
-  for (let i = 0; i < scoringTable.length - 1; i++) {
-    if (totalSeconds >= scoringTable[i].time && totalSeconds < scoringTable[i + 1].time) {
-      // Linear interpolation between the two scores
-      const lowerTime = scoringTable[i].time;
-      const upperTime = scoringTable[i + 1].time;
-      const lowerScore = scoringTable[i].score;
-      const upperScore = scoringTable[i + 1].score;
-      
-      // Calculate the interpolated score
-      const ratio = (totalSeconds - lowerTime) / (upperTime - lowerTime);
-      const interpolatedScore = lowerScore - ratio * (lowerScore - upperScore);
-      
-      return Math.floor(interpolatedScore); // Round down to be conservative
-    }
-  }
-  
-  return 0; // Fallback (should not reach here)
+  // Ensure points are not negative and round down to nearest integer
+  // As per IAAF standard, points are always rounded down
+  return Math.max(0, Math.floor(points * 100));
 };
