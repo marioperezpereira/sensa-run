@@ -197,16 +197,18 @@ serve(async (req) => {
               'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
               'Content-Length': `${applePayload.length}`,
               'TTL': '2419200',
-              'Topic': 'web.push',  // Required by Apple
+              'Topic': 'web.push',  // Apple requires this to be 'web.push'
               'apns-priority': '10', // High priority
               'apns-push-type': 'alert' // Required for Safari 16+
             };
             
-            console.log(`[PushNotification] Apple Web Push Request:
-              URL: ${subscription.endpoint}
-              Headers: ${JSON.stringify({...appleHeaders, 'Authorization': 'vapid t=[JWT_TOKEN_HIDDEN], k=[VAPID_KEY_HIDDEN]'})}
-              Payload: ${applePayload}
-            `);
+            console.log('[PushNotification] Apple Web Push Request Headers:', 
+              JSON.stringify({
+                ...appleHeaders, 
+                'Authorization': 'vapid t=[JWT_TOKEN_HIDDEN], k=[VAPID_KEY_HIDDEN]'
+              }, null, 2)
+            );
+            console.log('[PushNotification] Apple Web Push Payload:', applePayload);
             
             const appleResponse = await fetch(subscription.endpoint, {
               method: 'POST',
@@ -240,7 +242,7 @@ serve(async (req) => {
               
               // Check for specific error codes and give more helpful messages
               if (appleResponse.status === 403) {
-                errorDetails = `BadJwtToken: ${appleResponseText} - Check: 1) Subject format is correct (${vapidSubject}), 2) JWT expiration is valid, 3) VAPID key is correct`;
+                errorDetails = `BadJwtToken: ${appleResponseText} - Check: 1) VAPID key format (base64), 2) Subject format "${vapidSubject}", 3) ES256 signing`;
               } else if (appleResponse.status === 404) {
                 errorDetails = `Subscription not found: ${appleResponseText} - Device may have unsubscribed`;
               } else if (appleResponse.status === 400) {
@@ -256,7 +258,7 @@ serve(async (req) => {
                 endpoint: subscription.endpoint,
                 method: 'apple',
                 status: appleResponse.status,
-                jwt: jwt.substring(0, 20) + '...' // Log partial JWT for debugging
+                jwt_length: jwt.length // Log JWT length for debugging
               });
             }
             

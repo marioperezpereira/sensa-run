@@ -40,9 +40,34 @@ export function generateSalt(size: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(size));
 }
 
+// Convert a PEM private key to a CryptoKey object
+async function importPrivateKey(vapidPrivateKey: string): Promise<CryptoKey> {
+  console.log('[Utils] Importing VAPID private key');
+  
+  // Convert the base64 private key to a Uint8Array
+  const privateKeyBytes = base64ToUint8Array(vapidPrivateKey);
+  
+  try {
+    // Import the private key as a CryptoKey
+    return await crypto.subtle.importKey(
+      'pkcs8',
+      privateKeyBytes,
+      {
+        name: 'ECDSA',
+        namedCurve: 'P-256'
+      },
+      false,
+      ['sign']
+    );
+  } catch (error) {
+    console.error('[Utils] Error importing private key:', error);
+    throw new Error(`Failed to import private key: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 // Generate a JWT for Apple Web Push
 export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: string, vapidPublicKey: string): Promise<string> {
-  console.log('[Utils] Generating Apple JWT with proper validation');
+  console.log('[Utils] Generating Apple JWT with proper ES256 signing');
   
   // Ensure raw subject is logged before any processing
   console.log('[Utils] Raw VAPID subject before formatting:', vapidSubject);
@@ -94,43 +119,49 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
   
   // Log the exact values being used
   console.log('[Utils] JWT Header:', JSON.stringify(header));
-  console.log('[Utils] JWT Payload:', JSON.stringify(payload));
+  console.log('[Utils] JWT Payload:', JSON.stringify(payload, null, 2));
   console.log('[Utils] JWT Subject used in payload:', formattedSubject);
   console.log('[Utils] JWT Current time:', currentTime, new Date(currentTime * 1000).toISOString());
   console.log('[Utils] JWT Expiration:', expirationTime, new Date(expirationTime * 1000).toISOString());
   
   // Encode header and payload to base64url
-  const headerBase64 = btoa(JSON.stringify(header))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
+  const encoder = new TextEncoder();
+  const headerBuffer = encoder.encode(JSON.stringify(header));
+  const payloadBuffer = encoder.encode(JSON.stringify(payload));
   
-  const payloadBase64 = btoa(JSON.stringify(payload))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
+  const headerBase64 = uint8ArrayToBase64Url(new Uint8Array(headerBuffer));
+  const payloadBase64 = uint8ArrayToBase64Url(new Uint8Array(payloadBuffer));
   
   // Create the unsigned token
   const unsignedToken = `${headerBase64}.${payloadBase64}`;
+  console.log('[Utils] Created unsigned token part of JWT:', unsignedToken);
   
-  console.log('[Utils] Created JWT header and payload');
-  
-  // For now, continue with the deterministic signature approach for debugging
-  // In production, this should be replaced with proper ES256 signing
-  console.log('[Utils] Using deterministic signature for debugging');
-  
-  // Generate a deterministic signature based on the unsignedToken
-  const signatureText = `${unsignedToken}_signature_for_${formattedSubject}`;
-  const encoder = new TextEncoder();
-  const signatureBytes = encoder.encode(signatureText);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', signatureBytes);
-  const signatureArray = new Uint8Array(hashBuffer);
-  
-  // Convert the signature to base64url format
-  const signatureBase64Url = uint8ArrayToBase64Url(signatureArray);
-  
-  // Return the complete JWT
-  const jwt = `${unsignedToken}.${signatureBase64Url}`;
-  console.log('[Utils] Final JWT token length:', jwt.length);
-  return jwt;
+  try {
+    // Import the private key
+    const privateKey = await importPrivateKey(vapidPrivateKey);
+    console.log('[Utils] Private key imported successfully');
+    
+    // Convert the unsigned token to an ArrayBuffer for signing
+    const unsignedTokenBuffer = encoder.encode(unsignedToken);
+    
+    // Sign the token using ES256
+    const signatureArrayBuffer = await crypto.subtle.sign(
+      { name: 'ECDSA', hash: { name: 'SHA-256' } },
+      privateKey,
+      unsignedTokenBuffer
+    );
+    
+    // Convert the signature to a base64url string
+    const signatureBase64 = uint8ArrayToBase64Url(new Uint8Array(signatureArrayBuffer));
+    console.log('[Utils] Generated signature with proper ES256 signing');
+    
+    // Return the complete JWT
+    const jwt = `${unsignedToken}.${signatureBase64}`;
+    console.log('[Utils] Final JWT token length:', jwt.length);
+    
+    return jwt;
+  } catch (error) {
+    console.error('[Utils] Error generating JWT signature:', error);
+    throw new Error(`Failed to sign JWT: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
