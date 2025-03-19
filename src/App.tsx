@@ -14,30 +14,8 @@ import Profile from "./pages/Profile";
 import StravaCallback from "./pages/StravaCallback";
 import { Landing } from "./components/Landing";
 import Privacy from "./pages/Privacy";
-import { checkAndSaveExistingSubscription } from "./utils/sendNotification";
 
 const queryClient = new QueryClient();
-
-// Register service worker
-const registerServiceWorker = async () => {
-  if ('serviceWorker' in navigator) {
-    try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('ServiceWorker registration successful');
-      
-      // Once registered, check for existing push subscriptions
-      if (registration.active) {
-        checkAndSaveExistingSubscription();
-      }
-      
-      return registration;
-    } catch (error) {
-      console.error('ServiceWorker registration failed:', error);
-      return null;
-    }
-  }
-  return null;
-};
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -89,10 +67,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
-  useEffect(() => {
-    registerServiceWorker();
-  }, []);
-  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
