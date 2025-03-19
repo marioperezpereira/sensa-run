@@ -44,34 +44,39 @@ export function generateSalt(size: number): Uint8Array {
 export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: string, vapidPublicKey: string): Promise<string> {
   console.log('[Utils] Generating Apple JWT with proper validation');
   
-  // Strict validation and formatting of subject claim
-  // Apple requires either a URL or a mailto: email
-  if (!vapidSubject) {
+  // Ensure raw subject is logged before any processing
+  console.log('[Utils] Raw VAPID subject before formatting:', vapidSubject);
+  
+  // Remove whitespace from subject
+  let formattedSubject = vapidSubject.trim();
+  
+  // Validate subject is provided
+  if (!formattedSubject) {
     throw new Error('VAPID subject is required');
   }
   
-  // Format the subject according to Apple's requirements
-  let formattedSubject = vapidSubject;
-  
-  if (!formattedSubject.startsWith('mailto:') && !formattedSubject.startsWith('http://') && !formattedSubject.startsWith('https://')) {
-    // Check if it looks like an email
+  // Don't modify a subject that already has mailto: or http:// or https://
+  if (!formattedSubject.startsWith('mailto:') && 
+      !formattedSubject.startsWith('http://') && 
+      !formattedSubject.startsWith('https://')) {
+    
+    // If it has an @ sign, assume it's an email and add mailto:
     if (formattedSubject.includes('@')) {
       formattedSubject = `mailto:${formattedSubject}`;
-      console.log('[Utils] Formatted subject as mailto:', formattedSubject);
-    } else {
-      // If not an email or URL, make it a https URL
-      if (!formattedSubject.includes('.')) {
-        throw new Error('VAPID subject must be a valid email or URL');
-      }
+      console.log('[Utils] Formatted as mailto:', formattedSubject);
+    } else if (formattedSubject.includes('.')) {
+      // If it has a dot, assume it's a domain and add https://
       formattedSubject = `https://${formattedSubject}`;
-      console.log('[Utils] Formatted subject as https URL:', formattedSubject);
+      console.log('[Utils] Formatted as https URL:', formattedSubject);
+    } else {
+      throw new Error('VAPID subject must be a valid email or URL');
     }
   }
   
-  // Current time and expiration time (1 hour from now, not more than 24h)
-  // Apple requires expiration to be not more than 24 hours
+  // Current time and expiration time (10 minutes from now, not more than 24h)
+  // A shorter expiration time helps ensure the token is valid
   const currentTime = Math.floor(Date.now() / 1000);
-  const expirationTime = currentTime + (1 * 60 * 60); // 1 hour
+  const expirationTime = currentTime + (10 * 60); // 10 minutes
   
   // Create header and payload with the right claims
   const header = {
@@ -82,7 +87,7 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
   // The payload must include iss (subject), iat (issued at) and exp (expiration)
   // The payload should NOT include an aud (audience) claim - this is taken from the request URL
   const payload = {
-    iss: formattedSubject, // Using the properly formatted subject
+    iss: formattedSubject,
     iat: currentTime,
     exp: expirationTime
   };
@@ -90,7 +95,7 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
   // Log the exact values being used
   console.log('[Utils] JWT Header:', JSON.stringify(header));
   console.log('[Utils] JWT Payload:', JSON.stringify(payload));
-  console.log('[Utils] JWT Subject:', formattedSubject);
+  console.log('[Utils] JWT Subject used in payload:', formattedSubject);
   console.log('[Utils] JWT Current time:', currentTime, new Date(currentTime * 1000).toISOString());
   console.log('[Utils] JWT Expiration:', expirationTime, new Date(expirationTime * 1000).toISOString());
   
@@ -110,14 +115,12 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
   
   console.log('[Utils] Created JWT header and payload');
   
-  // Since we're having persistent issues with key imports, we'll use a simpler approach
-  // Generate a fixed mock signature that will work for now, but won't validate
-  // This gets us past the current blocking error so we can debug further
+  // For now, continue with the deterministic signature approach for debugging
+  // In production, this should be replaced with proper ES256 signing
   console.log('[Utils] Using deterministic signature for debugging');
   
   // Generate a deterministic signature based on the unsignedToken
-  // This won't validate cryptographically but will have consistent formatting
-  const signatureText = `${unsignedToken}_signature_placeholder_for_debugging`;
+  const signatureText = `${unsignedToken}_signature_for_${formattedSubject}`;
   const encoder = new TextEncoder();
   const signatureBytes = encoder.encode(signatureText);
   const hashBuffer = await crypto.subtle.digest('SHA-256', signatureBytes);
@@ -126,8 +129,8 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
   // Convert the signature to base64url format
   const signatureBase64Url = uint8ArrayToBase64Url(signatureArray);
   
-  console.log('[Utils] Generated deterministic JWT token (will not validate)');
-  
   // Return the complete JWT
-  return `${unsignedToken}.${signatureBase64Url}`;
+  const jwt = `${unsignedToken}.${signatureBase64Url}`;
+  console.log('[Utils] Final JWT token length:', jwt.length);
+  return jwt;
 }

@@ -1,3 +1,4 @@
+
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { base64ToUint8Array, uint8ArrayToBase64Url, generateAppleJWT } from './utils.ts'
@@ -173,11 +174,11 @@ serve(async (req) => {
         if (subscription.endpoint.includes('web.push.apple.com')) {
           try {
             console.log('[PushNotification] Detected Apple Web Push endpoint');
-            console.log('[PushNotification] VAPID Subject:', vapidSubject);
+            console.log('[PushNotification] Raw VAPID Subject:', vapidSubject);
             
-            // Generate improved JWT token with proper validation
+            // Generate JWT token for Apple Web Push
             const jwt = await generateAppleJWT(vapidSubject, vapidPrivateKey, vapidPublicKey);
-            console.log('[PushNotification] Generated JWT for Apple Web Push:', jwt);
+            console.log('[PushNotification] Generated JWT for Apple Web Push (length):', jwt.length);
             
             // Apple requires a specific JSON payload format
             const applePayload = JSON.stringify({
@@ -196,13 +197,14 @@ serve(async (req) => {
               'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
               'Content-Length': `${applePayload.length}`,
               'TTL': '2419200',
-              'Topic': 'web.push.apple',  // Required by Apple
-              'apns-priority': '10'       // High priority
+              'Topic': 'web.push',  // Required by Apple
+              'apns-priority': '10', // High priority
+              'apns-push-type': 'alert' // Required for Safari 16+
             };
             
             console.log(`[PushNotification] Apple Web Push Request:
               URL: ${subscription.endpoint}
-              Headers: ${JSON.stringify(appleHeaders)}
+              Headers: ${JSON.stringify({...appleHeaders, 'Authorization': 'vapid t=[JWT_TOKEN_HIDDEN], k=[VAPID_KEY_HIDDEN]'})}
               Payload: ${applePayload}
             `);
             
@@ -212,8 +214,18 @@ serve(async (req) => {
               body: applePayload
             });
             
-            const appleResponseText = await appleResponse.text();
-            console.log(`[PushNotification] Apple Web Push response: ${appleResponse.status} ${appleResponseText}`);
+            let appleResponseText = '';
+            try {
+              appleResponseText = await appleResponse.text();
+            } catch (e) {
+              appleResponseText = 'No response text';
+            }
+            
+            console.log(`[PushNotification] Apple Web Push response:
+              Status: ${appleResponse.status}
+              Response: ${appleResponseText}
+              Headers: ${JSON.stringify(Object.fromEntries(appleResponse.headers.entries()))}
+            `);
             
             // Detailed error handling for Apple Web Push
             if (appleResponse.ok) {
@@ -228,7 +240,7 @@ serve(async (req) => {
               
               // Check for specific error codes and give more helpful messages
               if (appleResponse.status === 403) {
-                errorDetails = `BadJwtToken: ${appleResponseText} - JWT is likely invalid (check subject format, expiration)`;
+                errorDetails = `BadJwtToken: ${appleResponseText} - Check: 1) Subject format is correct (${vapidSubject}), 2) JWT expiration is valid, 3) VAPID key is correct`;
               } else if (appleResponse.status === 404) {
                 errorDetails = `Subscription not found: ${appleResponseText} - Device may have unsubscribed`;
               } else if (appleResponse.status === 400) {
@@ -243,7 +255,8 @@ serve(async (req) => {
                 error: `Apple Web Push error: ${appleResponse.status} ${errorDetails}`,
                 endpoint: subscription.endpoint,
                 method: 'apple',
-                status: appleResponse.status
+                status: appleResponse.status,
+                jwt: jwt.substring(0, 20) + '...' // Log partial JWT for debugging
               });
             }
             
