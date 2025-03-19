@@ -36,6 +36,7 @@ serve(async (req) => {
     const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
     const vapidSubject = Deno.env.get('VAPID_SUBJECT');
+    const fcmServerKey = Deno.env.get('FCM_SERVER_KEY');
 
     if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
       throw new Error('VAPID configuration missing');
@@ -124,82 +125,166 @@ serve(async (req) => {
         console.log(`[PushNotification] Sending notification to endpoint: ${subscription.endpoint}`);
         
         try {
-          // Use simplified payload for now - we're skipping encryption
-          // In a production environment, you would properly encrypt this
-          const simplified = true;
-          
-          if (simplified) {
-            // Send a simplified request without proper encryption
-            // This is just for testing and development
-            const notificationData = {
-              endpoint: subscription.endpoint,
-              keys: subscription.keys,
-              payload: {
+          // Check if this is an FCM endpoint
+          if (subscription.endpoint.includes('fcm.googleapis.com/fcm/send/')) {
+            // For FCM endpoints, we need to extract the FCM token
+            const fcmToken = subscription.endpoint.split('fcm.googleapis.com/fcm/send/')[1];
+            console.log(`[PushNotification] FCM token extracted: ${fcmToken}`);
+            
+            if (!fcmServerKey) {
+              console.error('[PushNotification] FCM_SERVER_KEY not configured');
+              results.push({
+                success: false,
+                error: 'FCM_SERVER_KEY not configured',
+                endpoint: subscription.endpoint
+              });
+              continue;
+            }
+            
+            const fcmResult = await fetch('https://fcm.googleapis.com/fcm/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `key=${fcmServerKey}`
+              },
+              body: JSON.stringify({
+                to: fcmToken,
                 notification: {
                   title: title || 'Sensa.run',
                   body: message || 'Tienes una notificación nueva',
                   icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
-                  click_action: url || '/',
-                  data: {
-                    url: url || '/'
-                  }
+                  click_action: url || '/'
+                },
+                data: {
+                  url: url || '/'
                 }
-              }
+              })
+            });
+            
+            const responseText = await fcmResult.text();
+            console.log(`[PushNotification] FCM response: ${fcmResult.status} ${responseText}`);
+            
+            if (fcmResult.ok) {
+              results.push({ 
+                success: true, 
+                endpoint: subscription.endpoint,
+                provider: 'fcm'
+              });
+            } else {
+              results.push({ 
+                success: false, 
+                error: `FCM error: ${fcmResult.status} ${responseText}`,
+                endpoint: subscription.endpoint
+              });
+            }
+            continue;
+          }
+          
+          // Check if this is an Apple push endpoint
+          if (subscription.endpoint.includes('web.push.apple.com')) {
+            // For Apple Web Push API, we need proper VAPID JWT authentication
+            
+            // Create the VAPID JWT token
+            // Generate a JWT token expiring in 12 hours
+            const now = Math.floor(Date.now() / 1000);
+            const expiresAt = now + 12 * 60 * 60; // 12 hours
+            
+            // Create the JWT header
+            const jwtHeader = {
+              typ: "JWT",
+              alg: "ES256"
             };
             
-            // For FCM endpoints, we need to extract the FCM token
-            let isFCM = false;
-            let fcmToken = '';
+            // Create the JWT payload
+            const jwtPayload = {
+              aud: new URL(subscription.endpoint).origin,
+              exp: expiresAt,
+              sub: vapidSubject
+            };
             
-            if (subscription.endpoint.includes('fcm.googleapis.com/fcm/send/')) {
-              isFCM = true;
-              fcmToken = subscription.endpoint.split('fcm.googleapis.com/fcm/send/')[1];
-              console.log(`[PushNotification] FCM token extracted: ${fcmToken}`);
-            }
+            // Encode the JWT header and payload
+            const encodeBase64Url = (input: string): string => {
+              return btoa(input)
+                .replace(/=/g, '')
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_');
+            };
             
-            // For FCM, we can try a direct approach
-            if (isFCM) {
-              const result = await fetch('https://fcm.googleapis.com/fcm/send', {
+            const encodedHeader = encodeBase64Url(JSON.stringify(jwtHeader));
+            const encodedPayload = encodeBase64Url(JSON.stringify(jwtPayload));
+            const unsignedToken = `${encodedHeader}.${encodedPayload}`;
+            
+            try {
+              // Format the VAPID private key
+              const privateKeyBuffer = formatVapidKey(vapidPrivateKey);
+              
+              // Import the key
+              const privateKey = await crypto.subtle.importKey(
+                'pkcs8',
+                privateKeyBuffer,
+                {
+                  name: 'ECDSA',
+                  namedCurve: 'P-256',
+                },
+                false,
+                ['sign']
+              );
+              
+              // Sign the token
+              const encoder = new TextEncoder();
+              const signatureBuffer = await crypto.subtle.sign(
+                { name: 'ECDSA', hash: { name: 'SHA-256' } },
+                privateKey,
+                encoder.encode(unsignedToken)
+              );
+              
+              // Convert the signature to base64url
+              const signature = uint8ArrayToBase64Url(new Uint8Array(signatureBuffer));
+              
+              // Create the complete JWT token
+              const jwtToken = `${unsignedToken}.${signature}`;
+              
+              // Send the push notification with the proper headers
+              const response = await fetch(subscription.endpoint, {
                 method: 'POST',
                 headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `key=${Deno.env.get('FCM_SERVER_KEY')}`
+                  'TTL': '86400',
+                  'Content-Encoding': 'aes128gcm',
+                  'Content-Type': 'application/octet-stream',
+                  'Authorization': `vapid t=${jwtToken}, k=${vapidPublicKey}`
                 },
-                body: JSON.stringify({
-                  to: fcmToken,
-                  notification: {
-                    title: title || 'Sensa.run',
-                    body: message || 'Tienes una notificación nueva',
-                    icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
-                    click_action: url || '/'
-                  },
-                  data: {
-                    url: url || '/'
-                  }
-                })
+                body: payload
               });
               
-              const responseText = await result.text();
-              console.log(`[PushNotification] FCM response: ${result.status} ${responseText}`);
+              const responseText = await response.text();
+              console.log(`[PushNotification] Apple Web Push response: ${response.status} ${responseText}`);
               
-              if (result.ok) {
+              if (response.ok) {
                 results.push({ 
-                  success: true, 
+                  success: true,
                   endpoint: subscription.endpoint,
-                  simplified: true
+                  provider: 'apple' 
                 });
               } else {
                 results.push({ 
                   success: false, 
-                  error: `FCM error: ${result.status} ${responseText}`,
-                  endpoint: subscription.endpoint
+                  error: `Apple Web Push error: ${response.status} ${responseText}`,
+                  endpoint: subscription.endpoint 
                 });
               }
-              continue;
+            } catch (error) {
+              console.error('[PushNotification] Error with Apple Web Push:', error);
+              results.push({
+                success: false,
+                error: `Apple Web Push error: ${error instanceof Error ? error.message : String(error)}`,
+                endpoint: subscription.endpoint
+              });
             }
+            continue;
           }
           
-          // Send standard web push notification
+          // For all other Push Service endpoints (Firefox, etc.)
+          // Use a simple approach for now
           const result = await fetch(subscription.endpoint, {
             method: 'POST',
             headers: {
@@ -213,6 +298,7 @@ serve(async (req) => {
             results.push({ 
               success: true, 
               endpoint: subscription.endpoint,
+              provider: 'standard'
             });
           } else {
             const statusCode = result.status;
@@ -235,7 +321,7 @@ serve(async (req) => {
               success: false, 
               error: errorMessage,
               status: statusCode,
-              endpoint: subscription.endpoint
+              endpoint: subscription.endpoint 
             });
           }
         } catch (pushError) {
@@ -244,7 +330,7 @@ serve(async (req) => {
           results.push({ 
             success: false, 
             error: pushError instanceof Error ? pushError.message : String(pushError),
-            endpoint: subscription.endpoint
+            endpoint: subscription.endpoint 
           });
         }
       } catch (error) {
