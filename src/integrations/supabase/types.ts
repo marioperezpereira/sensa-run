@@ -102,6 +102,42 @@ export type Database = {
         }
         Relationships: []
       }
+      race_results: {
+        Row: {
+          created_at: string
+          distance: Database["public"]["Enums"]["pb_race_distance"]
+          hours: number
+          id: string
+          minutes: number
+          race_date: string
+          seconds: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          distance: Database["public"]["Enums"]["pb_race_distance"]
+          hours?: number
+          id?: string
+          minutes?: number
+          race_date: string
+          seconds?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          distance?: Database["public"]["Enums"]["pb_race_distance"]
+          hours?: number
+          id?: string
+          minutes?: number
+          race_date?: string
+          seconds?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       strava_tokens: {
         Row: {
           athlete_id: string
@@ -198,14 +234,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_pb_profiles: {
+        Row: {
+          created_at: string
+          date_of_birth: string
+          gender: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth: string
+          gender: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string
+          gender?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_email: {
+        Args: {
+          email: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      pb_race_distance: "5K" | "10K" | "Half Marathon" | "Marathon"
       race_distance: "5K" | "10K" | "Media maratón" | "Maratón"
     }
     CompositeTypes: {

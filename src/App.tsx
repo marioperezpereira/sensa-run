@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import StravaCallback from "./pages/StravaCallback";
 import { Landing } from "./components/Landing";
 import Privacy from "./pages/Privacy";
+import PersonalBests from "./pages/PersonalBests";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/personal-bests"
+              element={
+                <ProtectedRoute>
+                  <PersonalBests />
                 </ProtectedRoute>
               }
             />
