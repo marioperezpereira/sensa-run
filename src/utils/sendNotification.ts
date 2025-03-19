@@ -23,14 +23,14 @@ export async function sendNotificationToUser(
     toast.info("Enviando notificación...");
     
     // Call our Supabase Edge Function to send the push notification
-    const { data, error } = await supabase.functions.invoke('send-push-notification', {
+    const { data, error, status } = await supabase.functions.invoke('send-push-notification', {
       body: { user_id: userId, title, message, url }
     });
     
     if (error) {
-      console.error('[SendNotification] Error invoking function:', error);
-      toast.error("Error al enviar la notificación");
-      return { success: false, error };
+      console.error('[SendNotification] Error invoking function:', error, 'Status:', status);
+      toast.error(`Error al enviar la notificación: ${error.message}`);
+      return { success: false, error, status };
     }
     
     console.log('[SendNotification] Push notification result:', data);

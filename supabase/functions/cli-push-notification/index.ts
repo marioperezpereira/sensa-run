@@ -106,15 +106,13 @@ serve(async (req) => {
           continue;
         }
 
-        // Now we actually send the notification to the browser
-        // We'll do this by making a POST request to the browser's push service endpoint
-        const pushSubscription = subscription;
-        const payload = JSON.stringify(notificationPayload);
-        
-        console.log(`[CLI-PushNotification] Sending push notification to endpoint: ${subscription.endpoint}`);
+        // Log subscription details for debugging
+        console.log(`[CLI-PushNotification] Processing subscription with endpoint: ${subscription.endpoint}`);
+        console.log(`[CLI-PushNotification] Subscription has keys: ${!!subscription.keys}, p256dh: ${!!subscription.keys?.p256dh}, auth: ${!!subscription.keys?.auth}`);
         
         // Use the send-push-notification function to actually send the push
-        // since it's set up to interact with the browser push service
+        console.log(`[CLI-PushNotification] Sending push notification to endpoint via send-push-notification function`);
+        
         const sendResult = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
           method: 'POST',
           headers: {
@@ -122,28 +120,47 @@ serve(async (req) => {
             'Authorization': `Bearer ${supabaseServiceRoleKey}`
           },
           body: JSON.stringify({
-            user_id: targetUserId,
+            specific_subscription: subscription,
             title: notificationPayload.title,
             message: notificationPayload.body,
-            url: notificationPayload.url,
-            specific_subscription: pushSubscription
+            url: notificationPayload.url
           })
         });
 
+        const responseText = await sendResult.text();
+        console.log(`[CLI-PushNotification] Response status: ${sendResult.status}, Response body:`, responseText);
+        
+        let responseData;
+        try {
+          responseData = JSON.parse(responseText);
+        } catch (e) {
+          responseData = { success: false, error: `Invalid JSON response: ${responseText}` };
+        }
+
         if (!sendResult.ok) {
-          const errorData = await sendResult.json();
           results.push({
             success: false,
             endpoint: subscription.endpoint,
-            error: errorData.error || `Failed to send notification: ${sendResult.status}`
+            status: sendResult.status,
+            error: responseData.error || `Failed with status: ${sendResult.status}`
           });
         } else {
-          results.push({
-            success: true,
-            endpoint: subscription.endpoint,
-          });
+          if (responseData.success) {
+            results.push({
+              success: true,
+              endpoint: subscription.endpoint,
+            });
+          } else {
+            // Potentially successful HTTP status but application-level failure
+            results.push({
+              success: false,
+              endpoint: subscription.endpoint,
+              error: responseData.error || 'Unknown error in notification service'
+            });
+          }
         }
       } catch (error) {
+        console.error(`[CLI-PushNotification] Error processing subscription:`, error);
         results.push({ 
           success: false, 
           error: error instanceof Error ? error.message : String(error),

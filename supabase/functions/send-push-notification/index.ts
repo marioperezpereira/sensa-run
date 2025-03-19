@@ -41,12 +41,20 @@ serve(async (req) => {
       throw new Error('VAPID configuration missing');
     }
 
-    // Setup web-push with VAPID details
-    webpush.setVapidDetails(
-      vapidSubject,
-      vapidPublicKey,
-      vapidPrivateKey
-    );
+    console.log(`[PushNotification] VAPID details - Subject: ${vapidSubject}, Public key exists: ${!!vapidPublicKey}, Private key exists: ${!!vapidPrivateKey}`);
+
+    try {
+      // Setup web-push with VAPID details
+      webpush.setVapidDetails(
+        vapidSubject,
+        vapidPublicKey,
+        vapidPrivateKey
+      );
+      console.log(`[PushNotification] Successfully set VAPID details`);
+    } catch (vapidError) {
+      console.error(`[PushNotification] Error setting VAPID details:`, vapidError);
+      throw new Error(`Failed to set VAPID keys: ${vapidError.message}`);
+    }
 
     // Initialize the client with service role key for admin access
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
@@ -56,6 +64,7 @@ serve(async (req) => {
     // If a specific subscription was provided, use that
     if (specific_subscription) {
       console.log(`[PushNotification] Using provided specific subscription`);
+      console.log(`[PushNotification] Subscription endpoint: ${specific_subscription.endpoint}`);
       subscriptionsToProcess = [{ subscription: specific_subscription }];
     } else {
       // Get user subscriptions from DB
@@ -98,6 +107,7 @@ serve(async (req) => {
         }
         
         console.log(`[PushNotification] Processing subscription: ${subscription.endpoint}`);
+        console.log(`[PushNotification] Subscription keys present: p256dh=${!!subscription.keys?.p256dh}, auth=${!!subscription.keys?.auth}`);
         
         // Create payload
         const payload = JSON.stringify({
@@ -108,16 +118,37 @@ serve(async (req) => {
         
         console.log(`[PushNotification] Sending notification to endpoint: ${subscription.endpoint}`);
         
-        // Send the notification using web-push
-        await webpush.sendNotification(subscription, payload);
-        console.log(`[PushNotification] Successfully sent notification to endpoint: ${subscription.endpoint}`);
-        
-        results.push({ 
-          success: true, 
-          endpoint: subscription.endpoint,
-        });
+        try {
+          // Send the notification using web-push
+          await webpush.sendNotification(subscription, payload);
+          console.log(`[PushNotification] Successfully sent notification to endpoint: ${subscription.endpoint}`);
+          
+          results.push({ 
+            success: true, 
+            endpoint: subscription.endpoint,
+          });
+        } catch (pushError) {
+          console.error(`[PushNotification] Push service error:`, pushError);
+          
+          // Check for common errors
+          let errorMessage = pushError.message;
+          if (pushError.statusCode === 401) {
+            errorMessage = `Authentication error (401): VAPID key mismatch or invalid token`;
+          } else if (pushError.statusCode === 404) {
+            errorMessage = `Subscription not found (404): Browser may have unsubscribed`;
+          } else if (pushError.statusCode === 410) {
+            errorMessage = `Subscription expired (410): Should be removed from database`;
+          }
+          
+          results.push({ 
+            success: false, 
+            error: errorMessage,
+            status: pushError.statusCode,
+            endpoint: subscription.endpoint
+          });
+        }
       } catch (error) {
-        console.error(`[PushNotification] Error sending notification:`, error);
+        console.error(`[PushNotification] Error processing subscription:`, error);
         
         results.push({ 
           success: false, 
