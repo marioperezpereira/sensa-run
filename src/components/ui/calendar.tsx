@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
@@ -30,8 +30,6 @@ function Calendar({
         ),
         nav_button_previous: "absolute left-1",
         nav_button_next: "absolute right-1",
-        nav_button_previous_year: "absolute left-9",
-        nav_button_next_year: "absolute right-9",
         table: "w-full border-collapse space-y-1",
         head_row: "flex",
         head_cell:
@@ -57,8 +55,6 @@ function Calendar({
       components={{
         IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" {...props} />,
         IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" {...props} />,
-        IconPreviousYear: ({ ...props }) => <ChevronsLeft className="h-4 w-4" {...props} />, 
-        IconNextYear: ({ ...props }) => <ChevronsRight className="h-4 w-4" {...props} />,
       }}
       {...props}
     />
