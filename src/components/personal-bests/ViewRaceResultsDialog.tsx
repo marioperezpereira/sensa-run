@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Pencil, Trash2, Clock } from "lucide-react";
+import { Pencil, Trash2, Clock, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import EditRaceResultDialog from "./EditRaceResultDialog";
 import { RaceResult } from "./race-results/types";
+import { calculateIAAFPoints } from "@/lib/iaaf-scoring-tables";
 
 // Import the enum type from types
 import { Enums } from "@/integrations/supabase/types";
@@ -43,6 +45,7 @@ const ViewRaceResultsDialog = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editResult, setEditResult] = useState<RaceResult | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [gender, setGender] = useState<'men' | 'women'>('men');
   const { toast } = useToast();
 
   // Convert string distance to PBRaceDistance enum
@@ -63,6 +66,24 @@ const ViewRaceResultsDialog = ({
   const fetchResults = async () => {
     setLoading(true);
     try {
+      // First get the user's profile to determine gender
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
+      const { data: profile } = await supabase
+        .from('user_pb_profiles')
+        .select('gender')
+        .eq('user_id', user.id)
+        .single();
+        
+      // Set gender for IAAF point calculation
+      if (profile?.gender) {
+        setGender(profile.gender.toLowerCase() === 'female' ? 'women' : 'men');
+      }
+      
       const { data, error } = await supabase
         .from('race_results')
         .select('*')
@@ -136,6 +157,16 @@ const ViewRaceResultsDialog = ({
     return format(new Date(dateString), "d MMM yyyy", { locale: es });
   };
 
+  const getIAAFPoints = (result: RaceResult) => {
+    return calculateIAAFPoints(
+      result.distance, 
+      result.hours, 
+      result.minutes, 
+      result.seconds, 
+      gender
+    );
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -161,6 +192,7 @@ const ViewRaceResultsDialog = ({
                   <TableRow>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Tiempo</TableHead>
+                    <TableHead>Puntos IAAF</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -173,6 +205,12 @@ const ViewRaceResultsDialog = ({
                           <Clock className="mr-1 h-4 w-4 text-gray-500" />
                           {formatTime(result.hours, result.minutes, result.seconds)}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center bg-amber-100 text-amber-800 font-medium px-2 py-1 rounded-full text-xs w-fit">
+                          <Award className="mr-1 h-3 w-3" />
+                          {getIAAFPoints(result)}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
