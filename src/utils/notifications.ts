@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export async function registerPushNotifications() {
@@ -54,6 +55,7 @@ export async function registerPushNotifications() {
     // Create new subscription with proper userVisibleOnly
     console.log("[Notifications] Creating new push subscription");
     try {
+      // First attempt with the standard approach
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey
@@ -64,11 +66,8 @@ export async function registerPushNotifications() {
       // Save the subscription to the database
       await savePushSubscription(subscription);
       
-      // Display a test notification to confirm permission
-      new Notification('Sensa.run', {
-        body: 'Las notificaciones están funcionando correctamente',
-        icon: "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png",
-      });
+      // Test notification to verify subscription works
+      await testNewSubscription(subscription);
       
       return subscription;
     } catch (subscribeError) {
@@ -79,6 +78,35 @@ export async function registerPushNotifications() {
   } catch (err) {
     console.error('[Notifications] Error setting up push notifications:', err);
     return null;
+  }
+}
+
+// Send a test notification to verify a new subscription works
+async function testNewSubscription(subscription: PushSubscription) {
+  try {
+    // Display a test notification to confirm permission
+    new Notification('Sensa.run', {
+      body: 'Las notificaciones están funcionando correctamente',
+      icon: "/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png",
+    });
+    
+    // We'll also test the server-side push notification to verify end-to-end
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      console.log('[Notifications] Sending test push notification via server');
+      await supabase.functions.invoke('send-push-notification', {
+        body: { 
+          specific_subscription: subscription,
+          title: "Verificación de Sensa", 
+          message: "Tus notificaciones push están configuradas", 
+          url: "/profile" 
+        }
+      });
+    }
+  } catch (error) {
+    console.error('[Notifications] Error testing new subscription:', error);
+    // We don't throw here since this is just a test
   }
 }
 
