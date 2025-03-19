@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -19,19 +18,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import EditRaceResultDialog from "./EditRaceResultDialog";
+import { RaceResult } from "./race-results/types";
 
 // Import the enum type from types
 import { Enums } from "@/integrations/supabase/types";
 type PBRaceDistance = Enums<"pb_race_distance">;
-
-interface RaceResult {
-  id: string;
-  race_date: string;
-  distance: PBRaceDistance;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
 
 interface ViewRaceResultsDialogProps {
   open: boolean;
