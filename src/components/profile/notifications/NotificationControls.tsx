@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, BellOff } from "lucide-react";
+import { Bell, BellOff, Info } from "lucide-react";
 import { useEffect, useState } from "react";
 import { registerPushNotifications } from "@/utils/notifications";
 import { checkAndSaveExistingSubscription } from "@/utils/sendNotification";
@@ -16,6 +16,7 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
   const [showNotificationButton, setShowNotificationButton] = useState(false);
   const [notificationsActive, setNotificationsActive] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if notifications are supported and if they are already registered
@@ -36,14 +37,27 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
             
             if (subscription) {
               setNotificationsActive(true);
+              
+              // Save debug info about the subscription
+              const subscriptionJSON = JSON.stringify(subscription, null, 2);
+              console.log('Current active subscription:', subscriptionJSON);
+              setDebugInfo(`Subscription endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+              
               await checkAndSaveExistingSubscription();
+            } else {
+              setDebugInfo('No active push subscription found');
             }
           } catch (error) {
             console.error('Error checking push subscription:', error);
+            setDebugInfo(`Error checking subscription: ${error instanceof Error ? error.message : String(error)}`);
           } finally {
             setIsRecovering(false);
           }
+        } else {
+          setDebugInfo(`Current notification permission: ${currentPermission}`);
         }
+      } else {
+        setDebugInfo('Notifications or Service Worker not supported');
       }
       
       // Show notification button if supported
@@ -63,19 +77,27 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
           description: "Necesitamos tu permiso para enviar notificaciones",
           variant: "destructive"
         });
+        setDebugInfo(`Permission request denied: ${permission}`);
         return;
       }
 
       // Try PWA push notifications first if service worker is available
       if ('serviceWorker' in navigator) {
+        setDebugInfo('Registering push notifications...');
         const subscription = await registerPushNotifications();
         if (subscription) {
+          const subscriptionJSON = JSON.stringify(subscription, null, 2);
+          console.log('New subscription created:', subscriptionJSON);
+          setDebugInfo(`Subscription created with endpoint: ${subscription.endpoint.substring(0, 50)}...`);
+          
           toast({
             title: "¡Éxito!",
             description: "Las notificaciones push han sido habilitadas",
           });
           setNotificationsActive(true);
           return;
+        } else {
+          setDebugInfo('Failed to register push notifications');
         }
       }
 
@@ -90,9 +112,11 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
         description: "Las notificaciones web han sido habilitadas",
       });
       setNotificationsActive(true);
+      setDebugInfo('Using standard web notifications (not push)');
 
     } catch (error) {
       console.error('Error enabling notifications:', error);
+      setDebugInfo(`Error enabling notifications: ${error instanceof Error ? error.message : String(error)}`);
       toast({
         title: "Error",
         description: "Hubo un error al habilitar las notificaciones",
@@ -112,10 +136,12 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
           const successful = await subscription.unsubscribe();
           
           if (!successful) {
+            setDebugInfo('Failed to unsubscribe from push notifications');
             throw new Error("Failed to unsubscribe from push notifications");
           }
           
           console.log('Successfully unsubscribed from push notifications');
+          setDebugInfo('Successfully unsubscribed from push notifications');
           
           // Remove subscription from database if user is logged in
           if (userId) {
@@ -126,6 +152,7 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
               .eq('endpoint', subscription.endpoint);
             
             console.log('Successfully removed subscription from database');
+            setDebugInfo('Subscription removed from database');
           }
           
           toast({
@@ -136,6 +163,7 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
           setNotificationsActive(false);
         } else {
           console.log('No active subscription found to disable');
+          setDebugInfo('No active subscription found to disable');
           toast({
             title: "No hay notificaciones activas",
             description: "No se encontraron notificaciones activas para desactivar",
@@ -143,6 +171,7 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
           setNotificationsActive(false);
         }
       } else {
+        setDebugInfo('Service Worker not supported');
         toast({
           title: "No soportado",
           description: "Tu navegador no soporta notificaciones push",
@@ -150,6 +179,7 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
       }
     } catch (error) {
       console.error('Error disabling notifications:', error);
+      setDebugInfo(`Error disabling notifications: ${error instanceof Error ? error.message : String(error)}`);
       toast({
         title: "Error",
         description: "Hubo un error al desactivar las notificaciones",
@@ -158,27 +188,105 @@ const NotificationControls = ({ userId }: NotificationControlsProps) => {
     }
   };
 
+  const handleTest = async () => {
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "Necesitas iniciar sesión para probar las notificaciones",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setDebugInfo('Sending test notification...');
+      
+      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+        body: { 
+          user_id: userId, 
+          title: "Prueba de notificación", 
+          message: "Esta es una prueba de notificación push", 
+          url: "/profile" 
+        }
+      });
+      
+      if (error) {
+        console.error('Error sending test notification:', error);
+        setDebugInfo(`Error sending test: ${error.message}`);
+        toast({
+          title: "Error",
+          description: `Error al enviar la notificación de prueba: ${error.message}`,
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      console.log('Test notification result:', data);
+      setDebugInfo(`Test notification result: ${JSON.stringify(data, null, 2)}`);
+      
+      if (data.success) {
+        toast({
+          title: "Prueba enviada",
+          description: "Notificación de prueba enviada correctamente",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Error al enviar la notificación de prueba",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Exception sending test notification:', error);
+      setDebugInfo(`Exception sending test: ${error instanceof Error ? error.message : String(error)}`);
+      toast({
+        title: "Error",
+        description: "Error al enviar la notificación de prueba",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (!showNotificationButton) return null;
 
   return (
-    <Button 
-      variant="outline" 
-      className="w-full rounded-[42px] border-sensa-purple text-sensa-purple hover:bg-sensa-purple/10"
-      onClick={notificationsActive ? handleDisableNotifications : handleEnableNotifications}
-      disabled={isRecovering}
-    >
-      {notificationsActive ? (
-        <>
-          <BellOff className="mr-2 h-4 w-4" />
-          Desactivar notificaciones
-        </>
-      ) : (
-        <>
-          <Bell className="mr-2 h-4 w-4" />
-          {isRecovering ? 'Comprobando notificaciones...' : 'Habilitar notificaciones'}
-        </>
+    <div className="space-y-4">
+      <Button 
+        variant="outline" 
+        className="w-full rounded-[42px] border-sensa-purple text-sensa-purple hover:bg-sensa-purple/10"
+        onClick={notificationsActive ? handleDisableNotifications : handleEnableNotifications}
+        disabled={isRecovering}
+      >
+        {notificationsActive ? (
+          <>
+            <BellOff className="mr-2 h-4 w-4" />
+            Desactivar notificaciones
+          </>
+        ) : (
+          <>
+            <Bell className="mr-2 h-4 w-4" />
+            {isRecovering ? 'Comprobando notificaciones...' : 'Habilitar notificaciones'}
+          </>
+        )}
+      </Button>
+      
+      {notificationsActive && (
+        <Button
+          variant="outline"
+          className="w-full rounded-[42px] border-sensa-purple text-sensa-purple hover:bg-sensa-purple/10"
+          onClick={handleTest}
+        >
+          <Info className="mr-2 h-4 w-4" />
+          Probar notificación
+        </Button>
       )}
-    </Button>
+      
+      {debugInfo && (
+        <div className="mt-2 text-xs text-gray-500 bg-gray-100 p-2 rounded overflow-auto max-h-20">
+          <p className="font-mono">{debugInfo}</p>
+        </div>
+      )}
+    </div>
   );
 };
 
