@@ -39,7 +39,19 @@ export async function sendNotificationToUser(
       toast.success("Notificación enviada correctamente");
       return data;
     } else {
-      toast.error(data.error || "Error al enviar la notificación");
+      let errorMessage = data.error || "Error al enviar la notificación";
+      // Check if there are more specific errors in the results
+      if (data.results && Array.isArray(data.results)) {
+        const errors = data.results
+          .filter(r => !r.success && r.error)
+          .map(r => r.error);
+          
+        if (errors.length > 0) {
+          errorMessage = errors.join(', ');
+        }
+      }
+      
+      toast.error(errorMessage);
       return data;
     }
   } catch (err) {

@@ -1,6 +1,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import webpush from 'https://esm.sh/web-push@3.6.6'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,6 +31,22 @@ serve(async (req) => {
     if (!supabaseUrl || !supabaseServiceRoleKey) {
       throw new Error('Supabase connection details not configured');
     }
+
+    // Get VAPID keys
+    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
+    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+    const vapidSubject = Deno.env.get('VAPID_SUBJECT');
+
+    if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
+      throw new Error('VAPID configuration missing');
+    }
+
+    // Setup web-push with VAPID details
+    webpush.setVapidDetails(
+      vapidSubject,
+      vapidPublicKey,
+      vapidPrivateKey
+    );
 
     // Initialize the client with service role key for admin access
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
@@ -65,84 +82,57 @@ serve(async (req) => {
     }
 
     // Process each subscription
-    const results = subscriptionsToProcess.map(item => {
+    const results = [];
+
+    for (const item of subscriptionsToProcess) {
       try {
         const subscription = item.subscription;
         
         if (!subscription || !subscription.endpoint) {
-          return { 
+          results.push({ 
             success: false, 
             error: 'Invalid subscription object', 
             endpoint: subscription?.endpoint || 'unknown' 
-          };
+          });
+          continue;
         }
         
         console.log(`[PushNotification] Processing subscription: ${subscription.endpoint}`);
         
-        // Here we're returning the subscription and payload so the client can use the 
-        // browser Push API to send the notification
-        return { 
+        // Create payload
+        const payload = JSON.stringify({
+          title: title || 'Sensa.run',
+          body: message || 'Tienes una notificación nueva',
+          url: url || '/',
+        });
+        
+        console.log(`[PushNotification] Sending notification to endpoint: ${subscription.endpoint}`);
+        
+        // Send the notification using web-push
+        await webpush.sendNotification(subscription, payload);
+        console.log(`[PushNotification] Successfully sent notification to endpoint: ${subscription.endpoint}`);
+        
+        results.push({ 
           success: true, 
           endpoint: subscription.endpoint,
-          subscription: subscription,
-          payload: {
-            title: title || 'Sensa.run',
-            body: message || 'Tienes una notificación nueva',
-            url: url || '/',
-          }
-        };
+        });
       } catch (error) {
-        return { 
+        console.error(`[PushNotification] Error sending notification:`, error);
+        
+        results.push({ 
           success: false, 
           error: error instanceof Error ? error.message : String(error),
           endpoint: item.subscription?.endpoint || 'unknown'
-        };
-      }
-    });
-
-    // Let's try to directly send push notification using the web push API
-    // This is an attempt to send the notification directly from the edge function
-    // without relying on the client to do it
-    for (const result of results) {
-      if (result.success && result.subscription) {
-        try {
-          // Create a simple text payload
-          const payload = JSON.stringify(result.payload);
-          
-          console.log(`[PushNotification] Sending notification to endpoint: ${result.endpoint}`);
-          
-          // Make a direct POST request to the push service
-          const pushServiceResponse = await fetch(result.subscription.endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'TTL': '60',
-              // The subscription object should contain the auth and p256dh keys needed
-              // but we're not using them directly - browser handles the encryption
-            },
-            body: payload
-          });
-          
-          if (!pushServiceResponse.ok) {
-            console.error(`[PushNotification] Push service error: ${pushServiceResponse.status} ${pushServiceResponse.statusText}`);
-            result.directPushError = `Push service error: ${pushServiceResponse.status}`;
-          } else {
-            console.log(`[PushNotification] Successfully sent notification directly to endpoint: ${result.endpoint}`);
-            result.directPushSuccess = true;
-          }
-        } catch (error) {
-          console.error(`[PushNotification] Error sending direct push:`, error);
-          result.directPushError = error instanceof Error ? error.message : String(error);
-        }
+        });
       }
     }
 
-    // Return the subscription info to the client
+    // Return the results to the client
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        results,
-        message: 'Notification data prepared for delivery'
+        success: results.some(r => r.success), 
+        message: 'Notification processing completed',
+        results 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
