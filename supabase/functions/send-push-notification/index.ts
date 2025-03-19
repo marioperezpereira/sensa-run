@@ -175,6 +175,9 @@ serve(async (req) => {
           try {
             console.log('[PushNotification] Detected Apple Web Push endpoint');
             
+            // Log VAPID key details (length only for security)
+            console.log(`[PushNotification] VAPID key details - Public key length: ${vapidPublicKey.length}, Private key length: ${vapidPrivateKey.length}`);
+            
             // Generate JWT token for Apple Web Push using the updated function
             const jwt = await generateAppleJWT(vapidSubject, vapidPrivateKey, vapidPublicKey);
             console.log('[PushNotification] Generated JWT for Apple Web Push (length):', jwt.length);

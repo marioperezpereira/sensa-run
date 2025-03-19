@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export async function registerPushNotifications() {
@@ -46,10 +45,11 @@ export async function registerPushNotifications() {
       return null;
     }
 
-    console.log("[Notifications] VAPID public key received:", data.publicKey);
+    console.log("[Notifications] VAPID public key received. Length:", data.publicKey.length);
 
-    // Convert base64 string to Uint8Array
+    // Convert base64 string to Uint8Array with proper handling of URL-safe base64
     const applicationServerKey = urlB64ToUint8Array(data.publicKey);
+    console.log("[Notifications] Converted application server key length:", applicationServerKey.length);
 
     // Create new subscription with proper userVisibleOnly
     console.log("[Notifications] Creating new push subscription");
