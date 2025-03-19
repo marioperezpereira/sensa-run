@@ -1,7 +1,4 @@
-
 import { useState, useEffect } from "react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { Pencil, Trash2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,19 +16,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import EditRaceResultDialog from "./EditRaceResultDialog";
-
-// Import the enum type from types
-import { Enums } from "@/integrations/supabase/types";
-type PBRaceDistance = Enums<"pb_race_distance">;
-
-interface RaceResult {
-  id: string;
-  race_date: string;
-  distance: PBRaceDistance;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
+import { 
+  RaceResult, 
+  formatTime, 
+  formatDate, 
+  getDbDistanceFromDisplay 
+} from "./utils/pb-utils";
 
 interface ViewRaceResultsDialogProps {
   open: boolean;
@@ -54,15 +44,6 @@ const ViewRaceResultsDialog = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
 
-  // Convert string distance to PBRaceDistance enum
-  const getPBDistance = (dist: string): PBRaceDistance => {
-    if (dist === "5K" || dist === "10K") return dist;
-    if (dist === "Media maratón") return "Half Marathon";
-    if (dist === "Maratón") return "Marathon";
-    // Default fallback - should not happen with proper validation
-    return "5K";
-  };
-
   useEffect(() => {
     if (open) {
       fetchResults();
@@ -75,7 +56,7 @@ const ViewRaceResultsDialog = ({
       const { data, error } = await supabase
         .from('race_results')
         .select('*')
-        .eq('distance', getPBDistance(distance))
+        .eq('distance', getDbDistanceFromDisplay(distance))
         .order('race_date', { ascending: false });
 
       if (error) throw error;
@@ -132,17 +113,6 @@ const ViewRaceResultsDialog = ({
     setResults(results.map(r => r.id === updatedResult.id ? updatedResult : r));
     setShowEditDialog(false);
     setEditResult(null);
-  };
-
-  const formatTime = (hours: number, minutes: number, seconds: number) => {
-    if (hours > 0) {
-      return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "d MMM yyyy", { locale: es });
   };
 
   return (
