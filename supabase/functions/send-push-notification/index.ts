@@ -159,24 +159,47 @@ serve(async (req) => {
             
             // For FCM, we can try a direct approach
             if (isFCM) {
-              const result = await fetch('https://fcm.googleapis.com/fcm/send', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `key=${Deno.env.get('FCM_SERVER_KEY')}`
+              const fcmServerKey = Deno.env.get('FCM_SERVER_KEY');
+              if (!fcmServerKey) {
+                console.error('[PushNotification] FCM_SERVER_KEY is not configured');
+                results.push({ 
+                  success: false, 
+                  error: 'FCM_SERVER_KEY is not configured',
+                  endpoint: subscription.endpoint
+                });
+                continue;
+              }
+              
+              const fcmUrl = 'https://fcm.googleapis.com/fcm/send';
+              const fcmPayload = {
+                to: fcmToken,
+                notification: {
+                  title: title || 'Sensa.run',
+                  body: message || 'Tienes una notificación nueva',
+                  icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
+                  click_action: url || '/'
                 },
-                body: JSON.stringify({
-                  to: fcmToken,
-                  notification: {
-                    title: title || 'Sensa.run',
-                    body: message || 'Tienes una notificación nueva',
-                    icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
-                    click_action: url || '/'
-                  },
-                  data: {
-                    url: url || '/'
-                  }
-                })
+                data: {
+                  url: url || '/'
+                }
+              };
+              
+              const fcmHeaders = {
+                'Content-Type': 'application/json',
+                'Authorization': `key=${fcmServerKey}`
+              };
+              
+              // Log the exact request details for debugging
+              console.log(`[PushNotification] FCM Request details:
+                URL: ${fcmUrl}
+                Headers: ${JSON.stringify(fcmHeaders)}
+                Payload: ${JSON.stringify(fcmPayload)}
+              `);
+              
+              const result = await fetch(fcmUrl, {
+                method: 'POST',
+                headers: fcmHeaders,
+                body: JSON.stringify(fcmPayload)
               });
               
               const responseText = await result.text();
@@ -197,7 +220,162 @@ serve(async (req) => {
               }
               continue;
             }
+            
+            // For Apple Web Push endpoints
+            if (subscription.endpoint.includes('web.push.apple.com')) {
+              try {
+                console.log('[PushNotification] Processing Apple Web Push notification');
+                
+                // Apple Web Push requires JWT authentication
+                const currentTime = Math.floor(Date.now() / 1000);
+                const expirationTime = currentTime + 60 * 60; // 1 hour expiration
+                
+                const jwtHeader = {
+                  alg: 'ES256',
+                  typ: 'JWT'
+                };
+                
+                const jwtPayload = {
+                  iss: vapidSubject,
+                  iat: currentTime,
+                  exp: expirationTime
+                };
+                
+                // Base64 encode the JWT parts
+                const headerBase64 = btoa(JSON.stringify(jwtHeader))
+                  .replace(/=/g, '')
+                  .replace(/\+/g, '-')
+                  .replace(/\//g, '_');
+                
+                const payloadBase64 = btoa(JSON.stringify(jwtPayload))
+                  .replace(/=/g, '')
+                  .replace(/\+/g, '-')
+                  .replace(/\//g, '_');
+                
+                // Form the unsigned token
+                const unsignedToken = `${headerBase64}.${payloadBase64}`;
+                
+                console.log('[PushNotification] Formatting VAPID private key for JWT signing');
+                
+                // Format the private key for signing
+                let privateKeyArrayBuffer;
+                try {
+                  privateKeyArrayBuffer = formatVapidKey(vapidPrivateKey);
+                  console.log('[PushNotification] Private key formatted successfully');
+                } catch (keyError) {
+                  console.error('[PushNotification] Error formatting private key:', keyError);
+                  throw new Error(`Error formatting VAPID key: ${keyError instanceof Error ? keyError.message : String(keyError)}`);
+                }
+                
+                console.log('[PushNotification] Importing private key for JWT signing');
+                
+                // Import the private key
+                let privateKey;
+                try {
+                  privateKey = await crypto.subtle.importKey(
+                    'pkcs8',
+                    privateKeyArrayBuffer,
+                    {
+                      name: 'ECDSA',
+                      namedCurve: 'P-256'
+                    },
+                    false,
+                    ['sign']
+                  );
+                  console.log('[PushNotification] Private key imported successfully');
+                } catch (importError) {
+                  console.error('[PushNotification] Error importing key:', importError);
+                  throw new Error(`Error importing key: ${importError instanceof Error ? importError.message : String(importError)}`);
+                }
+                
+                // Sign the token
+                console.log('[PushNotification] Signing JWT token');
+                const textEncoder = new TextEncoder();
+                const signatureArrayBuffer = await crypto.subtle.sign(
+                  {
+                    name: 'ECDSA',
+                    hash: { name: 'SHA-256' }
+                  },
+                  privateKey,
+                  textEncoder.encode(unsignedToken)
+                );
+                
+                // Convert the signature to base64url
+                const signatureBase64 = uint8ArrayToBase64Url(new Uint8Array(signatureArrayBuffer));
+                
+                // Assemble the complete JWT
+                const jwt = `${unsignedToken}.${signatureBase64}`;
+                
+                console.log('[PushNotification] JWT token created successfully');
+                
+                // Prepare the request for Apple
+                const applePayload = JSON.stringify({
+                  aps: {
+                    alert: {
+                      title: title || 'Sensa.run',
+                      body: message || 'Tienes una notificación nueva'
+                    },
+                    url: url || '/'
+                  }
+                });
+                
+                const appleHeaders = {
+                  'Content-Type': 'application/json',
+                  'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
+                  'Content-Length': `${applePayload.length}`,
+                  'TTL': '2419200'
+                };
+                
+                // Log the exact request details for debugging
+                console.log(`[PushNotification] Apple Web Push Request details:
+                  URL: ${subscription.endpoint}
+                  Headers: ${JSON.stringify(appleHeaders)}
+                  Payload: ${applePayload}
+                `);
+                
+                const appleResponse = await fetch(subscription.endpoint, {
+                  method: 'POST',
+                  headers: appleHeaders,
+                  body: applePayload
+                });
+                
+                const appleResponseText = await appleResponse.text();
+                console.log(`[PushNotification] Apple Web Push response: ${appleResponse.status} ${appleResponseText}`);
+                
+                if (appleResponse.ok) {
+                  console.log('[PushNotification] Successfully sent notification to Apple Web Push');
+                  results.push({
+                    success: true,
+                    endpoint: subscription.endpoint
+                  });
+                } else {
+                  console.error(`[PushNotification] Apple Web Push error: ${appleResponse.status} ${appleResponseText}`);
+                  results.push({
+                    success: false,
+                    error: `Apple Web Push error: ${appleResponse.status} ${appleResponseText}`,
+                    endpoint: subscription.endpoint
+                  });
+                }
+                
+                continue;
+              } catch (appleError) {
+                console.error('[PushNotification] Error with Apple Web Push:', appleError);
+                results.push({
+                  success: false,
+                  error: `Apple Web Push error: ${appleError instanceof Error ? appleError.message : String(appleError)}`,
+                  endpoint: subscription.endpoint
+                });
+                continue;
+              }
+            }
           }
+          
+          // For other push services, use a standard approach
+          console.log(`[PushNotification] Standard Push Request details:
+            URL: ${subscription.endpoint}
+            Headers: { 'TTL': '60' }
+            Payload: ${payload}
+          `);
           
           // Send standard web push notification
           const result = await fetch(subscription.endpoint, {

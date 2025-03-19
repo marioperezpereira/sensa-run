@@ -111,14 +111,21 @@ serve(async (req) => {
         try {
           console.log(`[CLI-PushNotification] Sending push notification to endpoint via send-push-notification function`);
           
+          const requestPayload = { 
+            specific_subscription: subscription,
+            title: notificationPayload.title,
+            message: notificationPayload.body,
+            url: notificationPayload.url
+          };
+          
+          // Log the exact request details for debugging
+          console.log(`[CLI-PushNotification] send-push-notification Request details:
+            Payload: ${JSON.stringify(requestPayload)}
+          `);
+          
           // Call the send-push-notification function to handle the actual sending
           const { data: pushResult, error: pushError } = await supabase.functions.invoke('send-push-notification', {
-            body: { 
-              specific_subscription: subscription,
-              title: notificationPayload.title,
-              message: notificationPayload.body,
-              url: notificationPayload.url
-            }
+            body: requestPayload
           });
           
           if (pushError) {
