@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { UserRound } from "lucide-react";
+import { UserRound, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const ChatHeader = () => {
@@ -24,14 +24,25 @@ export const ChatHeader = () => {
               <span className="font-semibold text-lg text-sensa-purple tracking-tight">Sensa</span>
             </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/profile")}
-            className="text-sensa-purple hover:bg-sensa-purple/10 rounded-xl transform transition hover:scale-105"
-          >
-            <UserRound className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/personal-bests")}
+              className="text-amber-500 hover:bg-amber-500/10 rounded-xl transform transition hover:scale-105"
+              title="Marcas personales"
+            >
+              <Trophy className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/profile")}
+              className="text-sensa-purple hover:bg-sensa-purple/10 rounded-xl transform transition hover:scale-105"
+            >
+              <UserRound className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
