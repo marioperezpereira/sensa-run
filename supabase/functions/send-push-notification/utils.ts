@@ -57,45 +57,89 @@ export function formatVapidKey(privateKey: string): ArrayBuffer {
       
       return base64ToUint8Array(pemContent).buffer;
     }
+
+    // If the key starts with these markers, it's a PEM EC PRIVATE KEY file
+    if (privateKey.includes('-----BEGIN EC PRIVATE KEY-----')) {
+      console.log('[Utils] Detected EC PEM format VAPID key');
+      // Extract the base64 part from PEM format
+      const pemContent = privateKey
+        .replace('-----BEGIN EC PRIVATE KEY-----', '')
+        .replace('-----END EC PRIVATE KEY-----', '')
+        .replace(/\s/g, '');
+      
+      // This is likely in SEC1 format, we need to convert to PKCS#8
+      console.log('[Utils] Converting EC Private Key from SEC1 to PKCS#8 format');
+      
+      // First decode the key
+      const rawKey = base64ToUint8Array(pemContent);
+      
+      // Create a PKCS#8 wrapper for P-256 EC key
+      // Fixed header for P-256 EC key in PKCS#8 format
+      const pkcs8Header = new Uint8Array([
+        0x30, 0x81, 0x87, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 
+        0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 
+        0x03, 0x01, 0x07, 0x04, 0x6d, 0x30, 0x6b, 0x02, 0x01, 0x01, 0x04, 0x20
+      ]);
+      
+      // Extract just the 32-byte private key value (removing ASN.1 encoding)
+      // For simple SEC1 encoding, the private key is right after the header
+      // This is a simplification - actual SEC1 parsing would be more complex
+      const privateKeyValue = rawKey.slice(-32); // Take last 32 bytes which should be the key
+      
+      console.log('[Utils] Extracted private key value, length:', privateKeyValue.length);
+      
+      // Combine the header with the key value
+      const pkcs8Key = new Uint8Array(pkcs8Header.length + privateKeyValue.length);
+      pkcs8Key.set(pkcs8Header);
+      pkcs8Key.set(privateKeyValue, pkcs8Header.length);
+      
+      console.log('[Utils] Created PKCS#8 formatted key with length:', pkcs8Key.length);
+      return pkcs8Key.buffer;
+    }
+    
+    console.log('[Utils] Treating as raw base64 VAPID key');
     
     // For raw base64 keys (typical VAPID private key format)
-    console.log('[Utils] Treating as raw base64 VAPID key, converting to PKCS#8');
-    
     try {
-      // For ECDSA with P-256, we need to prepare a PKCS#8 structure
       // First, decode the base64 key
       const rawKeyBytes = base64ToUint8Array(privateKey);
       
-      // Log the key length to help with debugging
+      // Log the raw key length
       console.log('[Utils] Raw key length:', rawKeyBytes.length);
       
+      // Check if this is already in a DER format (starts with 0x30)
+      if (rawKeyBytes.length > 0 && rawKeyBytes[0] === 0x30) {
+        console.log('[Utils] Detected possible DER encoding, using as is');
+        return rawKeyBytes.buffer;
+      }
+      
       // Create a PKCS#8 formatted key for P-256 curve
-      // This is a simplified version that wraps the raw key material
+      // This header represents the ASN.1 structure required for PKCS#8
       const pkcs8Header = new Uint8Array([
-        // ASN.1 Sequence
-        0x30, 0x81, 0x87, 
-        // Version
-        0x02, 0x01, 0x00,
-        // Algorithm Identifier
-        0x30, 0x13, 
-        // Algorithm OID (EC Public Key)
-        0x06, 0x07, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 0x01,
-        // Parameters (named curve OID for P-256)
-        0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07,
-        // Private Key OCTET STRING header
-        0x04, 0x6D, 
-        // Private Key OCTET STRING content
-        0x30, 0x6B, 
-        // Version
-        0x02, 0x01, 0x01,
-        // Private Key value (32 bytes for P-256)
-        0x04, 0x20
+        0x30, 0x81, 0x87, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 
+        0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 
+        0x03, 0x01, 0x07, 0x04, 0x6d, 0x30, 0x6b, 0x02, 0x01, 0x01, 0x04, 0x20
       ]);
       
+      // For WebPush VAPID keys, if we have a raw 32-byte key (common format)
+      let keyBytes = rawKeyBytes;
+      if (rawKeyBytes.length !== 32) {
+        console.log('[Utils] Unexpected key length, trying to extract 32-byte portion');
+        // Try to take last 32 bytes if longer
+        if (rawKeyBytes.length > 32) {
+          keyBytes = rawKeyBytes.slice(rawKeyBytes.length - 32);
+        } else {
+          // Pad if shorter (though this is likely not going to work)
+          const paddedKey = new Uint8Array(32);
+          paddedKey.set(rawKeyBytes, 32 - rawKeyBytes.length);
+          keyBytes = paddedKey;
+        }
+      }
+      
       // Concatenate header and key bytes
-      const pkcs8Key = new Uint8Array(pkcs8Header.length + rawKeyBytes.length);
+      const pkcs8Key = new Uint8Array(pkcs8Header.length + keyBytes.length);
       pkcs8Key.set(pkcs8Header);
-      pkcs8Key.set(rawKeyBytes, pkcs8Header.length);
+      pkcs8Key.set(keyBytes, pkcs8Header.length);
       
       console.log('[Utils] Created PKCS#8 formatted key with length:', pkcs8Key.length);
       return pkcs8Key.buffer;
