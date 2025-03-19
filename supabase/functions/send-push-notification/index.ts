@@ -124,14 +124,89 @@ serve(async (req) => {
         console.log(`[PushNotification] Sending notification to endpoint: ${subscription.endpoint}`);
         
         try {
-          // Send the notification with our custom implementation
-          const result = await sendPushNotification(
-            subscription,
-            payload,
-            vapidPublicKey,
-            vapidPrivateKey,
-            vapidSubject
-          );
+          // Use simplified payload for now - we're skipping encryption
+          // In a production environment, you would properly encrypt this
+          const simplified = true;
+          
+          if (simplified) {
+            // Send a simplified request without proper encryption
+            // This is just for testing and development
+            const notificationData = {
+              endpoint: subscription.endpoint,
+              keys: subscription.keys,
+              payload: {
+                notification: {
+                  title: title || 'Sensa.run',
+                  body: message || 'Tienes una notificación nueva',
+                  icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
+                  click_action: url || '/',
+                  data: {
+                    url: url || '/'
+                  }
+                }
+              }
+            };
+            
+            // For FCM endpoints, we need to extract the FCM token
+            let isFCM = false;
+            let fcmToken = '';
+            
+            if (subscription.endpoint.includes('fcm.googleapis.com/fcm/send/')) {
+              isFCM = true;
+              fcmToken = subscription.endpoint.split('fcm.googleapis.com/fcm/send/')[1];
+              console.log(`[PushNotification] FCM token extracted: ${fcmToken}`);
+            }
+            
+            // For FCM, we can try a direct approach
+            if (isFCM) {
+              const result = await fetch('https://fcm.googleapis.com/fcm/send', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `key=${Deno.env.get('FCM_SERVER_KEY')}`
+                },
+                body: JSON.stringify({
+                  to: fcmToken,
+                  notification: {
+                    title: title || 'Sensa.run',
+                    body: message || 'Tienes una notificación nueva',
+                    icon: '/lovable-uploads/e9de7ab0-2520-438e-9d6f-5ea0ec576fac.png',
+                    click_action: url || '/'
+                  },
+                  data: {
+                    url: url || '/'
+                  }
+                })
+              });
+              
+              const responseText = await result.text();
+              console.log(`[PushNotification] FCM response: ${result.status} ${responseText}`);
+              
+              if (result.ok) {
+                results.push({ 
+                  success: true, 
+                  endpoint: subscription.endpoint,
+                  simplified: true
+                });
+              } else {
+                results.push({ 
+                  success: false, 
+                  error: `FCM error: ${result.status} ${responseText}`,
+                  endpoint: subscription.endpoint
+                });
+              }
+              continue;
+            }
+          }
+          
+          // Send standard web push notification
+          const result = await fetch(subscription.endpoint, {
+            method: 'POST',
+            headers: {
+              'TTL': '60'
+            },
+            body: payload
+          });
           
           if (result.ok) {
             console.log(`[PushNotification] Successfully sent notification to endpoint: ${subscription.endpoint}`);
@@ -204,171 +279,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Custom implementation of web push notification without using the web-push library
-async function sendPushNotification(
-  subscription: any,
-  payload: string,
-  vapidPublicKey: string,
-  vapidPrivateKey: string,
-  vapidSubject: string
-) {
-  try {
-    // Parse the endpoint URL
-    const endpoint = subscription.endpoint;
-    const url = new URL(endpoint);
-    
-    // Get the audience (origin) from the endpoint
-    const audience = `${url.protocol}//${url.host}`;
-    
-    // Create the headers
-    const headers = new Headers();
-    headers.append('Content-Type', 'application/octet-stream');
-    headers.append('TTL', '86400');  // 24 hours in seconds
-    
-    try {
-      // Create the JWT token for Authorization
-      const token = await createVapidAuthorizationToken(
-        audience,
-        vapidSubject,
-        vapidPublicKey,
-        vapidPrivateKey
-      );
-      
-      headers.append('Authorization', `vapid t=${token}`);
-    } catch (authError) {
-      console.error('[PushNotification] Error creating authorization token:', authError);
-      throw authError;
-    }
-    
-    // Encrypt the payload - for now, using a simplified approach
-    // In a production environment, this would need proper encryption according to the Web Push Protocol
-    // https://developers.google.com/web/fundamentals/push-notifications/web-push-protocol
-    const encryptedPayload = await encryptPayload(
-      subscription.keys.p256dh,
-      subscription.keys.auth,
-      payload
-    );
-    
-    if (!encryptedPayload) {
-      throw new Error('Failed to encrypt the payload');
-    }
-    
-    // Set the encrypted content encryption header
-    if (encryptedPayload.contentEncoding) {
-      headers.append('Content-Encoding', encryptedPayload.contentEncoding);
-    }
-    
-    // Send the push message
-    return await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: encryptedPayload.cipherText
-    });
-  } catch (error) {
-    console.error('[PushNotification] Error in sendPushNotification:', error);
-    throw error;
-  }
-}
-
-// Create a VAPID JWT token for Authorization
-async function createVapidAuthorizationToken(
-  audience: string,
-  subject: string,
-  publicKey: string,
-  privateKey: string
-): Promise<string> {
-  try {
-    // Create JWT header
-    const header = {
-      typ: 'JWT',
-      alg: 'ES256'
-    };
-    
-    // Current time in seconds
-    const now = Math.floor(Date.now() / 1000);
-    
-    // Create JWT payload
-    const payload = {
-      aud: audience,
-      exp: now + 12 * 60 * 60, // 12 hours expiration
-      sub: subject
-    };
-    
-    // Encode header and payload as base64url
-    const encodedHeader = uint8ArrayToBase64Url(new TextEncoder().encode(JSON.stringify(header)));
-    const encodedPayload = uint8ArrayToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
-    
-    // Create the signing input
-    const signingInput = `${encodedHeader}.${encodedPayload}`;
-    
-    try {
-      console.log('[PushNotification] Formatting VAPID private key for import');
-      
-      // Properly format the private key for import
-      const privateKeyBuffer = formatVapidKey(privateKey);
-      
-      console.log('[PushNotification] Importing private key for signing');
-      
-      // Import the private key
-      const cryptoKey = await crypto.subtle.importKey(
-        'pkcs8', 
-        privateKeyBuffer,
-        {
-          name: 'ECDSA',
-          namedCurve: 'P-256',
-        },
-        false,
-        ['sign']
-      );
-      
-      console.log('[PushNotification] Signing JWT token');
-      
-      // Sign the token
-      const signature = await crypto.subtle.sign(
-        { name: 'ECDSA', hash: { name: 'SHA-256' } },
-        cryptoKey,
-        new TextEncoder().encode(signingInput)
-      );
-      
-      // Encode the signature as base64url
-      const encodedSignature = uint8ArrayToBase64Url(new Uint8Array(signature));
-      
-      // Return the complete JWT token
-      return `${signingInput}.${encodedSignature}`;
-    } catch (error) {
-      console.error('[PushNotification] Error during key operations:', error);
-      throw new Error(`Key operation failed: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  } catch (error) {
-    console.error('[PushNotification] Error creating VAPID JWT token:', error);
-    throw new Error(`Failed to create JWT token: ${error instanceof Error ? error.message : String(error)}`);
-  }
-}
-
-// Encrypt the payload for Web Push
-async function encryptPayload(
-  p256dhKey: string,
-  authSecret: string,
-  payload: string
-): Promise<{ cipherText: ArrayBuffer; contentEncoding: string } | null> {
-  try {
-    // Simplified implementation - in a real scenario, this would need to
-    // properly implement the Web Push encryption protocol
-    console.log("[PushNotification] Web Push encryption not fully implemented");
-    console.log("[PushNotification] Using a simple implementation for testing");
-    
-    // For now, just return the payload as ArrayBuffer for testing
-    // This will not work with actual push services which require proper encryption
-    const encoder = new TextEncoder();
-    const data = encoder.encode(payload);
-    
-    return {
-      cipherText: data.buffer,
-      contentEncoding: 'aes128gcm' // Or 'aesgcm' depending on what the push service supports
-    };
-  } catch (error) {
-    console.error('[PushNotification] Error encrypting payload:', error);
-    return null;
-  }
-}
