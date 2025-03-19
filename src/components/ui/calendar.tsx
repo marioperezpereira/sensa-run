@@ -55,14 +55,14 @@ function Calendar({
     },
     [mode, onSelect]
   );
-  
+
   // Create the date picker context
   const {
-    data: { weekDays, months, years, calendars },
-    propGetters: { dayButton, monthButton, yearButton, previousYearsButton, nextYearsButton }
+    data,
+    propGetters
   } = useDatePicker({
     selectedDates,
-    onDatesChange: ({ selectedDates }) => handleDateChange(selectedDates),
+    onDatesChange: (props) => handleDateChange(props.selectedDates),
     dates: {
       mode: mode === "single" ? "single" : mode === "range" ? "range" : "multiple",
     },
@@ -72,11 +72,11 @@ function Calendar({
         max: new Date(toYear, 11, 31) 
       } : {}),
     },
-    locale: locale !== "default" ? { locale } : undefined,
+    locale: locale !== "default" ? locale : undefined,
   });
 
   // Current displayed calendar
-  const calendar = calendars[0];
+  const calendar = data.calendars[0];
 
   // Custom date disabler function
   const isDateDisabled = React.useCallback(
@@ -93,7 +93,7 @@ function Calendar({
         <div className="flex justify-center space-x-2 mb-2">
           {captionLayout === "dropdown-buttons" && (
             <button
-              {...previousYearsButton()}
+              {...propGetters.previousYearsButton()}
               className={cn(
                 buttonVariants({ variant: "outline" }),
                 "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -109,15 +109,12 @@ function Calendar({
             className="bg-transparent border border-input rounded px-2 text-sm"
             value={calendar.month}
             onChange={(e) => {
-              const monthIndex = parseInt(e.target.value, 10);
-              const newDate = new Date(calendar.year, monthIndex, 1);
-              const buttonProps = monthButton(newDate);
-              if (buttonProps.onClick) {
-                buttonProps.onClick();
-              }
+              const monthIndex = Number(e.target.value);
+              const newDate = new Date(calendar.year, monthIndex);
+              propGetters.monthButton(newDate)?.onClick?.();
             }}
           >
-            {months.map((monthName, idx) => (
+            {data.months.map((monthName, idx) => (
               <option key={idx} value={idx}>
                 {monthName}
               </option>
@@ -128,15 +125,12 @@ function Calendar({
             className="bg-transparent border border-input rounded px-2 text-sm"
             value={calendar.year}
             onChange={(e) => {
-              const year = parseInt(e.target.value, 10);
-              const newDate = new Date(year, calendar.month, 1);
-              const buttonProps = yearButton(newDate);
-              if (buttonProps.onClick) {
-                buttonProps.onClick();
-              }
+              const year = Number(e.target.value);
+              const newDate = new Date(year, calendar.month);
+              propGetters.yearButton(newDate)?.onClick?.();
             }}
           >
-            {years.map((year) => (
+            {data.years.map((year) => (
               <option key={year.toString()} value={year}>
                 {year}
               </option>
@@ -145,7 +139,7 @@ function Calendar({
           
           {captionLayout === "dropdown-buttons" && (
             <button
-              {...nextYearsButton()}
+              {...propGetters.nextYearsButton()}
               className={cn(
                 buttonVariants({ variant: "outline" }),
                 "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -163,11 +157,8 @@ function Calendar({
         <div className="flex justify-between items-center mb-2">
           <button
             onClick={() => {
-              const newDate = new Date(calendar.year, calendar.month - 1, 1);
-              const buttonProps = monthButton(newDate);
-              if (buttonProps.onClick) {
-                buttonProps.onClick();
-              }
+              const newDate = new Date(calendar.year, calendar.month - 1);
+              propGetters.monthButton(newDate)?.onClick?.();
             }}
             className={cn(
               buttonVariants({ variant: "outline" }),
@@ -179,16 +170,13 @@ function Calendar({
           </button>
           
           <div className="font-medium text-sm">
-            {months[calendar.month]} {calendar.year}
+            {data.months[calendar.month]} {calendar.year}
           </div>
           
           <button
             onClick={() => {
-              const newDate = new Date(calendar.year, calendar.month + 1, 1);
-              const buttonProps = monthButton(newDate);
-              if (buttonProps.onClick) {
-                buttonProps.onClick();
-              }
+              const newDate = new Date(calendar.year, calendar.month + 1);
+              propGetters.monthButton(newDate)?.onClick?.();
             }}
             className={cn(
               buttonVariants({ variant: "outline" }),
@@ -209,7 +197,7 @@ function Calendar({
       
       <div className="space-y-2">
         <div className="grid grid-cols-7 gap-1">
-          {weekDays.map((day) => (
+          {data.weekDays.map((day) => (
             <div key={day} className="text-muted-foreground text-center text-xs">
               {day.slice(0, 3)}
             </div>
@@ -229,14 +217,14 @@ function Calendar({
             return (
               <button
                 key={`${day.day}-${day.$date.getMonth()}-${day.$date.getFullYear()}`}
-                {...dayButton(day)}
+                {...propGetters.dayButton(day)}
                 disabled={isDisabled}
                 className={cn(
                   buttonVariants({ variant: "ghost" }),
                   "h-9 w-9 p-0 font-normal text-sm",
                   isOutsideDay && "text-muted-foreground opacity-50",
                   day.selected && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-                  day.today && !day.selected && "bg-accent text-accent-foreground",
+                  day.isToday && !day.selected && "bg-accent text-accent-foreground",
                   isDisabled && "text-muted-foreground opacity-50 cursor-not-allowed"
                 )}
               >
