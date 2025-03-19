@@ -1,16 +1,23 @@
 
 import { DISTANCE_MAPPINGS } from './types';
-import { iaafScoringTables } from './scoring-tables';
+import { waCoefficients } from './coefficients';
 
 /**
- * Calculate IAAF points for a race result using exact table lookup without interpolation
+ * Calculate World Athletics (formerly IAAF) points using the quadratic formula
+ * 
+ * Formula: points = 1000 * e^(a*t² + b*t + c)
+ * Where:
+ * - t is the time in seconds
+ * - a, b, c are the coefficients for the specific event
+ * 
+ * Reference: https://jeffchen.dev/posts/Calculating-World-Athletics-Coefficients/
  * 
  * @param distance - Race distance (e.g., "5K", "10K", "Half Marathon", "Marathon")
  * @param hours - Hours component of the time
  * @param minutes - Minutes component of the time
  * @param seconds - Seconds component of the time
  * @param gender - Gender ("men" or "women")
- * @returns - IAAF points as a number
+ * @returns - World Athletics points as a number, rounded to nearest integer
  */
 export const calculateIAAFPoints = (
   distance: string, 
@@ -21,47 +28,23 @@ export const calculateIAAFPoints = (
 ): number => {
   const totalSeconds = hours * 3600 + minutes * 60 + seconds;
   
-  // Map the distance to the corresponding key in the scoring table
+  // Map the distance to the corresponding key in the coefficient table
   const mappedDistance = DISTANCE_MAPPINGS[distance];
   if (!mappedDistance) {
     return 0; // Return 0 if the distance is not recognized
   }
   
-  // Get the scoring entries for the gender and distance
-  const scoringEntries = iaafScoringTables[gender][mappedDistance];
-  if (!scoringEntries || scoringEntries.length === 0) {
-    return 0; // Return 0 if scoring entries are not found
+  // Get the coefficients for the gender and distance
+  const coefficients = waCoefficients[gender][mappedDistance];
+  if (!coefficients) {
+    return 0; // Return 0 if coefficients are not found
   }
   
-  // If time is faster than the fastest time in the table, return the highest score
-  if (totalSeconds <= scoringEntries[0].time) {
-    return scoringEntries[0].score;
-  }
+  // Apply the quadratic formula: 1000 * e^(a*t² + b*t + c)
+  const { a, b, c } = coefficients;
+  const exponent = (a * Math.pow(totalSeconds, 2)) + (b * totalSeconds) + c;
+  const points = 1000 * Math.exp(exponent);
   
-  // If time is slower than the slowest time in the table, return the lowest score
-  const lastEntry = scoringEntries[scoringEntries.length - 1];
-  if (totalSeconds >= lastEntry.time) {
-    return lastEntry.score;
-  }
-  
-  // Find the closest entry that's slower than or equal to the provided time
-  // This is an exact lookup without interpolation
-  for (let i = 0; i < scoringEntries.length - 1; i++) {
-    const currentEntry = scoringEntries[i];
-    const nextEntry = scoringEntries[i + 1];
-    
-    // If the time is exactly equal to an entry, return that score
-    if (totalSeconds === currentEntry.time) {
-      return currentEntry.score;
-    }
-    
-    // If the time is between two entries, return the score of the slower one
-    // This avoids interpolation and uses the exact values from the table
-    if (totalSeconds > currentEntry.time && totalSeconds < nextEntry.time) {
-      return nextEntry.score;
-    }
-  }
-  
-  // This should not happen if the data is properly structured
-  return 0;
+  // World Athletics points are always rounded to the nearest integer
+  return Math.round(points);
 };
