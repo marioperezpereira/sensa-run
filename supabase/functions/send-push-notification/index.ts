@@ -15,13 +15,13 @@ serve(async (req) => {
 
   try {
     // Get request body
-    const { user_id, title, message, url } = await req.json();
+    const { user_id, title, message, url, specific_subscription } = await req.json();
     
-    if (!user_id) {
-      throw new Error('User ID is required');
+    if (!user_id && !specific_subscription) {
+      throw new Error('Either user_id or specific_subscription is required');
     }
 
-    console.log(`[PushNotification] Sending notification to user: ${user_id}`);
+    console.log(`[PushNotification] Processing request for user: ${user_id || 'specific subscription'}`);
     
     // Create DB connection
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -34,30 +34,38 @@ serve(async (req) => {
     // Initialize the client with service role key for admin access
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
     
-    // Get user subscriptions from DB
-    const { data: subscriptions, error: fetchError } = await supabase
-      .from('push_subscriptions')
-      .select('subscription')
-      .eq('user_id', user_id);
+    let subscriptionsToProcess = [];
+    
+    // If a specific subscription was provided, use that
+    if (specific_subscription) {
+      console.log(`[PushNotification] Using provided specific subscription`);
+      subscriptionsToProcess = [{ subscription: specific_subscription }];
+    } else {
+      // Get user subscriptions from DB
+      console.log(`[PushNotification] Fetching subscriptions for user: ${user_id}`);
+      const { data: subscriptions, error: fetchError } = await supabase
+        .from('push_subscriptions')
+        .select('subscription')
+        .eq('user_id', user_id);
 
-    if (fetchError) {
-      throw new Error(`Error fetching subscriptions: ${fetchError.message}`);
+      if (fetchError) {
+        throw new Error(`Error fetching subscriptions: ${fetchError.message}`);
+      }
+
+      if (!subscriptions || subscriptions.length === 0) {
+        console.log(`[PushNotification] No subscriptions found for user: ${user_id}`);
+        return new Response(
+          JSON.stringify({ success: false, error: 'No subscriptions found for user' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+        );
+      }
+
+      console.log(`[PushNotification] Found ${subscriptions.length} subscription(s) for user: ${user_id}`);
+      subscriptionsToProcess = subscriptions;
     }
 
-    if (!subscriptions || subscriptions.length === 0) {
-      console.log(`[PushNotification] No subscriptions found for user: ${user_id}`);
-      return new Response(
-        JSON.stringify({ success: false, error: 'No subscriptions found for user' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
-    }
-
-    console.log(`[PushNotification] Found ${subscriptions.length} subscription(s) for user: ${user_id}`);
-
-    // Instead of using web-push directly, which causes compatibility issues,
-    // manually construct the push notification payload and send it using the browser's Push API
-    // This is a simplified approach that avoids the web-push library
-    const results = subscriptions.map(item => {
+    // Process each subscription
+    const results = subscriptionsToProcess.map(item => {
       try {
         const subscription = item.subscription;
         
@@ -69,10 +77,13 @@ serve(async (req) => {
           };
         }
         
+        console.log(`[PushNotification] Processing subscription: ${subscription.endpoint}`);
+        
+        // Here we're returning the subscription and payload so the client can use the 
+        // browser Push API to send the notification
         return { 
           success: true, 
           endpoint: subscription.endpoint,
-          // Return the subscription info so the client can handle sending the notification
           subscription: subscription,
           payload: {
             title: title || 'Sensa.run',
@@ -88,6 +99,43 @@ serve(async (req) => {
         };
       }
     });
+
+    // Let's try to directly send push notification using the web push API
+    // This is an attempt to send the notification directly from the edge function
+    // without relying on the client to do it
+    for (const result of results) {
+      if (result.success && result.subscription) {
+        try {
+          // Create a simple text payload
+          const payload = JSON.stringify(result.payload);
+          
+          console.log(`[PushNotification] Sending notification to endpoint: ${result.endpoint}`);
+          
+          // Make a direct POST request to the push service
+          const pushServiceResponse = await fetch(result.subscription.endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'TTL': '60',
+              // The subscription object should contain the auth and p256dh keys needed
+              // but we're not using them directly - browser handles the encryption
+            },
+            body: payload
+          });
+          
+          if (!pushServiceResponse.ok) {
+            console.error(`[PushNotification] Push service error: ${pushServiceResponse.status} ${pushServiceResponse.statusText}`);
+            result.directPushError = `Push service error: ${pushServiceResponse.status}`;
+          } else {
+            console.log(`[PushNotification] Successfully sent notification directly to endpoint: ${result.endpoint}`);
+            result.directPushSuccess = true;
+          }
+        } catch (error) {
+          console.error(`[PushNotification] Error sending direct push:`, error);
+          result.directPushError = error instanceof Error ? error.message : String(error);
+        }
+      }
+    }
 
     // Return the subscription info to the client
     return new Response(

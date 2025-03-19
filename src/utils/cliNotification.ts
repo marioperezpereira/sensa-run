@@ -18,6 +18,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Define the anon key as a fallback
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5anZmZ2JhaWRjb3RhdHBuZHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0NTMyMDYsImV4cCI6MjA1NzAyOTIwNn0.96KP_zfQiKZz5Ce2-lfOcMTzuYaI52bqHti2Ay84cvI';
@@ -33,6 +34,7 @@ export async function sendNotificationByEmail(
 ) {
   try {
     console.log('[CLI-Notification] Sending notification to email:', email);
+    toast.info('Enviando notificación...');
     
     // Get the current session
     const { data: sessionData } = await supabase.auth.getSession();
@@ -52,13 +54,22 @@ export async function sendNotificationByEmail(
     
     if (!response.ok) {
       console.error('[CLI-Notification] Error sending notification:', result);
+      toast.error(`Error al enviar la notificación: ${result.error || response.statusText}`);
       return { success: false, error: result.error || response.statusText };
     }
     
     console.log('[CLI-Notification] Notification sent successfully:', result);
+    
+    if (result.success) {
+      toast.success('Notificación enviada correctamente');
+    } else {
+      toast.error(`Error: ${result.error || 'No se pudo enviar la notificación'}`);
+    }
+    
     return result;
   } catch (err) {
     console.error('[CLI-Notification] Exception sending notification:', err);
+    toast.error(`Error al enviar la notificación: ${err instanceof Error ? err.message : String(err)}`);
     return { 
       success: false, 
       error: err instanceof Error ? err.message : String(err) 
@@ -77,6 +88,7 @@ export async function sendNotificationByUserId(
 ) {
   try {
     console.log('[CLI-Notification] Sending notification to user ID:', userId);
+    toast.info('Enviando notificación...');
     
     // Get the current session
     const { data: sessionData } = await supabase.auth.getSession();
@@ -96,13 +108,22 @@ export async function sendNotificationByUserId(
     
     if (!response.ok) {
       console.error('[CLI-Notification] Error sending notification:', result);
+      toast.error(`Error al enviar la notificación: ${result.error || response.statusText}`);
       return { success: false, error: result.error || response.statusText };
     }
     
     console.log('[CLI-Notification] Notification sent successfully:', result);
+    
+    if (result.success) {
+      toast.success('Notificación enviada correctamente');
+    } else {
+      toast.error(`Error: ${result.error || 'No se pudo enviar la notificación'}`);
+    }
+    
     return result;
   } catch (err) {
     console.error('[CLI-Notification] Exception sending notification:', err);
+    toast.error(`Error al enviar la notificación: ${err instanceof Error ? err.message : String(err)}`);
     return { 
       success: false, 
       error: err instanceof Error ? err.message : String(err)

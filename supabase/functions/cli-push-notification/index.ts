@@ -63,7 +63,7 @@ serve(async (req) => {
       console.log(`[CLI-PushNotification] Found user_id: ${targetUserId} for email: ${email}`);
     }
 
-    // Get user subscriptions from DB to verify if the user has any subscriptions
+    // Get user subscriptions from DB
     const { data: subscriptions, error: fetchError } = await supabase
       .from('push_subscriptions')
       .select('subscription')
@@ -82,23 +82,86 @@ serve(async (req) => {
     }
 
     console.log(`[CLI-PushNotification] Found ${subscriptions.length} subscription(s) for user: ${targetUserId}`);
-    
-    // Create a simple notification directly without using web-push
+
+    // Prepare notification payload
     const notificationPayload = {
       title: title || 'Sensa.run',
       body: message || 'Tienes una notificación nueva',
       url: url || '/',
     };
-    
+
+    // For each subscription, trigger the actual browser push notification
+    const results = [];
+
+    for (const item of subscriptions) {
+      try {
+        const subscription = item.subscription;
+        
+        if (!subscription || !subscription.endpoint) {
+          results.push({ 
+            success: false, 
+            error: 'Invalid subscription object', 
+            endpoint: subscription?.endpoint || 'unknown' 
+          });
+          continue;
+        }
+
+        // Now we actually send the notification to the browser
+        // We'll do this by making a POST request to the browser's push service endpoint
+        const pushSubscription = subscription;
+        const payload = JSON.stringify(notificationPayload);
+        
+        console.log(`[CLI-PushNotification] Sending push notification to endpoint: ${subscription.endpoint}`);
+        
+        // Use the send-push-notification function to actually send the push
+        // since it's set up to interact with the browser push service
+        const sendResult = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceRoleKey}`
+          },
+          body: JSON.stringify({
+            user_id: targetUserId,
+            title: notificationPayload.title,
+            message: notificationPayload.body,
+            url: notificationPayload.url,
+            specific_subscription: pushSubscription
+          })
+        });
+
+        if (!sendResult.ok) {
+          const errorData = await sendResult.json();
+          results.push({
+            success: false,
+            endpoint: subscription.endpoint,
+            error: errorData.error || `Failed to send notification: ${sendResult.status}`
+          });
+        } else {
+          results.push({
+            success: true,
+            endpoint: subscription.endpoint,
+          });
+        }
+      } catch (error) {
+        results.push({ 
+          success: false, 
+          error: error instanceof Error ? error.message : String(error),
+          endpoint: item.subscription?.endpoint || 'unknown'
+        });
+      }
+    }
+
     // Return notification result
     return new Response(
       JSON.stringify({ 
-        success: true, 
+        success: results.some(r => r.success),  // Success if at least one notification was sent
         message: 'Push notification request processed',
         user_id: targetUserId,
         email: email || 'not provided',
         notification: notificationPayload,
-        subscriptions: subscriptions.length
+        results: results,
+        subscriptions_processed: subscriptions.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
