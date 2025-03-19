@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useContextCalendars, useDatePickerContext } from "@rehookify/datepicker";
+import { useDatePicker, type OnDatesChangeProps } from "@rehookify/datepicker";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -43,27 +43,41 @@ function Calendar({
   // Initialize with the provided defaultMonth or first selected date or current date
   const initialMonth = defaultMonth || (selectedDates[0] || new Date());
   
-  // Create the date picker context
-  const { propGetters, calendar } = useContextCalendars({
-    selectedDates,
-    onDatesChange: (dates) => {
+  // Handle date selection
+  const handleDateChange = React.useCallback(
+    (props: OnDatesChangeProps) => {
       if (!onSelect) return;
+      
       if (mode === "single") {
-        onSelect(dates[0]);
-      } else if (mode === "multiple" || mode === "range") {
-        onSelect(dates);
+        onSelect(props.selectedDates[0]);
+      } else {
+        onSelect(props.selectedDates);
       }
     },
-    calendar: {
-      month: initialMonth.getMonth(),
-      year: initialMonth.getFullYear(),
-      fromYear: fromYear || initialMonth.getFullYear() - 100,
-      toYear: toYear || initialMonth.getFullYear() + 5,
+    [mode, onSelect]
+  );
+  
+  // Create the date picker context
+  const {
+    data: { weekDays, months, years, calendars },
+    propGetters
+  } = useDatePicker({
+    selectedDates,
+    onDatesChange: handleDateChange,
+    dates: {
+      mode: mode === "single" ? "single" : mode === "range" ? "range" : "multiple",
     },
-    locale: locale as any,
+    calendar: {
+      startMonth: initialMonth?.getMonth() || 0,
+      startYear: initialMonth?.getFullYear() || new Date().getFullYear(),
+      ...(fromYear ? { minYear: fromYear } : {}),
+      ...(toYear ? { maxYear: toYear } : {}),
+    },
+    locale: locale,
   });
 
-  const { weekDays, months, years, calendarCells, navigation } = useDatePickerContext();
+  // Current displayed calendar
+  const calendar = calendars[0];
 
   // Custom date disabler function
   const isDateDisabled = React.useCallback(
@@ -80,7 +94,7 @@ function Calendar({
         <div className="flex justify-center space-x-2 mb-2">
           {captionLayout === "dropdown-buttons" && (
             <button
-              {...propGetters.previousYear()}
+              {...propGetters.previousYearButton()}
               className={cn(
                 buttonVariants({ variant: "outline" }),
                 "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -95,10 +109,10 @@ function Calendar({
           <select
             {...propGetters.monthSelect()}
             className="bg-transparent border border-input rounded px-2 text-sm"
-            value={navigation.month}
+            value={calendar.month}
           >
             {months.map((monthName, idx) => (
-              <option key={monthName} value={idx}>
+              <option key={idx} value={idx}>
                 {monthName}
               </option>
             ))}
@@ -107,18 +121,18 @@ function Calendar({
           <select
             {...propGetters.yearSelect()}
             className="bg-transparent border border-input rounded px-2 text-sm"
-            value={navigation.year}
+            value={calendar.year}
           >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
               </option>
             ))}
           </select>
           
           {captionLayout === "dropdown-buttons" && (
             <button
-              {...propGetters.nextYear()}
+              {...propGetters.nextYearButton()}
               className={cn(
                 buttonVariants({ variant: "outline" }),
                 "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -135,7 +149,7 @@ function Calendar({
       return (
         <div className="flex justify-between items-center mb-2">
           <button
-            {...propGetters.previousMonth()}
+            {...propGetters.previousMonthButton()}
             className={cn(
               buttonVariants({ variant: "outline" }),
               "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -146,11 +160,11 @@ function Calendar({
           </button>
           
           <div className="font-medium text-sm">
-            {months[navigation.month]} {navigation.year}
+            {months[calendar.month]} {calendar.year}
           </div>
           
           <button
-            {...propGetters.nextMonth()}
+            {...propGetters.nextMonthButton()}
             className={cn(
               buttonVariants({ variant: "outline" }),
               "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -178,39 +192,33 @@ function Calendar({
         </div>
         
         <div className="grid grid-cols-7 gap-1">
-          {calendarCells.map((week, weekIndex) => (
-            <React.Fragment key={`week-${weekIndex}`}>
-              {week.map((day) => {
-                const isOutsideDay = day.date.getMonth() !== navigation.month;
-                const isDisabled = isDateDisabled(day.date);
-                const isSelected = day.selected;
-                const isToday = day.today;
-                
-                // Skip outside days if they're not shown
-                if (!showOutsideDays && isOutsideDay) {
-                  return <div key={`outside-${day.day}`} className="h-9 w-9"></div>;
-                }
-                
-                return (
-                  <button
-                    key={`${day.day}-${day.date.getMonth()}-${day.date.getFullYear()}`}
-                    {...propGetters.dayButton(day.date)}
-                    disabled={isDisabled}
-                    className={cn(
-                      buttonVariants({ variant: "ghost" }),
-                      "h-9 w-9 p-0 font-normal text-sm",
-                      isOutsideDay && "text-muted-foreground opacity-50",
-                      isSelected && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-                      isToday && !isSelected && "bg-accent text-accent-foreground",
-                      isDisabled && "text-muted-foreground opacity-50 cursor-not-allowed"
-                    )}
-                  >
-                    {day.day}
-                  </button>
-                );
-              })}
-            </React.Fragment>
-          ))}
+          {calendar.days.map((day) => {
+            const isOutsideDay = day.inCurrentMonth === false;
+            const isDisabled = isDateDisabled(day.date) || day.disabled;
+            
+            // Skip outside days if they're not shown
+            if (!showOutsideDays && isOutsideDay) {
+              return <div key={`outside-${day.day}`} className="h-9 w-9"></div>;
+            }
+            
+            return (
+              <button
+                key={`${day.day}-${day.month}-${day.year}`}
+                {...propGetters.dayButton(day.date)}
+                disabled={isDisabled}
+                className={cn(
+                  buttonVariants({ variant: "ghost" }),
+                  "h-9 w-9 p-0 font-normal text-sm",
+                  isOutsideDay && "text-muted-foreground opacity-50",
+                  day.selected && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+                  day.today && !day.selected && "bg-accent text-accent-foreground",
+                  isDisabled && "text-muted-foreground opacity-50 cursor-not-allowed"
+                )}
+              >
+                {day.day}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

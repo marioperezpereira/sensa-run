@@ -62,6 +62,7 @@ export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
             captionLayout="dropdown-buttons"
             fromYear={currentYear}
             toYear={currentYear + 5}
+            locale="es"
           />
         </PopoverContent>
       </Popover>

@@ -151,11 +151,7 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={(date) => {
-                        if (date) {
-                          field.onChange(Array.isArray(date) ? date[0] : date);
-                        }
-                      }}
+                      onSelect={field.onChange}
                       disabled={(date) =>
                         date > new Date() || date < new Date("1900-01-01")
                       }
@@ -164,6 +160,7 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
                       fromYear={1940}
                       toYear={currentYear - 10}
                       showOutsideDays={false}
+                      locale="es"
                     />
                   </PopoverContent>
                 </Popover>

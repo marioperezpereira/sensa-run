@@ -184,7 +184,7 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
                           date > new Date()
                         }
                         initialFocus
-                        locale={es}
+                        locale="es"
                         captionLayout="dropdown-buttons"
                         fromYear={2010}
                         toYear={currentYear}

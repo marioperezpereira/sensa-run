@@ -154,15 +154,12 @@ const EditRaceResultDialog = ({
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={(date) => {
-                          if (date) {
-                            field.onChange(Array.isArray(date) ? date[0] : date);
-                          }
-                        }}
+                        onSelect={field.onChange}
                         disabled={(date) =>
                           date > new Date()
                         }
                         initialFocus
+                        locale="es"
                         captionLayout="dropdown-buttons"
                       />
                     </PopoverContent>
