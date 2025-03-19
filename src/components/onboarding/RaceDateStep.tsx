@@ -12,6 +12,8 @@ interface RaceDateStepProps {
 }
 
 export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
+  const currentYear = new Date().getFullYear();
+  
   return (
     <div className="space-y-4">
       <p className="text-gray-800 text-sm md:text-base">
@@ -37,6 +39,9 @@ export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
             onSelect={(date) => onChange(date?.toISOString() || "")}
             disabled={(date) => date < new Date()}
             initialFocus
+            captionLayout="dropdown-buttons"
+            fromYear={currentYear}
+            toYear={currentYear + 5}
           />
         </PopoverContent>
       </Popover>

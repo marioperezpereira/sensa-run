@@ -116,6 +116,8 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
     }
   };
 
+  const currentYear = new Date().getFullYear();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -183,6 +185,9 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
                         }
                         initialFocus
                         locale={es}
+                        captionLayout="dropdown-buttons"
+                        fromYear={2010}
+                        toYear={currentYear}
                       />
                     </PopoverContent>
                   </Popover>

@@ -86,6 +86,8 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
     }
   };
 
+  const currentYear = new Date().getFullYear();
+
   return (
     <div>
       <div className="mb-4">
@@ -158,7 +160,8 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
                       locale={es}
                       captionLayout="dropdown-buttons"
                       fromYear={1940}
-                      toYear={2010}
+                      toYear={currentYear - 10}
+                      showOutsideDays={false}
                     />
                   </PopoverContent>
                 </Popover>
