@@ -14,24 +14,13 @@ interface RaceDateStepProps {
 export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
   const currentYear = new Date().getFullYear();
   
-  const handleDateSelect = (date: Date | Date[] | undefined) => {
+  const handleDateSelect = (date: Date | undefined) => {
     if (!date) {
       onChange("");
       return;
     }
     
-    // Handle single date selection
-    if (!Array.isArray(date)) {
-      onChange(date.toISOString());
-      return;
-    }
-    
-    // If it's an array (should not happen with mode="single"), take the first one
-    if (date.length > 0) {
-      onChange(date[0].toISOString());
-    } else {
-      onChange("");
-    }
+    onChange(date.toISOString());
   };
   
   return (

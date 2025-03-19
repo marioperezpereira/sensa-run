@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useDatePicker, type OnDatesChangeProps } from "@rehookify/datepicker";
+import { useDatePicker } from "@rehookify/datepicker";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -45,13 +45,13 @@ function Calendar({
   
   // Handle date selection
   const handleDateChange = React.useCallback(
-    (props: OnDatesChangeProps) => {
+    (newSelectedDates: Date[]) => {
       if (!onSelect) return;
       
       if (mode === "single") {
-        onSelect(props.selectedDates[0]);
+        onSelect(newSelectedDates[0]);
       } else {
-        onSelect(props.selectedDates);
+        onSelect(newSelectedDates);
       }
     },
     [mode, onSelect]
@@ -60,20 +60,18 @@ function Calendar({
   // Create the date picker context
   const {
     data: { weekDays, months, years, calendars },
-    propGetters
+    propGetters: { dayButton, monthButton, nextMonthButton, previousMonthButton, nextYearsButton, previousYearsButton }
   } = useDatePicker({
     selectedDates,
-    onDatesChange: handleDateChange,
+    onDatesChange: ({ selectedDates }) => handleDateChange(selectedDates),
     dates: {
       mode: mode === "single" ? "single" : mode === "range" ? "range" : "multiple",
     },
     calendar: {
-      startMonth: initialMonth?.getMonth() || 0,
-      startYear: initialMonth?.getFullYear() || new Date().getFullYear(),
-      ...(fromYear ? { minYear: fromYear } : {}),
-      ...(toYear ? { maxYear: toYear } : {}),
+      ...(fromYear ? { minDate: new Date(fromYear, 0, 1) } : {}),
+      ...(toYear ? { maxDate: new Date(toYear, 11, 31) } : {}),
     },
-    locale: locale,
+    locale: locale ? { locale } : undefined,
   });
 
   // Current displayed calendar
@@ -94,7 +92,7 @@ function Calendar({
         <div className="flex justify-center space-x-2 mb-2">
           {captionLayout === "dropdown-buttons" && (
             <button
-              {...propGetters.previousYearButton()}
+              {...previousYearsButton()}
               className={cn(
                 buttonVariants({ variant: "outline" }),
                 "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -107,9 +105,13 @@ function Calendar({
           )}
           
           <select
-            {...propGetters.monthSelect()}
             className="bg-transparent border border-input rounded px-2 text-sm"
             value={calendar.month}
+            onChange={(e) => {
+              const month = parseInt(e.target.value, 10);
+              const nextDate = new Date(calendar.year, month, 1);
+              monthButton(nextDate)?.onClick();
+            }}
           >
             {months.map((monthName, idx) => (
               <option key={idx} value={idx}>
@@ -119,9 +121,13 @@ function Calendar({
           </select>
           
           <select
-            {...propGetters.yearSelect()}
             className="bg-transparent border border-input rounded px-2 text-sm"
             value={calendar.year}
+            onChange={(e) => {
+              const year = parseInt(e.target.value, 10);
+              const nextDate = new Date(year, calendar.month, 1);
+              monthButton(nextDate)?.onClick();
+            }}
           >
             {years.map((year) => (
               <option key={year} value={year}>
@@ -132,7 +138,7 @@ function Calendar({
           
           {captionLayout === "dropdown-buttons" && (
             <button
-              {...propGetters.nextYearButton()}
+              {...nextYearsButton()}
               className={cn(
                 buttonVariants({ variant: "outline" }),
                 "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -149,7 +155,7 @@ function Calendar({
       return (
         <div className="flex justify-between items-center mb-2">
           <button
-            {...propGetters.previousMonthButton()}
+            {...previousMonthButton()}
             className={cn(
               buttonVariants({ variant: "outline" }),
               "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -164,7 +170,7 @@ function Calendar({
           </div>
           
           <button
-            {...propGetters.nextMonthButton()}
+            {...nextMonthButton()}
             className={cn(
               buttonVariants({ variant: "outline" }),
               "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
@@ -193,8 +199,8 @@ function Calendar({
         
         <div className="grid grid-cols-7 gap-1">
           {calendar.days.map((day) => {
-            const isOutsideDay = day.inCurrentMonth === false;
-            const isDisabled = isDateDisabled(day.date) || day.disabled;
+            const isOutsideDay = !day.inCurrentMonth;
+            const isDisabled = isDateDisabled(day.$date) || day.disabled;
             
             // Skip outside days if they're not shown
             if (!showOutsideDays && isOutsideDay) {
@@ -203,15 +209,15 @@ function Calendar({
             
             return (
               <button
-                key={`${day.day}-${day.month}-${day.year}`}
-                {...propGetters.dayButton(day.date)}
+                key={`${day.day}-${day.$date.getMonth()}-${day.$date.getFullYear()}`}
+                {...dayButton(day.$date)}
                 disabled={isDisabled}
                 className={cn(
                   buttonVariants({ variant: "ghost" }),
                   "h-9 w-9 p-0 font-normal text-sm",
                   isOutsideDay && "text-muted-foreground opacity-50",
                   day.selected && "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-                  day.today && !day.selected && "bg-accent text-accent-foreground",
+                  day.isToday && !day.selected && "bg-accent text-accent-foreground",
                   isDisabled && "text-muted-foreground opacity-50 cursor-not-allowed"
                 )}
               >

@@ -159,7 +159,6 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
                       captionLayout="dropdown-buttons"
                       fromYear={1940}
                       toYear={currentYear - 10}
-                      showOutsideDays={false}
                       locale="es"
                     />
                   </PopoverContent>
