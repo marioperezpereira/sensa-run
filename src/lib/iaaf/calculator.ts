@@ -45,7 +45,7 @@ export const calculateIAAFPoints = (
     // Calculate how many seconds over the slowest time in the table
     const secondsOver = totalSeconds - scoringTable[lastIndex].time;
     
-    // Calculate the rate of decline between the last two entries
+    // Calculate the rate of decline based on the last two entries in the table
     const secondLastIndex = lastIndex - 1;
     const timeDiff = scoringTable[lastIndex].time - scoringTable[secondLastIndex].time;
     const scoreDiff = scoringTable[secondLastIndex].score - scoringTable[lastIndex].score;

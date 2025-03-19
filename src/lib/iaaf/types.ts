@@ -17,7 +17,7 @@ export type ScoringTable = {
   };
 };
 
-// Constants for recognized distances
+// Constants for recognized distances - these MUST match the keys in the scoring data
 export const DISTANCE_MAPPINGS: { [key: string]: string } = {
   "5K": "track5000",
   "10K": "road10000",
