@@ -23,6 +23,9 @@ import { toast } from "sonner";
 // Define the anon key as a fallback
 const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5anZmZ2JhaWRjb3RhdHBuZHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0NTMyMDYsImV4cCI6MjA1NzAyOTIwNn0.96KP_zfQiKZz5Ce2-lfOcMTzuYaI52bqHti2Ay84cvI';
 
+// URL for the CLI push notification function
+const CLI_NOTIFICATION_URL = 'https://kyjvfgbaidcotatpndpw.supabase.co/functions/v1/cli-push-notification';
+
 /**
  * Utility function to send notification to a user by email
  */
@@ -41,7 +44,7 @@ export async function sendNotificationByEmail(
     const accessToken = sessionData?.session?.access_token || ANON_KEY;
 
     // Use direct fetch to avoid any potential issues with the Supabase client
-    const response = await fetch('https://kyjvfgbaidcotatpndpw.supabase.co/functions/v1/cli-push-notification', {
+    const response = await fetch(CLI_NOTIFICATION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -95,7 +98,7 @@ export async function sendNotificationByUserId(
     const accessToken = sessionData?.session?.access_token || ANON_KEY;
 
     // Use direct fetch to avoid any potential issues with the Supabase client
-    const response = await fetch('https://kyjvfgbaidcotatpndpw.supabase.co/functions/v1/cli-push-notification', {
+    const response = await fetch(CLI_NOTIFICATION_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

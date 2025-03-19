@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, RefreshCcw, Bell } from "lucide-react";
+import { LogOut, RefreshCcw, Bell, BellOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { registerPushNotifications } from "@/utils/notifications";
 import { checkAndSaveExistingSubscription } from "@/utils/sendNotification";
@@ -17,32 +17,40 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showNotificationButton, setShowNotificationButton] = useState(false);
+  const [notificationsActive, setNotificationsActive] = useState(false);
   const [isRecovering, setIsRecovering] = useState(false);
 
   useEffect(() => {
-    // Check if notifications are supported
+    // Check if notifications are supported and if they are already registered
     const checkNotificationSupport = async () => {
-      const hasNotificationSupport = 'Notification' in window;
+      const hasNotificationSupport = 'Notification' in window && 'serviceWorker' in navigator;
       let currentPermission = "default";
       
       if (hasNotificationSupport) {
         currentPermission = Notification.permission;
         
-        // Try to recover any existing subscription
+        // Check if we have an active service worker with push subscription
         if (currentPermission === 'granted') {
           setIsRecovering(true);
           try {
-            await checkAndSaveExistingSubscription();
+            // Check if we have a registered service worker
+            const registration = await navigator.serviceWorker.ready;
+            const subscription = await registration.pushManager.getSubscription();
+            
+            if (subscription) {
+              setNotificationsActive(true);
+              await checkAndSaveExistingSubscription();
+            }
           } catch (error) {
-            console.error('Error recovering subscription:', error);
+            console.error('Error checking push subscription:', error);
           } finally {
             setIsRecovering(false);
           }
         }
       }
       
-      // Only show button if notifications are supported and not already granted
-      setShowNotificationButton(hasNotificationSupport && currentPermission !== 'granted');
+      // Show notification button if supported
+      setShowNotificationButton(hasNotificationSupport && currentPermission !== 'denied');
     };
 
     checkNotificationSupport();
@@ -82,7 +90,7 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
             title: "¡Éxito!",
             description: "Las notificaciones push han sido habilitadas",
           });
-          setShowNotificationButton(false);
+          setNotificationsActive(true);
           return;
         }
       }
@@ -97,13 +105,55 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
         title: "¡Éxito!",
         description: "Las notificaciones web han sido habilitadas",
       });
-      setShowNotificationButton(false);
+      setNotificationsActive(true);
 
     } catch (error) {
       console.error('Error enabling notifications:', error);
       toast({
         title: "Error",
         description: "Hubo un error al habilitar las notificaciones",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleDisableNotifications = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (subscription) {
+          // Unsubscribe from push notifications
+          await subscription.unsubscribe();
+          
+          // Remove subscription from database if user is logged in
+          if (userId) {
+            await supabase
+              .from('push_subscriptions')
+              .delete()
+              .eq('user_id', userId)
+              .eq('endpoint', subscription.endpoint);
+          }
+          
+          toast({
+            title: "Notificaciones desactivadas",
+            description: "Has desactivado las notificaciones correctamente",
+          });
+          
+          setNotificationsActive(false);
+        } else {
+          toast({
+            title: "No hay notificaciones activas",
+            description: "No se encontraron notificaciones activas para desactivar",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error disabling notifications:', error);
+      toast({
+        title: "Error",
+        description: "Hubo un error al desactivar las notificaciones",
         variant: "destructive"
       });
     }
@@ -124,11 +174,20 @@ const ProfileActions = ({ userId, onResetClick }: ProfileActionsProps) => {
         <Button 
           variant="outline" 
           className="w-full rounded-[42px] border-sensa-purple text-sensa-purple hover:bg-sensa-purple/10"
-          onClick={handleEnableNotifications}
+          onClick={notificationsActive ? handleDisableNotifications : handleEnableNotifications}
           disabled={isRecovering}
         >
-          <Bell className="mr-2 h-4 w-4" />
-          {isRecovering ? 'Comprobando notificaciones...' : 'Habilitar notificaciones'}
+          {notificationsActive ? (
+            <>
+              <BellOff className="mr-2 h-4 w-4" />
+              Desactivar notificaciones
+            </>
+          ) : (
+            <>
+              <Bell className="mr-2 h-4 w-4" />
+              {isRecovering ? 'Comprobando notificaciones...' : 'Habilitar notificaciones'}
+            </>
+          )}
         </Button>
       )}
 
