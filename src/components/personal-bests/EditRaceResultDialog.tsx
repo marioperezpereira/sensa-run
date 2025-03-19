@@ -161,6 +161,7 @@ const EditRaceResultDialog = ({
                         }
                         initialFocus
                         locale={es}
+                        captionLayout="dropdown-buttons"
                       />
                     </PopoverContent>
                   </Popover>
