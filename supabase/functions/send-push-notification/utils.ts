@@ -58,44 +58,51 @@ export function formatVapidKey(privateKey: string): ArrayBuffer {
       return base64ToUint8Array(pemContent).buffer;
     }
     
-    // If the key is likely a raw base64 key
-    console.log('[Utils] Treating as raw base64 VAPID key');
-    
-    // First try standard VAPID key format - 32 bytes
-    let keyBytes: Uint8Array;
+    // For raw base64 keys (typical VAPID private key format)
+    console.log('[Utils] Treating as raw base64 VAPID key, converting to PKCS#8');
     
     try {
-      keyBytes = base64ToUint8Array(privateKey);
+      // For ECDSA with P-256, we need to prepare a PKCS#8 structure
+      // First, decode the base64 key
+      const rawKeyBytes = base64ToUint8Array(privateKey);
       
-      // For EC P-256 curve, the private key should be 32 bytes
-      if (keyBytes.length === 32) {
-        console.log('[Utils] Got valid 32-byte private key');
-        
-        // For ECDSA with P-256, we need to convert the raw 32-byte key to PKCS#8
-        // This is a simplified PKCS#8 wrapper for P-256 curve private key
-        const pkcs8Header = new Uint8Array([
-          0x30, 0x81, 0x87, 0x02, 0x01, 0x00, 0x30, 0x13, 
-          0x06, 0x07, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 
-          0x01, 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 
-          0x03, 0x01, 0x07, 0x04, 0x6D, 0x30, 0x6B, 0x02, 
-          0x01, 0x01, 0x04, 0x20
-        ]);
-        
-        // Combine header and key
-        const pkcs8Key = new Uint8Array(pkcs8Header.length + keyBytes.length);
-        pkcs8Key.set(pkcs8Header);
-        pkcs8Key.set(keyBytes, pkcs8Header.length);
-        
-        console.log('[Utils] Created PKCS#8 formatted key');
-        return pkcs8Key.buffer;
-      }
+      // Log the key length to help with debugging
+      console.log('[Utils] Raw key length:', rawKeyBytes.length);
+      
+      // Create a PKCS#8 formatted key for P-256 curve
+      // This is a simplified version that wraps the raw key material
+      const pkcs8Header = new Uint8Array([
+        // ASN.1 Sequence
+        0x30, 0x81, 0x87, 
+        // Version
+        0x02, 0x01, 0x00,
+        // Algorithm Identifier
+        0x30, 0x13, 
+        // Algorithm OID (EC Public Key)
+        0x06, 0x07, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 0x01,
+        // Parameters (named curve OID for P-256)
+        0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07,
+        // Private Key OCTET STRING header
+        0x04, 0x6D, 
+        // Private Key OCTET STRING content
+        0x30, 0x6B, 
+        // Version
+        0x02, 0x01, 0x01,
+        // Private Key value (32 bytes for P-256)
+        0x04, 0x20
+      ]);
+      
+      // Concatenate header and key bytes
+      const pkcs8Key = new Uint8Array(pkcs8Header.length + rawKeyBytes.length);
+      pkcs8Key.set(pkcs8Header);
+      pkcs8Key.set(rawKeyBytes, pkcs8Header.length);
+      
+      console.log('[Utils] Created PKCS#8 formatted key with length:', pkcs8Key.length);
+      return pkcs8Key.buffer;
     } catch (e) {
-      console.error('[Utils] Error parsing raw key:', e);
+      console.error('[Utils] Error formatting raw key to PKCS#8:', e);
+      throw new Error(`Failed to format raw key to PKCS#8: ${e instanceof Error ? e.message : String(e)}`);
     }
-    
-    // If we reach here, try to use the key as-is
-    console.log('[Utils] Using key as-is, this may fail if not in PKCS#8 format');
-    return base64ToUint8Array(privateKey).buffer;
   } catch (error) {
     console.error('[Utils] Error formatting VAPID key:', error);
     throw new Error(`Failed to format VAPID key: ${error instanceof Error ? error.message : String(error)}`);

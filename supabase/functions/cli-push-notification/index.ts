@@ -1,4 +1,3 @@
-
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
@@ -120,6 +119,7 @@ serve(async (req) => {
           
           // Log the exact request details for debugging
           console.log(`[CLI-PushNotification] send-push-notification Request details:
+            URL: "supabase-edge-function-send-push-notification"
             Payload: ${JSON.stringify(requestPayload)}
           `);
           
@@ -127,6 +127,12 @@ serve(async (req) => {
           const { data: pushResult, error: pushError } = await supabase.functions.invoke('send-push-notification', {
             body: requestPayload
           });
+          
+          // Log the response for debugging
+          console.log(`[CLI-PushNotification] send-push-notification Response:
+            Data: ${JSON.stringify(pushResult)}
+            Error: ${JSON.stringify(pushError)}
+          `);
           
           if (pushError) {
             console.error('[CLI-PushNotification] Error calling send-push-notification function:', pushError);
