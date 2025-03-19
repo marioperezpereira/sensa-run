@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
-  gender: z.enum(["Male", "Female", "Other"], {
+  gender: z.enum(["Male", "Female"], {
     required_error: "Debes seleccionar el género",
   }),
   dateOfBirth: z.date({
@@ -87,7 +87,7 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+    <div>
       <div className="mb-4">
         <h2 className="text-lg font-medium">Información de perfil</h2>
         <p className="text-sm text-gray-500">
@@ -115,7 +115,6 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
                   <SelectContent>
                     <SelectItem value="Male">Masculino</SelectItem>
                     <SelectItem value="Female">Femenino</SelectItem>
-                    <SelectItem value="Other">Otro</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -157,6 +156,9 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
                       }
                       initialFocus
                       locale={es}
+                      captionLayout="dropdown-buttons"
+                      fromYear={1940}
+                      toYear={2010}
                     />
                   </PopoverContent>
                 </Popover>
@@ -165,7 +167,7 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
             )}
           />
           
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button type="submit" className="w-full bg-sensa-purple hover:bg-sensa-purple/90" disabled={isSubmitting}>
             {isSubmitting ? "Guardando..." : "Guardar información"}
           </Button>
         </form>

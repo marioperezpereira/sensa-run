@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -139,14 +140,14 @@ const RaceResultsList = ({ refreshTrigger = 0 }: RaceResultsListProps) => {
   return (
     <div className="space-y-4">
       {resultsByDistance.map(({ distance, pb, latest, count }) => (
-        <div key={distance} className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+        <div key={distance} className="bg-white/70 backdrop-blur-sm rounded-lg p-4">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-lg font-semibold">{distance}</h3>
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => handleViewResults(distance)}
-              className="text-xs"
+              className="text-xs text-sensa-purple hover:bg-sensa-purple/10"
             >
               Ver todos ({count}) <ChevronRight className="ml-1 h-3 w-3" />
             </Button>
@@ -154,12 +155,12 @@ const RaceResultsList = ({ refreshTrigger = 0 }: RaceResultsListProps) => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Best time */}
-            <div className="bg-[#FEF7CD]/50 rounded-lg p-3">
+            <div className="bg-amber-50/70 rounded-lg p-3">
               <p className="text-xs text-gray-500 mb-1">Mejor tiempo</p>
               {pb ? (
                 <>
                   <p className="font-semibold flex items-center">
-                    <Clock className="mr-1 h-4 w-4" />
+                    <Clock className="mr-1 h-4 w-4 text-amber-500" />
                     {formatTime(pb.hours, pb.minutes, pb.seconds)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">{formatDate(pb.race_date)}</p>
@@ -170,12 +171,12 @@ const RaceResultsList = ({ refreshTrigger = 0 }: RaceResultsListProps) => {
             </div>
             
             {/* Latest */}
-            <div className="bg-gray-100 rounded-lg p-3">
+            <div className="bg-sensa-purple/10 rounded-lg p-3">
               <p className="text-xs text-gray-500 mb-1">Última carrera</p>
               {latest ? (
                 <>
                   <p className="font-semibold flex items-center">
-                    <Clock className="mr-1 h-4 w-4" />
+                    <Clock className="mr-1 h-4 w-4 text-sensa-purple" />
                     {formatTime(latest.hours, latest.minutes, latest.seconds)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">{formatDate(latest.race_date)}</p>
