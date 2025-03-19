@@ -161,19 +161,21 @@ serve(async (req) => {
               })
             });
             
-            const responseText = await fcmResult.text();
-            console.log(`[PushNotification] FCM response: ${fcmResult.status} ${responseText}`);
-            
+            // Check if we got a valid response
             if (fcmResult.ok) {
+              const responseText = await fcmResult.text();
+              console.log(`[PushNotification] FCM response: ${fcmResult.status} ${responseText}`);
               results.push({ 
                 success: true, 
                 endpoint: subscription.endpoint,
                 provider: 'fcm'
               });
             } else {
+              const errorText = await fcmResult.text();
+              console.error(`[PushNotification] FCM error: ${fcmResult.status} ${errorText}`);
               results.push({ 
                 success: false, 
-                error: `FCM error: ${fcmResult.status} ${responseText}`,
+                error: `FCM error: ${fcmResult.status} ${errorText}`,
                 endpoint: subscription.endpoint
               });
             }
@@ -182,94 +184,109 @@ serve(async (req) => {
           
           // Check if this is an Apple push endpoint
           if (subscription.endpoint.includes('web.push.apple.com')) {
-            // For Apple Web Push API, we need proper VAPID JWT authentication
-            
-            // Create the VAPID JWT token
-            // Generate a JWT token expiring in 12 hours
-            const now = Math.floor(Date.now() / 1000);
-            const expiresAt = now + 12 * 60 * 60; // 12 hours
-            
-            // Create the JWT header
-            const jwtHeader = {
-              typ: "JWT",
-              alg: "ES256"
-            };
-            
-            // Create the JWT payload
-            const jwtPayload = {
-              aud: new URL(subscription.endpoint).origin,
-              exp: expiresAt,
-              sub: vapidSubject
-            };
-            
-            // Encode the JWT header and payload
-            const encodeBase64Url = (input: string): string => {
-              return btoa(input)
-                .replace(/=/g, '')
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_');
-            };
-            
-            const encodedHeader = encodeBase64Url(JSON.stringify(jwtHeader));
-            const encodedPayload = encodeBase64Url(JSON.stringify(jwtPayload));
-            const unsignedToken = `${encodedHeader}.${encodedPayload}`;
-            
             try {
-              // Format the VAPID private key
-              const privateKeyBuffer = formatVapidKey(vapidPrivateKey);
+              console.log('[PushNotification] Processing Apple Web Push notification');
               
-              // Import the key
-              const privateKey = await crypto.subtle.importKey(
-                'pkcs8',
-                privateKeyBuffer,
-                {
-                  name: 'ECDSA',
-                  namedCurve: 'P-256',
-                },
-                false,
-                ['sign']
-              );
+              // Create the JWT for Apple Web Push API
+              // Generate a JWT token expiring in 12 hours
+              const now = Math.floor(Date.now() / 1000);
+              const expiresAt = now + 12 * 60 * 60; // 12 hours
               
-              // Sign the token
-              const encoder = new TextEncoder();
-              const signatureBuffer = await crypto.subtle.sign(
-                { name: 'ECDSA', hash: { name: 'SHA-256' } },
-                privateKey,
-                encoder.encode(unsignedToken)
-              );
+              // Create the JWT header and payload
+              const jwtHeader = {
+                typ: "JWT",
+                alg: "ES256"
+              };
               
-              // Convert the signature to base64url
-              const signature = uint8ArrayToBase64Url(new Uint8Array(signatureBuffer));
+              const jwtPayload = {
+                aud: new URL(subscription.endpoint).origin,
+                exp: expiresAt,
+                sub: vapidSubject
+              };
               
-              // Create the complete JWT token
-              const jwtToken = `${unsignedToken}.${signature}`;
+              // Encode the JWT header and payload
+              const encodeBase64Url = (input: string): string => {
+                return btoa(input)
+                  .replace(/=/g, '')
+                  .replace(/\+/g, '-')
+                  .replace(/\//g, '_');
+              };
               
-              // Send the push notification with the proper headers
-              const response = await fetch(subscription.endpoint, {
-                method: 'POST',
-                headers: {
-                  'TTL': '86400',
-                  'Content-Encoding': 'aes128gcm',
-                  'Content-Type': 'application/octet-stream',
-                  'Authorization': `vapid t=${jwtToken}, k=${vapidPublicKey}`
-                },
-                body: payload
-              });
+              const encodedHeader = encodeBase64Url(JSON.stringify(jwtHeader));
+              const encodedPayload = encodeBase64Url(JSON.stringify(jwtPayload));
+              const unsignedToken = `${encodedHeader}.${encodedPayload}`;
               
-              const responseText = await response.text();
-              console.log(`[PushNotification] Apple Web Push response: ${response.status} ${responseText}`);
+              console.log('[PushNotification] Preparing to format VAPID private key');
               
-              if (response.ok) {
-                results.push({ 
-                  success: true,
-                  endpoint: subscription.endpoint,
-                  provider: 'apple' 
+              // Format the VAPID private key and import it
+              const formattedKey = formatVapidKey(vapidPrivateKey);
+              
+              console.log('[PushNotification] Importing VAPID private key for signing');
+              
+              try {
+                // Import the key
+                const privateKey = await crypto.subtle.importKey(
+                  'pkcs8',
+                  formattedKey.buffer,
+                  {
+                    name: 'ECDSA',
+                    namedCurve: 'P-256',
+                  },
+                  false,
+                  ['sign']
+                );
+                
+                console.log('[PushNotification] Successfully imported key, signing JWT');
+                
+                // Sign the token
+                const encoder = new TextEncoder();
+                const signatureBuffer = await crypto.subtle.sign(
+                  { name: 'ECDSA', hash: { name: 'SHA-256' } },
+                  privateKey,
+                  encoder.encode(unsignedToken)
+                );
+                
+                // Convert the signature to base64url
+                const signature = uint8ArrayToBase64Url(new Uint8Array(signatureBuffer));
+                
+                // Create the complete JWT token
+                const jwtToken = `${unsignedToken}.${signature}`;
+                
+                console.log('[PushNotification] JWT token created, sending push notification');
+                
+                // Send the push notification with the proper headers
+                const response = await fetch(subscription.endpoint, {
+                  method: 'POST',
+                  headers: {
+                    'TTL': '86400',
+                    'Content-Type': 'application/octet-stream',
+                    'Authorization': `vapid t=${jwtToken}, k=${vapidPublicKey}`
+                  },
+                  body: payload
                 });
-              } else {
-                results.push({ 
-                  success: false, 
-                  error: `Apple Web Push error: ${response.status} ${responseText}`,
-                  endpoint: subscription.endpoint 
+                
+                if (response.ok) {
+                  console.log('[PushNotification] Apple Web Push notification sent successfully');
+                  results.push({ 
+                    success: true,
+                    endpoint: subscription.endpoint,
+                    provider: 'apple' 
+                  });
+                } else {
+                  const responseText = await response.text();
+                  console.error(`[PushNotification] Apple Web Push error: ${response.status} ${responseText}`);
+                  results.push({ 
+                    success: false, 
+                    error: `Apple Web Push error: ${response.status} ${responseText}`,
+                    endpoint: subscription.endpoint 
+                  });
+                }
+              } catch (keyError) {
+                console.error('[PushNotification] Error during key operations:', keyError);
+                results.push({
+                  success: false,
+                  error: `Error during key operations: ${keyError instanceof Error ? keyError.message : String(keyError)}`,
+                  endpoint: subscription.endpoint
                 });
               }
             } catch (error) {
@@ -284,13 +301,12 @@ serve(async (req) => {
           }
           
           // For all other Push Service endpoints (Firefox, etc.)
-          // Use a simple approach for now
+          // Use a simple approach with minimal headers
           const result = await fetch(subscription.endpoint, {
             method: 'POST',
             headers: {
               'TTL': '60'
-            },
-            body: payload
+            }
           });
           
           if (result.ok) {

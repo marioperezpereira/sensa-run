@@ -40,62 +40,52 @@ export function generateSalt(size: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(size));
 }
 
-// Function to format the VAPID private key for JWT signing
-export function formatVapidKey(privateKey: string): ArrayBuffer {
+// Format a VAPID private key in the correct format for crypto.subtle.importKey
+export function formatVapidKey(privateKey: string): Uint8Array {
   try {
-    // Debug the key format
-    console.log('[Utils] Formatting VAPID private key, length:', privateKey.length);
-    
-    // If the key starts with these markers, it's a PEM file
+    // Check if the key is in PEM format
     if (privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
-      console.log('[Utils] Detected PEM format VAPID key');
+      console.log('[Utils] Detected PEM format key, extracting base64 content');
       // Extract the base64 part from PEM format
       const pemContent = privateKey
         .replace('-----BEGIN PRIVATE KEY-----', '')
         .replace('-----END PRIVATE KEY-----', '')
         .replace(/\s/g, '');
       
-      return base64ToUint8Array(pemContent).buffer;
+      return base64ToUint8Array(pemContent);
     }
     
-    // If the key is likely a raw base64 key
-    console.log('[Utils] Treating as raw base64 VAPID key');
+    // If it's likely a raw base64 key (typical VAPID format)
+    console.log('[Utils] Processing raw base64 key');
     
-    // First try standard VAPID key format - 32 bytes
-    let keyBytes: Uint8Array;
+    // VAPID private keys are typically 32 bytes for EC P-256 curve
+    const keyBytes = base64ToUint8Array(privateKey);
     
-    try {
-      keyBytes = base64ToUint8Array(privateKey);
-      
-      // For EC P-256 curve, the private key should be 32 bytes
-      if (keyBytes.length === 32) {
-        console.log('[Utils] Got valid 32-byte private key');
-        
-        // For ECDSA with P-256, we need to convert the raw 32-byte key to PKCS#8
-        // This is a simplified PKCS#8 wrapper for P-256 curve private key
-        const pkcs8Header = new Uint8Array([
-          0x30, 0x81, 0x87, 0x02, 0x01, 0x00, 0x30, 0x13, 
-          0x06, 0x07, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 
-          0x01, 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 
-          0x03, 0x01, 0x07, 0x04, 0x6D, 0x30, 0x6B, 0x02, 
-          0x01, 0x01, 0x04, 0x20
-        ]);
-        
-        // Combine header and key
-        const pkcs8Key = new Uint8Array(pkcs8Header.length + keyBytes.length);
-        pkcs8Key.set(pkcs8Header);
-        pkcs8Key.set(keyBytes, pkcs8Header.length);
-        
-        console.log('[Utils] Created PKCS#8 formatted key');
-        return pkcs8Key.buffer;
-      }
-    } catch (e) {
-      console.error('[Utils] Error parsing raw key:', e);
+    // If it's already in PKCS#8 format, return as is
+    if (keyBytes.length > 32) {
+      console.log('[Utils] Key appears to be in PKCS#8 format already');
+      return keyBytes;
     }
     
-    // If we reach here, try to use the key as-is
-    console.log('[Utils] Using key as-is, this may fail if not in PKCS#8 format');
-    return base64ToUint8Array(privateKey).buffer;
+    // For EC P-256 curve with 32-byte keys, we'll convert to PKCS#8
+    console.log('[Utils] Converting 32-byte key to PKCS#8 format');
+    
+    // This is a fixed PKCS#8 ASN.1 header for EC P-256 private keys
+    const pkcs8Header = new Uint8Array([
+      0x30, 0x81, 0x87, 0x02, 0x01, 0x00, 0x30, 0x13, 
+      0x06, 0x07, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 
+      0x01, 0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 
+      0x03, 0x01, 0x07, 0x04, 0x6D, 0x30, 0x6B, 0x02, 
+      0x01, 0x01, 0x04, 0x20
+    ]);
+    
+    // Combine header and key
+    const pkcs8Key = new Uint8Array(pkcs8Header.length + keyBytes.length);
+    pkcs8Key.set(pkcs8Header);
+    pkcs8Key.set(keyBytes, pkcs8Header.length);
+    
+    console.log('[Utils] Successfully created PKCS#8 formatted key');
+    return pkcs8Key;
   } catch (error) {
     console.error('[Utils] Error formatting VAPID key:', error);
     throw new Error(`Failed to format VAPID key: ${error instanceof Error ? error.message : String(error)}`);
