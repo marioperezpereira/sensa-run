@@ -2,8 +2,10 @@
 import { useState } from "react";
 import { RaceResult } from "./types";
 import ResultsTable from "./ResultsTable";
+import ResultsPagination from "./ResultsPagination";
 import DeleteConfirmationDialog from "./DeleteConfirmationDialog";
 import EditRaceResultDialog from "../EditRaceResultDialog";
+import { usePagination } from "@/hooks/usePagination";
 
 interface ResultsManagerProps {
   results: RaceResult[];
@@ -26,6 +28,21 @@ const ResultsManager = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editResult, setEditResult] = useState<RaceResult | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  
+  // Initialize pagination
+  const { 
+    currentPage, 
+    totalPages, 
+    goToPage, 
+    getPaginatedItems 
+  } = usePagination({ 
+    totalItems: results.length,
+    itemsPerPage: 5,
+    initialPage: 1
+  });
+  
+  // Get current page results
+  const currentResults = getPaginatedItems(results);
 
   const handleEdit = (result: RaceResult) => {
     setEditResult(result);
@@ -56,13 +73,21 @@ const ResultsManager = ({
       {results.length === 0 ? (
         <p className="text-center py-8 text-gray-500">No hay resultados para mostrar</p>
       ) : (
-        <ResultsTable 
-          results={results}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          gender={gender}
-          getIAAFPoints={getIAAFPoints}
-        />
+        <>
+          <ResultsTable 
+            results={currentResults}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            gender={gender}
+            getIAAFPoints={getIAAFPoints}
+          />
+          
+          <ResultsPagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={goToPage}
+          />
+        </>
       )}
       
       {/* Delete confirmation dialog */}
