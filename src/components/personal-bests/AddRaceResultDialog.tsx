@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -29,7 +28,6 @@ const formSchema = z.object({
   minutes: z.number().min(0).max(59),
   seconds: z.number().min(0).max(59),
 }).refine(data => {
-  // At least one time unit must be greater than 0
   return data.hours > 0 || data.minutes > 0 || data.seconds > 0;
 }, {
   message: "Debes ingresar un tiempo válido",
@@ -184,8 +182,7 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
                           date > new Date()
                         }
                         initialFocus
-                        locale="es"
-                        captionLayout="dropdown-buttons"
+                        locale={es}
                         fromYear={2010}
                         toYear={currentYear}
                       />

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -159,8 +160,7 @@ const EditRaceResultDialog = ({
                           date > new Date()
                         }
                         initialFocus
-                        locale="es"
-                        captionLayout="dropdown-buttons"
+                        locale={es}
                       />
                     </PopoverContent>
                   </Popover>

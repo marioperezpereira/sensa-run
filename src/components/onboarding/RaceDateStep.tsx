@@ -1,5 +1,6 @@
 
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -38,7 +39,7 @@ export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {value ? format(new Date(value), "PPP") : "Selecciona una fecha"}
+            {value ? format(new Date(value), "PPP", { locale: es }) : "Selecciona una fecha"}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -48,10 +49,9 @@ export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
             onSelect={handleDateSelect}
             disabled={(date) => date < new Date()}
             initialFocus
-            captionLayout="dropdown-buttons"
-            fromYear={currentYear}
+            locale={es}
+            fromMonth={new Date()}
             toYear={currentYear + 5}
-            locale="es"
           />
         </PopoverContent>
       </Popover>

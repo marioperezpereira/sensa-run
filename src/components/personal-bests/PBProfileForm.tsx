@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -156,10 +157,9 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
                         date > new Date() || date < new Date("1900-01-01")
                       }
                       initialFocus
-                      captionLayout="dropdown-buttons"
                       fromYear={1940}
                       toYear={currentYear - 10}
-                      locale="es"
+                      locale={es}
                     />
                   </PopoverContent>
                 </Popover>
