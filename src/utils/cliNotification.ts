@@ -31,21 +31,32 @@ export async function sendNotificationByEmail(
   try {
     // Get the current session
     const { data } = await supabase.auth.getSession();
-    const accessToken = data?.session?.access_token || '';
+    const accessToken = data?.session?.access_token;
 
-    const response = await supabase.functions.invoke('cli-push-notification', {
-      body: { email, title, message, url },
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
+    // If not authenticated, use the anonymous key
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    // Use direct fetch to avoid any potential issues with the Supabase client
+    const response = await fetch('https://kyjvfgbaidcotatpndpw.supabase.co/functions/v1/cli-push-notification', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ email, title, message, url })
     });
     
-    if (response.error) {
-      console.error('Error sending notification:', response.error);
-      return { success: false, error: response.error };
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Error sending notification:', result);
+      return { success: false, error: result.error || response.statusText };
     }
     
-    return response.data;
+    return result;
   } catch (err) {
     console.error('Exception sending notification:', err);
     return { success: false, error: err };
@@ -64,21 +75,32 @@ export async function sendNotificationByUserId(
   try {
     // Get the current session
     const { data } = await supabase.auth.getSession();
-    const accessToken = data?.session?.access_token || '';
+    const accessToken = data?.session?.access_token;
 
-    const response = await supabase.functions.invoke('cli-push-notification', {
-      body: { user_id: userId, title, message, url },
-      headers: {
-        Authorization: `Bearer ${accessToken}`
-      }
+    // If not authenticated, use the anonymous key
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+
+    // Use direct fetch to avoid any potential issues with the Supabase client
+    const response = await fetch('https://kyjvfgbaidcotatpndpw.supabase.co/functions/v1/cli-push-notification', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ user_id: userId, title, message, url })
     });
     
-    if (response.error) {
-      console.error('Error sending notification:', response.error);
-      return { success: false, error: response.error };
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Error sending notification:', result);
+      return { success: false, error: result.error || response.statusText };
     }
     
-    return response.data;
+    return result;
   } catch (err) {
     console.error('Exception sending notification:', err);
     return { success: false, error: err };

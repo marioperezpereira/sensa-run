@@ -1,8 +1,6 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-// Import web-push with a specific version that's compatible with Deno
-import webpush from 'https://esm.sh/web-push@3.5.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,15 +14,8 @@ serve(async (req) => {
   }
 
   try {
-    // Get the VAPID keys from environment variables
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY'); 
-    const vapidSubject = Deno.env.get('VAPID_SUBJECT');
-
-    if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
-      throw new Error('VAPID keys not configured');
-    }
-
+    console.log(`[CLI-PushNotification] Request received`);
+    
     // Get request body - either email or user_id plus notification details
     const { email, user_id, title, message, url } = await req.json();
     
@@ -91,59 +82,41 @@ serve(async (req) => {
     }
 
     console.log(`[CLI-PushNotification] Found ${subscriptions.length} subscription(s) for user: ${targetUserId}`);
-
-    try {
-      // Set VAPID details
-      webpush.setVapidDetails(
-        vapidSubject,
-        vapidPublicKey,
-        vapidPrivateKey
-      );
-      
-      console.log('[CLI-PushNotification] Successfully set VAPID details');
-    } catch (error) {
-      console.error('[CLI-PushNotification] Error setting VAPID details:', error);
-      throw new Error(`Error setting VAPID details: ${error.message}`);
-    }
-
-    // Send notification to each subscription
-    const results = await Promise.all(
-      subscriptions.map(async (item) => {
-        try {
-          const subscription = item.subscription;
-          
-          // Validate subscription object
-          if (!subscription || !subscription.endpoint) {
-            console.error('[CLI-PushNotification] Invalid subscription object:', subscription);
-            return { success: false, error: 'Invalid subscription object' };
-          }
-          
-          const payload = JSON.stringify({
-            title: title || 'Sensa.run',
-            body: message || 'Tienes una notificación nueva',
-            url: url || '/',
-          });
-          
-          console.log(`[CLI-PushNotification] Sending to endpoint: ${subscription.endpoint.substring(0, 50)}...`);
-          await webpush.sendNotification(subscription, payload);
-          console.log(`[CLI-PushNotification] Successfully sent notification to endpoint: ${subscription.endpoint.substring(0, 50)}...`);
-          return { success: true, endpoint: subscription.endpoint };
-        } catch (error) {
-          console.error(`[CLI-PushNotification] Error sending notification:`, error);
-          return { success: false, error: error.message, endpoint: item.subscription?.endpoint };
-        }
+    
+    // Instead of using web-push directly in this function (which causes compatibility issues),
+    // we'll forward the request to the send-push-notification function that already works
+    
+    console.log('[CLI-PushNotification] Forwarding request to send-push-notification endpoint');
+    const sendPushEndpoint = `${supabaseUrl}/functions/v1/send-push-notification`;
+    
+    const response = await fetch(sendPushEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseServiceRoleKey}`
+      },
+      body: JSON.stringify({
+        user_id: targetUserId,
+        title: title || 'Sensa.run',
+        message: message || 'Tienes una notificación nueva',
+        url: url || '/',
       })
-    );
-
-    // Return results
+    });
+    
+    const result = await response.json();
+    
+    console.log('[CLI-PushNotification] Response received from send-push-notification:', result);
+    
+    // Return combined results
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        results,
+        success: result.success, 
+        results: result.results,
         user_id: targetUserId,
-        email: email || 'not provided'
+        email: email || 'not provided',
+        forwarded: true
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: response.status }
     );
   } catch (error) {
     console.error('[CLI-PushNotification] Error:', error);
