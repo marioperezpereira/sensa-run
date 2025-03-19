@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Trophy, ArrowLeft, PlusCircle } from "lucide-react";
+import { Trophy, PlusCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PBProfileForm from "@/components/personal-bests/PBProfileForm";
 import RaceResultsList from "@/components/personal-bests/RaceResultsList";
 import AddRaceResultDialog from "@/components/personal-bests/AddRaceResultDialog";
@@ -69,32 +70,35 @@ const PersonalBests = () => {
       <ChatHeader />
       
       <div className="flex-1 container max-w-2xl mx-auto px-4 py-6">
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold flex items-center">
-              <Trophy className="mr-2 h-5 w-5 text-amber-500" /> 
-              Personal Bests
-            </h1>
-            
-            {profileComplete && (
-              <Button 
-                onClick={() => setShowAddDialog(true)}
-                className="ml-auto bg-sensa-purple hover:bg-sensa-purple/90 text-white"
-                size="sm"
-              >
-                <PlusCircle className="mr-1 h-4 w-4" />
-                Nueva marca
-              </Button>
-            )}
-          </div>
+        <Card className="shadow-md border-none">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl font-semibold flex items-center">
+                <Trophy className="mr-2 h-5 w-5 text-amber-500" /> 
+                Personal Bests
+              </CardTitle>
+              
+              {profileComplete && (
+                <Button 
+                  onClick={() => setShowAddDialog(true)}
+                  className="bg-sensa-purple hover:bg-sensa-purple/90 text-white"
+                  size="sm"
+                >
+                  <PlusCircle className="mr-1 h-4 w-4" />
+                  Nueva marca
+                </Button>
+              )}
+            </div>
+          </CardHeader>
           
-          {!profileComplete ? (
-            <PBProfileForm onProfileSaved={handleProfileSaved} />
-          ) : (
-            <RaceResultsList refreshTrigger={refreshResults} />
-          )}
-        </div>
+          <CardContent className="pt-4">
+            {!profileComplete ? (
+              <PBProfileForm onProfileSaved={handleProfileSaved} />
+            ) : (
+              <RaceResultsList refreshTrigger={refreshResults} />
+            )}
+          </CardContent>
+        </Card>
       </div>
       
       <AddRaceResultDialog 
