@@ -20,10 +20,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import EditRaceResultDialog from "./EditRaceResultDialog";
 
+// Import the enum type from types
+import { Enums } from "@/integrations/supabase/types";
+type PBRaceDistance = Enums<"pb_race_distance">;
+
 interface RaceResult {
   id: string;
   race_date: string;
-  distance: string;
+  distance: PBRaceDistance;
   hours: number;
   minutes: number;
   seconds: number;
@@ -50,6 +54,15 @@ const ViewRaceResultsDialog = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
 
+  // Convert string distance to PBRaceDistance enum
+  const getPBDistance = (dist: string): PBRaceDistance => {
+    if (dist === "5K" || dist === "10K") return dist;
+    if (dist === "Media maratón") return "Half Marathon";
+    if (dist === "Maratón") return "Marathon";
+    // Default fallback - should not happen with proper validation
+    return "5K";
+  };
+
   useEffect(() => {
     if (open) {
       fetchResults();
@@ -62,7 +75,7 @@ const ViewRaceResultsDialog = ({
       const { data, error } = await supabase
         .from('race_results')
         .select('*')
-        .eq('distance', distance)
+        .eq('distance', getPBDistance(distance))
         .order('race_date', { ascending: false });
 
       if (error) throw error;

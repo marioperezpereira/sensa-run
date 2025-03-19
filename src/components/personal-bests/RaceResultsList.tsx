@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -7,11 +6,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import ViewRaceResultsDialog from "./ViewRaceResultsDialog";
+import { Enums } from "@/integrations/supabase/types";
+
+type PBRaceDistance = Enums<"pb_race_distance">;
+
+// Helper function to convert database enum to display format
+const formatDistanceForDisplay = (distance: PBRaceDistance): string => {
+  if (distance === "5K" || distance === "10K") return distance;
+  if (distance === "Half Marathon") return "Media maratón";
+  if (distance === "Marathon") return "Maratón";
+  return distance; // Fallback
+};
 
 interface RaceResult {
   id: string;
   race_date: string;
-  distance: string;
+  distance: PBRaceDistance;
   hours: number;
   minutes: number;
   seconds: number;
@@ -47,10 +57,11 @@ const RaceResultsList = ({ refreshTrigger = 0 }: RaceResultsListProps) => {
         if (error) throw error;
 
         // Group by distance
-        const distances = Array.from(new Set(results.map(r => r.distance)));
+        const distances = Array.from(new Set(results.map(r => formatDistanceForDisplay(r.distance))));
         
-        const grouped = distances.map(distance => {
-          const distanceResults = results.filter(r => r.distance === distance);
+        const grouped = distances.map(displayDistance => {
+          // Filter results for this display distance by matching with the DB enum value
+          const distanceResults = results.filter(r => formatDistanceForDisplay(r.distance) === displayDistance);
           
           // Find PB (fastest time)
           const pb = [...distanceResults].sort((a, b) => {
@@ -63,7 +74,7 @@ const RaceResultsList = ({ refreshTrigger = 0 }: RaceResultsListProps) => {
           const latest = distanceResults[0] || null;
           
           return {
-            distance,
+            distance: displayDistance,
             pb,
             latest,
             count: distanceResults.length

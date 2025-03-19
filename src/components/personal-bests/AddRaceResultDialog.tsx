@@ -15,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/components/ui/use-toast";
+import { Enums } from "@/integrations/supabase/types";
+
+type PBRaceDistance = Enums<"pb_race_distance">;
 
 const formSchema = z.object({
   distance: z.enum(["5K", "10K", "Half Marathon", "Marathon"], {
