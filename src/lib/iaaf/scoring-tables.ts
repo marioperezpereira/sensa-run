@@ -1,13 +1,9 @@
 
 import { ScoringTable } from './types';
-import { menScoringData } from './men-scoring-data';
-import { womenScoringData } from './women-scoring-data';
+import { iaafFullScoringData } from './scoring-data';
 
 /**
- * Full IAAF scoring table data combining men's and women's data
+ * Export the full IAAF scoring table data for all events and distances
  * Source: https://github.com/jchen1/iaaf-scoring-tables/blob/master/iaaf-2025.json
  */
-export const iaafScoringTables: ScoringTable = {
-  men: menScoringData,
-  women: womenScoringData
-};
+export const iaafScoringTables: ScoringTable = iaafFullScoringData;
