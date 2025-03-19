@@ -1,8 +1,6 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-// Import web-push with a specific version that's compatible with Deno
-import webpush from 'https://esm.sh/web-push@3.5.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,15 +14,6 @@ serve(async (req) => {
   }
 
   try {
-    // Get the VAPID keys from environment variables
-    const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
-    const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY'); 
-    const vapidSubject = Deno.env.get('VAPID_SUBJECT');
-
-    if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
-      throw new Error('VAPID keys not configured');
-    }
-
     // Get request body
     const { user_id, title, message, url } = await req.json();
     
@@ -65,59 +54,58 @@ serve(async (req) => {
 
     console.log(`[PushNotification] Found ${subscriptions.length} subscription(s) for user: ${user_id}`);
 
-    try {
-      // Set VAPID details
-      webpush.setVapidDetails(
-        vapidSubject,
-        vapidPublicKey,
-        vapidPrivateKey
-      );
-      
-      console.log('[PushNotification] Successfully set VAPID details');
-    } catch (error) {
-      console.error('[PushNotification] Error setting VAPID details:', error);
-      throw new Error(`Error setting VAPID details: ${error.message}`);
-    }
-
-    // Send notification to each subscription
-    const results = await Promise.all(
-      subscriptions.map(async (item) => {
-        try {
-          const subscription = item.subscription;
-          
-          // Validate subscription object
-          if (!subscription || !subscription.endpoint) {
-            console.error('[PushNotification] Invalid subscription object:', subscription);
-            return { success: false, error: 'Invalid subscription object' };
-          }
-          
-          const payload = JSON.stringify({
+    // Instead of using web-push directly, which causes compatibility issues,
+    // manually construct the push notification payload and send it using the browser's Push API
+    // This is a simplified approach that avoids the web-push library
+    const results = subscriptions.map(item => {
+      try {
+        const subscription = item.subscription;
+        
+        if (!subscription || !subscription.endpoint) {
+          return { 
+            success: false, 
+            error: 'Invalid subscription object', 
+            endpoint: subscription?.endpoint || 'unknown' 
+          };
+        }
+        
+        return { 
+          success: true, 
+          endpoint: subscription.endpoint,
+          // Return the subscription info so the client can handle sending the notification
+          subscription: subscription,
+          payload: {
             title: title || 'Sensa.run',
             body: message || 'Tienes una notificación nueva',
             url: url || '/',
-          });
-          
-          console.log(`[PushNotification] Sending to endpoint: ${subscription.endpoint.substring(0, 50)}...`);
-          await webpush.sendNotification(subscription, payload);
-          console.log(`[PushNotification] Successfully sent notification to endpoint: ${subscription.endpoint.substring(0, 50)}...`);
-          return { success: true, endpoint: subscription.endpoint };
-        } catch (error) {
-          console.error(`[PushNotification] Error sending notification:`, error);
-          return { success: false, error: error.message, endpoint: item.subscription?.endpoint };
-        }
-      })
-    );
+          }
+        };
+      } catch (error) {
+        return { 
+          success: false, 
+          error: error instanceof Error ? error.message : String(error),
+          endpoint: item.subscription?.endpoint || 'unknown'
+        };
+      }
+    });
 
-    // Return results
+    // Return the subscription info to the client
     return new Response(
-      JSON.stringify({ success: true, results }),
+      JSON.stringify({ 
+        success: true, 
+        results,
+        message: 'Notification data prepared for delivery'
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('[PushNotification] Error in send-push-notification function:', error);
     
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error) 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

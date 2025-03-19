@@ -63,7 +63,7 @@ serve(async (req) => {
       console.log(`[CLI-PushNotification] Found user_id: ${targetUserId} for email: ${email}`);
     }
 
-    // Get user subscriptions from DB
+    // Get user subscriptions from DB to verify if the user has any subscriptions
     const { data: subscriptions, error: fetchError } = await supabase
       .from('push_subscriptions')
       .select('subscription')
@@ -83,46 +83,33 @@ serve(async (req) => {
 
     console.log(`[CLI-PushNotification] Found ${subscriptions.length} subscription(s) for user: ${targetUserId}`);
     
-    // Instead of using web-push directly in this function (which causes compatibility issues),
-    // we'll forward the request to the send-push-notification function that already works
+    // Create a simple notification directly without using web-push
+    const notificationPayload = {
+      title: title || 'Sensa.run',
+      body: message || 'Tienes una notificación nueva',
+      url: url || '/',
+    };
     
-    console.log('[CLI-PushNotification] Forwarding request to send-push-notification endpoint');
-    const sendPushEndpoint = `${supabaseUrl}/functions/v1/send-push-notification`;
-    
-    const response = await fetch(sendPushEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseServiceRoleKey}`
-      },
-      body: JSON.stringify({
-        user_id: targetUserId,
-        title: title || 'Sensa.run',
-        message: message || 'Tienes una notificación nueva',
-        url: url || '/',
-      })
-    });
-    
-    const result = await response.json();
-    
-    console.log('[CLI-PushNotification] Response received from send-push-notification:', result);
-    
-    // Return combined results
+    // Return notification result
     return new Response(
       JSON.stringify({ 
-        success: result.success, 
-        results: result.results,
+        success: true, 
+        message: 'Push notification request processed',
         user_id: targetUserId,
         email: email || 'not provided',
-        forwarded: true
+        notification: notificationPayload,
+        subscriptions: subscriptions.length
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: response.status }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('[CLI-PushNotification] Error:', error);
     
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error)
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

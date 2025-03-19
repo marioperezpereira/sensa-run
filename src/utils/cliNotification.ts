@@ -19,6 +19,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+// Define the anon key as a fallback
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5anZmZ2JhaWRjb3RhdHBuZHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0NTMyMDYsImV4cCI6MjA1NzAyOTIwNn0.96KP_zfQiKZz5Ce2-lfOcMTzuYaI52bqHti2Ay84cvI';
+
 /**
  * Utility function to send notification to a user by email
  */
@@ -29,37 +32,37 @@ export async function sendNotificationByEmail(
   url?: string
 ) {
   try {
-    // Get the current session
-    const { data } = await supabase.auth.getSession();
-    const accessToken = data?.session?.access_token;
-
-    // If not authenticated, use the anonymous key
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json'
-    };
+    console.log('[CLI-Notification] Sending notification to email:', email);
     
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`;
-    }
+    // Get the current session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token || ANON_KEY;
 
     // Use direct fetch to avoid any potential issues with the Supabase client
     const response = await fetch('https://kyjvfgbaidcotatpndpw.supabase.co/functions/v1/cli-push-notification', {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
       body: JSON.stringify({ email, title, message, url })
     });
     
     const result = await response.json();
     
     if (!response.ok) {
-      console.error('Error sending notification:', result);
+      console.error('[CLI-Notification] Error sending notification:', result);
       return { success: false, error: result.error || response.statusText };
     }
     
+    console.log('[CLI-Notification] Notification sent successfully:', result);
     return result;
   } catch (err) {
-    console.error('Exception sending notification:', err);
-    return { success: false, error: err };
+    console.error('[CLI-Notification] Exception sending notification:', err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err.message : String(err) 
+    };
   }
 }
 
@@ -73,36 +76,36 @@ export async function sendNotificationByUserId(
   url?: string
 ) {
   try {
-    // Get the current session
-    const { data } = await supabase.auth.getSession();
-    const accessToken = data?.session?.access_token;
-
-    // If not authenticated, use the anonymous key
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json'
-    };
+    console.log('[CLI-Notification] Sending notification to user ID:', userId);
     
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`;
-    }
+    // Get the current session
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token || ANON_KEY;
 
     // Use direct fetch to avoid any potential issues with the Supabase client
     const response = await fetch('https://kyjvfgbaidcotatpndpw.supabase.co/functions/v1/cli-push-notification', {
       method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
       body: JSON.stringify({ user_id: userId, title, message, url })
     });
     
     const result = await response.json();
     
     if (!response.ok) {
-      console.error('Error sending notification:', result);
+      console.error('[CLI-Notification] Error sending notification:', result);
       return { success: false, error: result.error || response.statusText };
     }
     
+    console.log('[CLI-Notification] Notification sent successfully:', result);
     return result;
   } catch (err) {
-    console.error('Exception sending notification:', err);
-    return { success: false, error: err };
+    console.error('[CLI-Notification] Exception sending notification:', err);
+    return { 
+      success: false, 
+      error: err instanceof Error ? err.message : String(err)
+    };
   }
 }
