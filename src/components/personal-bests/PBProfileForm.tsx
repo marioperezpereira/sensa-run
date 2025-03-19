@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -152,12 +151,15 @@ const PBProfileForm = ({ onProfileSaved }: PBProfileFormProps) => {
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={field.onChange}
+                      onSelect={(date) => {
+                        if (date) {
+                          field.onChange(Array.isArray(date) ? date[0] : date);
+                        }
+                      }}
                       disabled={(date) =>
                         date > new Date() || date < new Date("1900-01-01")
                       }
                       initialFocus
-                      locale={es}
                       captionLayout="dropdown-buttons"
                       fromYear={1940}
                       toYear={currentYear - 10}

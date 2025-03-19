@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -155,12 +154,15 @@ const EditRaceResultDialog = ({
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          if (date) {
+                            field.onChange(Array.isArray(date) ? date[0] : date);
+                          }
+                        }}
                         disabled={(date) =>
                           date > new Date()
                         }
                         initialFocus
-                        locale={es}
                         captionLayout="dropdown-buttons"
                       />
                     </PopoverContent>

@@ -14,6 +14,26 @@ interface RaceDateStepProps {
 export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
   const currentYear = new Date().getFullYear();
   
+  const handleDateSelect = (date: Date | Date[] | undefined) => {
+    if (!date) {
+      onChange("");
+      return;
+    }
+    
+    // Handle single date selection
+    if (!Array.isArray(date)) {
+      onChange(date.toISOString());
+      return;
+    }
+    
+    // If it's an array (should not happen with mode="single"), take the first one
+    if (date.length > 0) {
+      onChange(date[0].toISOString());
+    } else {
+      onChange("");
+    }
+  };
+  
   return (
     <div className="space-y-4">
       <p className="text-gray-800 text-sm md:text-base">
@@ -36,7 +56,7 @@ export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
           <Calendar
             mode="single"
             selected={value ? new Date(value) : undefined}
-            onSelect={(date) => onChange(date?.toISOString() || "")}
+            onSelect={handleDateSelect}
             disabled={(date) => date < new Date()}
             initialFocus
             captionLayout="dropdown-buttons"
