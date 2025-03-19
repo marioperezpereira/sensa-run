@@ -1,7 +1,12 @@
 
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { Pencil, Trash2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { 
   AlertDialog,
@@ -14,10 +19,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import EditRaceResultDialog from "./EditRaceResultDialog";
-import RaceResultsTable from "./RaceResultsTable";
-import RaceResultsLoadingState from "./RaceResultsLoadingState";
-import RaceResultsEmptyState from "./RaceResultsEmptyState";
-import { RaceResult, getDbDistanceFromDisplay } from "./utils/pb-utils";
+
+// Import the enum type from types
+import { Enums } from "@/integrations/supabase/types";
+type PBRaceDistance = Enums<"pb_race_distance">;
+
+interface RaceResult {
+  id: string;
+  race_date: string;
+  distance: PBRaceDistance;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
 
 interface ViewRaceResultsDialogProps {
   open: boolean;
@@ -40,6 +54,15 @@ const ViewRaceResultsDialog = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { toast } = useToast();
 
+  // Convert string distance to PBRaceDistance enum
+  const getPBDistance = (dist: string): PBRaceDistance => {
+    if (dist === "5K" || dist === "10K") return dist;
+    if (dist === "Media maratón") return "Half Marathon";
+    if (dist === "Maratón") return "Marathon";
+    // Default fallback - should not happen with proper validation
+    return "5K";
+  };
+
   useEffect(() => {
     if (open) {
       fetchResults();
@@ -52,7 +75,7 @@ const ViewRaceResultsDialog = ({
       const { data, error } = await supabase
         .from('race_results')
         .select('*')
-        .eq('distance', getDbDistanceFromDisplay(distance))
+        .eq('distance', getPBDistance(distance))
         .order('race_date', { ascending: false });
 
       if (error) throw error;
@@ -111,9 +134,15 @@ const ViewRaceResultsDialog = ({
     setEditResult(null);
   };
 
-  const handleDeleteClick = (id: string) => {
-    setDeleteId(id);
-    setShowDeleteDialog(true);
+  const formatTime = (hours: number, minutes: number, seconds: number) => {
+    if (hours > 0) {
+      return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
+    }
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), "d MMM yyyy", { locale: es });
   };
 
   return (
@@ -125,15 +154,63 @@ const ViewRaceResultsDialog = ({
           </DialogHeader>
           
           {loading ? (
-            <RaceResultsLoadingState />
+            <div className="flex justify-center p-8">
+              <div className="animate-pulse space-y-4 w-full">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-gray-200 h-10 rounded w-full"></div>
+                ))}
+              </div>
+            </div>
           ) : results.length === 0 ? (
-            <RaceResultsEmptyState />
+            <p className="text-center py-8 text-gray-500">No hay resultados para mostrar</p>
           ) : (
-            <RaceResultsTable 
-              results={results} 
-              onEdit={handleEdit} 
-              onDelete={handleDeleteClick}
-            />
+            <div className="max-h-[60vh] overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Tiempo</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {results.map((result) => (
+                    <TableRow key={result.id}>
+                      <TableCell>{formatDate(result.race_date)}</TableCell>
+                      <TableCell>
+                        <span className="flex items-center">
+                          <Clock className="mr-1 h-4 w-4 text-gray-500" />
+                          {formatTime(result.hours, result.minutes, result.seconds)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(result)}
+                          className="h-8 w-8"
+                        >
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Editar</span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setDeleteId(result.id);
+                            setShowDeleteDialog(true);
+                          }}
+                          className="h-8 w-8 text-red-500 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Eliminar</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </DialogContent>
       </Dialog>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -14,8 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/components/ui/use-toast";
-import { PBRaceDistance } from "./utils/pb-utils";
 import { Enums } from "@/integrations/supabase/types";
+
+type PBRaceDistance = Enums<"pb_race_distance">;
 
 const formSchema = z.object({
   distance: z.enum(["5K", "10K", "Half Marathon", "Marathon"], {
@@ -28,6 +30,7 @@ const formSchema = z.object({
   minutes: z.number().min(0).max(59),
   seconds: z.number().min(0).max(59),
 }).refine(data => {
+  // At least one time unit must be greater than 0
   return data.hours > 0 || data.minutes > 0 || data.seconds > 0;
 }, {
   message: "Debes ingresar un tiempo válido",
@@ -114,8 +117,6 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
     }
   };
 
-  const currentYear = new Date().getFullYear();
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -183,8 +184,6 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
                         }
                         initialFocus
                         locale={es}
-                        fromYear={2010}
-                        toYear={currentYear}
                       />
                     </PopoverContent>
                   </Popover>
