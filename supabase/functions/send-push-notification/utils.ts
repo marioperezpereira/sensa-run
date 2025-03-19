@@ -44,15 +44,34 @@ export function generateSalt(size: number): Uint8Array {
 export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: string, vapidPublicKey: string): Promise<string> {
   console.log('[Utils] Generating Apple JWT with proper validation');
   
-  // Validate the subject claim (must be a URL or mailto:)
-  if (!vapidSubject.startsWith('mailto:') && !vapidSubject.startsWith('http')) {
-    console.log('[Utils] Adding mailto: prefix to subject as it seems to be an email');
-    vapidSubject = `mailto:${vapidSubject}`;
+  // Strict validation and formatting of subject claim
+  // Apple requires either a URL or a mailto: email
+  if (!vapidSubject) {
+    throw new Error('VAPID subject is required');
   }
   
-  // Current time and expiration time (12 hours from now, not more than 24h)
+  // Format the subject according to Apple's requirements
+  let formattedSubject = vapidSubject;
+  
+  if (!formattedSubject.startsWith('mailto:') && !formattedSubject.startsWith('http://') && !formattedSubject.startsWith('https://')) {
+    // Check if it looks like an email
+    if (formattedSubject.includes('@')) {
+      formattedSubject = `mailto:${formattedSubject}`;
+      console.log('[Utils] Formatted subject as mailto:', formattedSubject);
+    } else {
+      // If not an email or URL, make it a https URL
+      if (!formattedSubject.includes('.')) {
+        throw new Error('VAPID subject must be a valid email or URL');
+      }
+      formattedSubject = `https://${formattedSubject}`;
+      console.log('[Utils] Formatted subject as https URL:', formattedSubject);
+    }
+  }
+  
+  // Current time and expiration time (1 hour from now, not more than 24h)
+  // Apple requires expiration to be not more than 24 hours
   const currentTime = Math.floor(Date.now() / 1000);
-  const expirationTime = currentTime + (12 * 60 * 60); // 12 hours
+  const expirationTime = currentTime + (1 * 60 * 60); // 1 hour
   
   // Create header and payload with the right claims
   const header = {
@@ -63,10 +82,17 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
   // The payload must include iss (subject), iat (issued at) and exp (expiration)
   // The payload should NOT include an aud (audience) claim - this is taken from the request URL
   const payload = {
-    iss: vapidSubject,
+    iss: formattedSubject, // Using the properly formatted subject
     iat: currentTime,
     exp: expirationTime
   };
+  
+  // Log the exact values being used
+  console.log('[Utils] JWT Header:', JSON.stringify(header));
+  console.log('[Utils] JWT Payload:', JSON.stringify(payload));
+  console.log('[Utils] JWT Subject:', formattedSubject);
+  console.log('[Utils] JWT Current time:', currentTime, new Date(currentTime * 1000).toISOString());
+  console.log('[Utils] JWT Expiration:', expirationTime, new Date(expirationTime * 1000).toISOString());
   
   // Encode header and payload to base64url
   const headerBase64 = btoa(JSON.stringify(header))
@@ -83,8 +109,6 @@ export async function generateAppleJWT(vapidSubject: string, vapidPrivateKey: st
   const unsignedToken = `${headerBase64}.${payloadBase64}`;
   
   console.log('[Utils] Created JWT header and payload');
-  console.log('[Utils] JWT Subject:', vapidSubject);
-  console.log('[Utils] JWT Expiration:', new Date(expirationTime * 1000).toISOString());
   
   // Since we're having persistent issues with key imports, we'll use a simpler approach
   // Generate a fixed mock signature that will work for now, but won't validate

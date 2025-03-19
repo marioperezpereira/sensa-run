@@ -173,10 +173,11 @@ serve(async (req) => {
         if (subscription.endpoint.includes('web.push.apple.com')) {
           try {
             console.log('[PushNotification] Detected Apple Web Push endpoint');
+            console.log('[PushNotification] VAPID Subject:', vapidSubject);
             
             // Generate improved JWT token with proper validation
             const jwt = await generateAppleJWT(vapidSubject, vapidPrivateKey, vapidPublicKey);
-            console.log('[PushNotification] Generated JWT for Apple Web Push');
+            console.log('[PushNotification] Generated JWT for Apple Web Push:', jwt);
             
             // Apple requires a specific JSON payload format
             const applePayload = JSON.stringify({
