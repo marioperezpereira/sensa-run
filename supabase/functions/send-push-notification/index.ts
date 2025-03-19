@@ -1,6 +1,6 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { WebPushFactory } from 'https://deno.land/x/deno_web_push@0.1.0/mod.ts'
+import { WebPushFactory } from 'https://deno.land/x/web_push@0.1.0/mod.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
