@@ -1,7 +1,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import webpush from 'https://esm.sh/web-push@3.6.6'
+// Use a specific version of web-push that's known to work with Deno
+import webPush from 'https://esm.sh/web-push@3.5.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,19 +44,6 @@ serve(async (req) => {
 
     console.log(`[PushNotification] VAPID details - Subject: ${vapidSubject}, Public key exists: ${!!vapidPublicKey}, Private key exists: ${!!vapidPrivateKey}`);
 
-    try {
-      // Setup web-push with VAPID details
-      webpush.setVapidDetails(
-        vapidSubject,
-        vapidPublicKey,
-        vapidPrivateKey
-      );
-      console.log(`[PushNotification] Successfully set VAPID details`);
-    } catch (vapidError) {
-      console.error(`[PushNotification] Error setting VAPID details:`, vapidError);
-      throw new Error(`Failed to set VAPID keys: ${vapidError.message}`);
-    }
-
     // Initialize the client with service role key for admin access
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
     
@@ -92,6 +80,20 @@ serve(async (req) => {
 
     // Process each subscription
     const results = [];
+    
+    try {
+      // Setup web-push with VAPID details - Do this only once outside the loop
+      console.log(`[PushNotification] Setting up VAPID with subject: ${vapidSubject}`);
+      webPush.setVapidDetails(
+        vapidSubject,
+        vapidPublicKey,
+        vapidPrivateKey
+      );
+      console.log(`[PushNotification] Successfully set VAPID details`);
+    } catch (vapidError) {
+      console.error(`[PushNotification] Error setting VAPID details:`, vapidError);
+      throw new Error(`Failed to set VAPID keys: ${vapidError.message}`);
+    }
 
     for (const item of subscriptionsToProcess) {
       try {
@@ -107,6 +109,24 @@ serve(async (req) => {
         }
         
         console.log(`[PushNotification] Processing subscription: ${subscription.endpoint}`);
+        
+        // Validate subscription format
+        if (!subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
+          console.error(`[PushNotification] Subscription is missing required keys:`, 
+            JSON.stringify({
+              hasKeys: !!subscription.keys,
+              hasP256dh: subscription.keys?.p256dh,
+              hasAuth: subscription.keys?.auth
+            }));
+          
+          results.push({ 
+            success: false, 
+            error: 'Subscription is missing required keys', 
+            endpoint: subscription.endpoint 
+          });
+          continue;
+        }
+        
         console.log(`[PushNotification] Subscription keys present: p256dh=${!!subscription.keys?.p256dh}, auth=${!!subscription.keys?.auth}`);
         
         // Create payload
@@ -120,7 +140,7 @@ serve(async (req) => {
         
         try {
           // Send the notification using web-push
-          await webpush.sendNotification(subscription, payload);
+          await webPush.sendNotification(subscription, payload);
           console.log(`[PushNotification] Successfully sent notification to endpoint: ${subscription.endpoint}`);
           
           results.push({ 
@@ -131,19 +151,21 @@ serve(async (req) => {
           console.error(`[PushNotification] Push service error:`, pushError);
           
           // Check for common errors
-          let errorMessage = pushError.message;
-          if (pushError.statusCode === 401) {
+          let errorMessage = pushError.message || 'Unknown push error';
+          let statusCode = pushError.statusCode || 500;
+          
+          if (statusCode === 401) {
             errorMessage = `Authentication error (401): VAPID key mismatch or invalid token`;
-          } else if (pushError.statusCode === 404) {
+          } else if (statusCode === 404) {
             errorMessage = `Subscription not found (404): Browser may have unsubscribed`;
-          } else if (pushError.statusCode === 410) {
+          } else if (statusCode === 410) {
             errorMessage = `Subscription expired (410): Should be removed from database`;
           }
           
           results.push({ 
             success: false, 
             error: errorMessage,
-            status: pushError.statusCode,
+            status: statusCode,
             endpoint: subscription.endpoint
           });
         }
