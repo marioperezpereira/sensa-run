@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -15,8 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/components/ui/use-toast";
 import { PBRaceDistance } from "./utils/pb-utils";
-
-type PBRaceDistance = Enums<"pb_race_distance">;
+import { Enums } from "@/integrations/supabase/types";
 
 const formSchema = z.object({
   distance: z.enum(["5K", "10K", "Half Marathon", "Marathon"], {
