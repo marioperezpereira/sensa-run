@@ -152,7 +152,15 @@ const EditGoalDialog = ({
       case "goal":
         return <GoalStep value={goalType} onChange={handleGoalTypeChange} />;
       case "race-target":
-        return <RaceTargetStep value={raceDistance} onChange={(value) => setRaceDistance(value)} />;
+        return <RaceTargetStep 
+                 value={raceDistance} 
+                 onChange={(value) => {
+                   // Ensure we only set valid enum values that match our RaceDistance type
+                   if (raceOptions.includes(value as RaceDistance)) {
+                     setRaceDistance(value as RaceDistance);
+                   }
+                 }} 
+               />;
       case "race-date":
         return <RaceDateStep value={raceDate} onChange={(value) => setRaceDate(value)} />;
     }
