@@ -1,10 +1,13 @@
 
 import { z } from "zod";
+import { Enums } from "@/integrations/supabase/types";
+
+type PBRaceDistance = Enums<"pb_race_distance">;
 
 export interface RaceResult {
   id: string;
   race_date: string;
-  distance: string;
+  distance: PBRaceDistance;
   hours: number;
   minutes: number;
   seconds: number;

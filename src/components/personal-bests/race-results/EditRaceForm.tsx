@@ -12,6 +12,9 @@ import { RaceResult, RaceFormValues, raceFormSchema } from "./types";
 import RaceDateField from "./RaceDateField";
 import TimeFields from "./TimeFields";
 import DistanceField from "./DistanceField";
+import { Enums } from "@/integrations/supabase/types";
+
+type PBRaceDistance = Enums<"pb_race_distance">;
 
 interface EditRaceFormProps {
   result: RaceResult;
@@ -23,10 +26,13 @@ const EditRaceForm = ({ result, onResultUpdated, onCancel }: EditRaceFormProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
+  // Ensure distance is correctly typed as the expected enum value
+  const initialDistance: PBRaceDistance = result.distance as PBRaceDistance;
+  
   const form = useForm<RaceFormValues>({
     resolver: zodResolver(raceFormSchema),
     defaultValues: {
-      distance: result.distance,
+      distance: initialDistance,
       raceDate: new Date(result.race_date),
       hours: result.hours,
       minutes: result.minutes,

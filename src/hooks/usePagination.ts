@@ -54,6 +54,11 @@ export function usePagination({
   const lastPage = () => {
     setCurrentPage(totalPages);
   };
+  
+  // Added this function to reset pagination to page 1
+  const resetPagination = () => {
+    setCurrentPage(1);
+  };
 
   return {
     currentPage,
@@ -64,5 +69,6 @@ export function usePagination({
     lastPage,
     goToPage,
     getPaginatedItems,
+    resetPagination,
   };
 }
