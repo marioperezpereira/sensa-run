@@ -34,7 +34,8 @@ const ResultsManager = ({
     currentPage, 
     totalPages, 
     goToPage, 
-    getPaginatedItems 
+    getPaginatedItems,
+    resetPagination
   } = usePagination({ 
     totalItems: results.length,
     itemsPerPage: 5,
@@ -56,7 +57,11 @@ const ResultsManager = ({
 
   const confirmDelete = async () => {
     if (deleteId) {
-      await deleteResult(deleteId);
+      const success = await deleteResult(deleteId);
+      if (success && results.length % 5 === 1 && currentPage > 1) {
+        // If we just deleted the last item on a page, go back to the previous page
+        goToPage(currentPage - 1);
+      }
       setShowDeleteDialog(false);
       setDeleteId(null);
     }

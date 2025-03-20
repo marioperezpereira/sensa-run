@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { RaceResult, RaceFormValues, raceFormSchema } from "./types";
 import RaceDateField from "./RaceDateField";
 import TimeFields from "./TimeFields";
+import DistanceField from "./DistanceField";
 
 interface EditRaceFormProps {
   result: RaceResult;
@@ -25,6 +26,7 @@ const EditRaceForm = ({ result, onResultUpdated, onCancel }: EditRaceFormProps) 
   const form = useForm<RaceFormValues>({
     resolver: zodResolver(raceFormSchema),
     defaultValues: {
+      distance: result.distance,
       raceDate: new Date(result.race_date),
       hours: result.hours,
       minutes: result.minutes,
@@ -38,6 +40,7 @@ const EditRaceForm = ({ result, onResultUpdated, onCancel }: EditRaceFormProps) 
       const { error } = await supabase
         .from('race_results')
         .update({
+          distance: values.distance,
           race_date: format(values.raceDate, 'yyyy-MM-dd'),
           hours: values.hours,
           minutes: values.minutes,
@@ -64,6 +67,7 @@ const EditRaceForm = ({ result, onResultUpdated, onCancel }: EditRaceFormProps) 
       // Return updated result
       const updatedResult: RaceResult = {
         ...result,
+        distance: values.distance,
         race_date: format(values.raceDate, 'yyyy-MM-dd'),
         hours: values.hours,
         minutes: values.minutes,
@@ -86,6 +90,7 @@ const EditRaceForm = ({ result, onResultUpdated, onCancel }: EditRaceFormProps) 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+        <DistanceField form={form} />
         <RaceDateField form={form} />
         <TimeFields form={form} />
         

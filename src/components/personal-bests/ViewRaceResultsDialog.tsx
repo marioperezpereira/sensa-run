@@ -1,6 +1,8 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useRaceResults } from "@/hooks/useRaceResults";
+import { RaceResult } from "./race-results/types";
 import ResultsManager from "./race-results/ResultsManager";
 import ResultsLoadingState from "./race-results/ResultsLoadingState";
 
@@ -9,14 +11,21 @@ interface ViewRaceResultsDialogProps {
   onOpenChange: (open: boolean) => void;
   distance: string;
   refreshTrigger?: number;
+  onResultsChange?: () => void;
 }
 
 const ViewRaceResultsDialog = ({ 
   open, 
   onOpenChange, 
   distance,
-  refreshTrigger = 0 
+  refreshTrigger = 0,
+  onResultsChange
 }: ViewRaceResultsDialogProps) => {
+  const [localRefreshTrigger, setLocalRefreshTrigger] = useState(0);
+  
+  // Combine external and local refresh triggers
+  const combinedRefreshTrigger = refreshTrigger + localRefreshTrigger;
+  
   const { 
     loading, 
     results, 
@@ -24,13 +33,24 @@ const ViewRaceResultsDialog = ({
     deleteResult, 
     updateResultInState,
     getIAAFPoints
-  } = useRaceResults(distance, refreshTrigger);
+  } = useRaceResults(distance, combinedRefreshTrigger);
+
+  const handleResultUpdated = (updatedResult: RaceResult) => {
+    updateResultInState(updatedResult);
+    setLocalRefreshTrigger(prev => prev + 1);
+    if (onResultsChange) {
+      onResultsChange();
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Resultados: {distance}</DialogTitle>
+          <DialogDescription className="text-sm text-gray-500">
+            Historial de tiempos para esta distancia
+          </DialogDescription>
         </DialogHeader>
         
         {loading ? (
@@ -42,7 +62,7 @@ const ViewRaceResultsDialog = ({
             gender={gender}
             getIAAFPoints={getIAAFPoints}
             deleteResult={deleteResult}
-            updateResultInState={updateResultInState}
+            updateResultInState={handleResultUpdated}
           />
         )}
       </DialogContent>
