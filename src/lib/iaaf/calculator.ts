@@ -1,4 +1,3 @@
-import { DISTANCE_MAPPINGS } from './types';
 import {
   coefficients,
   eventNames,
