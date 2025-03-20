@@ -5,7 +5,6 @@ import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import CustomDatePicker from "@/components/personal-bests/CustomDatePicker";
 import { Calendar } from "@/components/ui/calendar";
 
 interface RaceDateStepProps {
@@ -61,7 +60,6 @@ export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
             initialFocus
             fromMonth={new Date()}
             showOutsideDays={false}
-            captionLayout="buttons-only"
             className={cn("p-3 pointer-events-auto")}
           />
         </PopoverContent>
