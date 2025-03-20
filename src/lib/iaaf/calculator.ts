@@ -1,3 +1,4 @@
+
 import {
   coefficients,
   eventNames,
@@ -13,10 +14,11 @@ const DISTANCE_MAPPINGS: { [key: string]: string } = {
   "Half Marathon": "Road HM",
   "Marathon": "Road Marathon"
 };
+
 /**
  * Calculate World Athletics (formerly IAAF) points using the quadratic formula
  * 
- * Formula: points = 1000 * e^(a*t² + b*t + c)
+ * Formula: points = a*t² + b*t + c
  * Where:
  * - t is the time in seconds
  * - a, b, c are the coefficients for the specific event
@@ -37,10 +39,46 @@ export const calculateIAAFPoints = (
   seconds: number, 
   gender: 'men' | 'women'
 ): number => {
-  return score(coefficients[gender][DISTANCE_MAPPINGS[distance]],hours*3600+minutes*60+seconds);
+  try {
+    // Validate inputs
+    if (!distance || hours < 0 || minutes < 0 || seconds < 0) {
+      console.warn("Invalid input parameters for IAAF calculation");
+      return 0;
+    }
+    
+    // Map the distance to the event name used in the coefficients object
+    const eventName = DISTANCE_MAPPINGS[distance];
+    if (!eventName) {
+      console.warn(`Unknown distance mapping: ${distance}`);
+      return 0;
+    }
+    
+    // Convert time to seconds
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    
+    // Get the coefficients for this event and gender
+    const eventCoefficients = coefficients[gender]?.[eventName];
+    if (!eventCoefficients || !Array.isArray(eventCoefficients)) {
+      console.warn(`No coefficients found for ${gender} ${eventName}`);
+      return 0;
+    }
+    
+    // Calculate the score
+    return score(eventCoefficients, totalSeconds);
+  } catch (error) {
+    console.error("Error calculating IAAF points:", error);
+    return 0;
+  }
 };
 
+// Export the DISTANCE_MAPPINGS for use in other parts of the application
+export { DISTANCE_MAPPINGS };
+
 function score(coefficients, x) {
+  if (!coefficients || !Array.isArray(coefficients)) {
+    return 0;
+  }
+  
   if (coefficients.length === 2) {
     return coefficients[0] * x + coefficients[1];
   }

@@ -97,13 +97,20 @@ export const useRaceResults = (distance: string, refreshTrigger = 0) => {
   };
 
   const getIAAFPoints = (result: RaceResult) => {
-    return calculateIAAFPoints(
-      result.distance, 
-      result.hours, 
-      result.minutes, 
-      result.seconds, 
-      gender
-    );
+    try {
+      if (!result) return 0;
+      
+      return calculateIAAFPoints(
+        result.distance, 
+        result.hours, 
+        result.minutes, 
+        result.seconds, 
+        gender
+      );
+    } catch (error) {
+      console.error('Error calculating IAAF points:', error);
+      return 0;
+    }
   };
 
   useEffect(() => {

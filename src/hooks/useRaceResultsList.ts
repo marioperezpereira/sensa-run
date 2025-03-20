@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -56,11 +57,11 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
         if (error) throw error;
 
         // Group by distance
-        const distances = Array.from(new Set(results.map(r => formatDistanceForDisplay(r.distance))));
+        const distances = Array.from(new Set((results || []).map(r => formatDistanceForDisplay(r.distance))));
         
         const grouped = distances.map(displayDistance => {
           // Filter results for this display distance by matching with the DB enum value
-          const distanceResults = results.filter(r => formatDistanceForDisplay(r.distance) === displayDistance);
+          const distanceResults = (results || []).filter(r => formatDistanceForDisplay(r.distance) === displayDistance);
           
           // Find PB (fastest time)
           const pb = [...distanceResults].sort((a, b) => {
@@ -97,16 +98,20 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
   }, [toast, refreshTrigger]);
   
   const getIAAFPoints = (result: RaceResult | null) => {
-    if (!result) return 0;
-    
-    const origDistance = result.distance; // Convert from display format back to DB enum
-    return calculateIAAFPoints(
-      origDistance, 
-      result.hours, 
-      result.minutes, 
-      result.seconds, 
-      gender
-    );
+    try {
+      if (!result) return 0;
+      
+      return calculateIAAFPoints(
+        result.distance, 
+        result.hours, 
+        result.minutes, 
+        result.seconds, 
+        gender
+      );
+    } catch (error) {
+      console.error('Error calculating IAAF points:', error);
+      return 0;
+    }
   };
 
   return {
