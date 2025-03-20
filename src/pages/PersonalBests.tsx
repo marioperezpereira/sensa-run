@@ -16,31 +16,29 @@ const PersonalBests = () => {
   const [profileComplete, setProfileComplete] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [refreshResults, setRefreshResults] = useState(0);
-  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const checkProfile = async () => {
+      setLoading(true);
       
-      if (!session) {
-        navigate('/auth');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/profile');
         return;
       }
       
-      setUser(session.user);
-      
-      // After confirming authentication, check profile
+      // Check if profile exists
       const { data: profile } = await supabase
         .from('user_pb_profiles')
         .select('*')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .single();
       
       setProfileComplete(!!profile);
       setLoading(false);
     };
     
-    checkAuth();
+    checkProfile();
   }, [navigate]);
 
   const handleProfileSaved = () => {
@@ -65,11 +63,6 @@ const PersonalBests = () => {
         </div>
       </div>
     );
-  }
-
-  // If no user (shouldn't get here due to redirect, but just in case)
-  if (!user) {
-    return null;
   }
 
   return (
