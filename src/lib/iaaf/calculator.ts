@@ -1,4 +1,3 @@
-
 import { DISTANCE_MAPPINGS } from './types';
 import {
   coefficients,
@@ -33,8 +32,31 @@ export const calculateIAAFPoints = (
   seconds: number, 
   gender: 'men' | 'women'
 ): number => {
+  // Convert distance to event name format used in the coefficients
+  const eventKey = DISTANCE_MAPPINGS[distance];
+  if (!eventKey) {
+    console.error(`Invalid distance: ${distance}`);
+    return 0;
+  }
   
-  var points = 0;
+  // Validate that this event is valid for the specified gender
+  if (!isEventValidForGender(eventKey, gender === 'men')) {
+    console.error(`Event ${eventKey} is not valid for gender ${gender}`);
+    return 0;
+  }
+  
+  // Convert time to seconds
+  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+  
+  // Get coefficients for this event and gender
+  const eventCoefficients = coefficients[gender][eventKey];
+  if (!eventCoefficients) {
+    console.error(`No coefficients found for ${eventKey} and gender ${gender}`);
+    return 0;
+  }
+  
+  // Calculate the score using the existing score function
+  const points = score(eventCoefficients, totalSeconds);
   
   // World Athletics points are always rounded to the nearest integer
   return Math.round(points);
