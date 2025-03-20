@@ -31,11 +31,12 @@
   [headers.values]
     Content-Type = "application/javascript"
 
-# Handle SPA routing
+# Handle SPA routing - This is the important part for direct navigation
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true
 
 [build]
   command = "npm run build"
@@ -48,4 +49,3 @@
 [build.processing.js]
   bundle = false
   minify = false
-
