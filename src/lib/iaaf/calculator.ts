@@ -1,6 +1,13 @@
 
 import { DISTANCE_MAPPINGS } from './types';
-import { waCoefficients } from './coefficients';
+import {
+  coefficients,
+  eventNames,
+  isEventValidForGender,
+  markTypes,
+  order,
+  units,
+} from "./constants";
 
 /**
  * Calculate World Athletics (formerly IAAF) points using the quadratic formula
@@ -26,25 +33,93 @@ export const calculateIAAFPoints = (
   seconds: number, 
   gender: 'men' | 'women'
 ): number => {
-  const totalSeconds = hours * 3600 + minutes * 60 + seconds;
   
-  // Map the distance to the corresponding key in the coefficient table
-  const mappedDistance = DISTANCE_MAPPINGS[distance];
-  if (!mappedDistance) {
-    return 0; // Return 0 if the distance is not recognized
-  }
-  
-  // Get the coefficients for the gender and distance
-  const coefficients = waCoefficients[gender][mappedDistance];
-  if (!coefficients) {
-    return 0; // Return 0 if coefficients are not found
-  }
-  
-  // Apply the quadratic formula: 1000 * e^(a*t² + b*t + c)
-  const { a, b, c } = coefficients;
-  const exponent = (a * Math.pow(totalSeconds, 2)) + (b * totalSeconds) + c;
-  const points = 1000 * Math.exp(exponent);
+  var points = 0;
   
   // World Athletics points are always rounded to the nearest integer
   return Math.round(points);
 };
+
+function score(coefficients, x) {
+  if (coefficients.length === 2) {
+    return coefficients[0] * x + coefficients[1];
+  }
+  return Math.round(
+    coefficients[0] * x * x + coefficients[1] * x + coefficients[2]
+  );
+}
+
+function getMarkFromScore(coefficients, y) {
+  let ret = Number(
+    (
+      (-1 * coefficients[1] -
+        Math.sqrt(
+          Math.pow(coefficients[1], 2) -
+            4 * coefficients[0] * (coefficients[2] - y)
+        )) /
+      (2 * coefficients[0])
+    ).toFixed(2)
+  );
+
+  // find the positive result
+  if (ret < 0) {
+    ret = Number(
+      (
+        (-1 * coefficients[1] +
+          Math.sqrt(
+            Math.pow(coefficients[1], 2) -
+              4 * coefficients[0] * (coefficients[2] - y)
+          )) /
+        (2 * coefficients[0])
+      ).toFixed(2)
+    );
+  }
+
+  return ret;
+}
+
+function userMarkToMark(userMark, markType) {
+  switch (markType) {
+    case "time":
+      const [seconds, minutes, hours] = userMark
+        .split(":")
+        .reverse()
+        .map(x => parseFloat(x));
+      return 60 * 60 * (hours ?? 0) + 60 * (minutes ?? 0) + seconds;
+    case "distance":
+      return parseFloat(userMark);
+    case "points":
+      return parseInt(userMark);
+    default:
+      throw new Error(`unknown mark type ${markType}`);
+  }
+}
+
+function zeroPad(num, places) {
+  return String(num).padStart(places, "0");
+}
+
+function markToUserMark(mark, markType) {
+  switch (markType) {
+    case "time":
+      const hours = Math.floor(mark / 60 / 60);
+      const minutes = Math.floor(mark / 60) % 60;
+      const seconds = Math.floor(mark % 60);
+      const ms = (mark % 1).toFixed(2).split(".")[1];
+
+      if (hours > 0) {
+        return `${hours}:${zeroPad(minutes, 2)}:${zeroPad(seconds, 2)}.${ms}`;
+      }
+      if (minutes > 0) {
+        return `${minutes}:${zeroPad(seconds, 2)}.${ms}`;
+      }
+
+      return `${seconds}.${ms}`;
+    case "distance":
+      return `${mark}`;
+    case "points":
+      return `${mark}`;
+    default:
+      throw new Error(`unknown mark type ${markType}`);
+  }
+}
