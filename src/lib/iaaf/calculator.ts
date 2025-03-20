@@ -8,10 +8,10 @@ import {
 } from "./constants";
 
 const DISTANCE_MAPPINGS: { [key: string]: string } = {
-  "5K": "road5000",
-  "10K": "road10000",
-  "Half Marathon": "roadHalfMarathon",
-  "Marathon": "roadMarathon"
+  "5K": "Road 5 km",
+  "10K": "Road 10 km",
+  "Half Marathon": "Road HM",
+  "Marathon": "Road Marathon"
 };
 /**
  * Calculate World Athletics (formerly IAAF) points using the quadratic formula
