@@ -1,42 +1,48 @@
+
 import { useState, useEffect } from "react";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import UserInfo from "@/components/profile/UserInfo";
 import StravaSection from "@/components/profile/StravaSection";
 import ProfileActions from "@/components/profile/ProfileActions";
+
 const Profile = () => {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [onboardingData, setOnboardingData] = useState<any>(null);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
-  useEffect(() => {
-    const fetchData = async () => {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        const {
-          data: onboarding
-        } = await supabase.from('user_onboarding').select('*').eq('user_id', user.id).single();
-        setOnboardingData(onboarding);
-      }
-    };
-    fetchData();
-  }, []);
+  
+  // Get current user
+  const { data: userData, isLoading: isLoadingUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+  });
+
+  // Get onboarding data
+  const { data: onboardingData, isLoading: isLoadingOnboarding } = useQuery({
+    queryKey: ['onboarding', userData?.id],
+    queryFn: async () => {
+      if (!userData?.id) return null;
+      const { data } = await supabase
+        .from('user_onboarding')
+        .select('*')
+        .eq('user_id', userData.id)
+        .single();
+      return data;
+    },
+    enabled: !!userData?.id,
+  });
+
   const handleResetOnboarding = async () => {
     try {
-      if (!user?.id) {
+      if (!userData?.id) {
         toast({
           title: "Error",
           description: "Usuario no encontrado",
@@ -44,10 +50,8 @@ const Profile = () => {
         });
         return;
       }
-      const {
-        error
-      } = await supabase.from('user_onboarding').delete().match({
-        user_id: user.id
+      const { error } = await supabase.from('user_onboarding').delete().match({
+        user_id: userData.id
       });
       if (error) {
         console.error('Error deleting onboarding:', error);
@@ -66,13 +70,23 @@ const Profile = () => {
       });
     }
   };
+
+  const isLoading = isLoadingUser || isLoadingOnboarding;
+
   return <div className="min-h-screen bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20 p-4">
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-sm space-y-6">
           <ProfileHeader />
-          <UserInfo user={user} onboardingData={onboardingData} />
-          <StravaSection onboardingData={onboardingData} />
-          <ProfileActions userId={user?.id} onResetClick={() => setShowConfirmDialog(true)} />
+          
+          {isLoading ? (
+            <div className="py-4 text-center text-gray-500">Cargando información...</div>
+          ) : (
+            <>
+              <UserInfo user={userData} onboardingData={onboardingData} />
+              <StravaSection onboardingData={onboardingData} />
+              <ProfileActions userId={userData?.id} onResetClick={() => setShowConfirmDialog(true)} />
+            </>
+          )}
         </div>
       </div>
 
@@ -96,4 +110,5 @@ const Profile = () => {
       </AlertDialog>
     </div>;
 };
+
 export default Profile;
