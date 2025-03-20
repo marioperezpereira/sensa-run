@@ -37,6 +37,11 @@ export const calculateIAAFPoints = (
   seconds: number, 
   gender: 'men' | 'women'
 ): number => {
+  console.log(coefficients);
+  console.log(distance);
+  console.log(DISTANCE_MAPPINGS[distance]);
+  console.log(coefficients[gender]);
+  console.log(coefficients[gender][DISTANCE_MAPPINGS[distance]]);
   return score(coefficients[gender][DISTANCE_MAPPINGS[distance]],hours*3600+minutes*60+seconds);
 };
 
