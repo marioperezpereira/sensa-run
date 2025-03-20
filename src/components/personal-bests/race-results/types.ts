@@ -10,7 +10,10 @@ export interface RaceResult {
   seconds: number;
 }
 
-export const raceFormSchema = z.object({
+export const RaceFormSchema = z.object({
+  distance: z.enum(["5K", "10K", "Half Marathon", "Marathon"], {
+    required_error: "Selecciona la distancia",
+  }),
   raceDate: z.date({
     required_error: "Selecciona la fecha de la carrera",
   }),
@@ -25,4 +28,6 @@ export const raceFormSchema = z.object({
   path: ["minutes"],
 });
 
-export type RaceFormValues = z.infer<typeof raceFormSchema>;
+export const raceFormSchema = RaceFormSchema;
+
+export type RaceFormValues = z.infer<typeof RaceFormSchema>;
