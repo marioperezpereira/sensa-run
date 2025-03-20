@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { raceOptions } from "@/components/onboarding/types";
+import { addDays } from "date-fns";
 
 type RaceDistance = typeof raceOptions[number];
 
@@ -32,6 +33,14 @@ export function useEditGoal({
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Set default date to tomorrow if needed
+  useEffect(() => {
+    if (goalType === "Quiero preparar una carrera lo mejor posible" && !raceDate) {
+      const tomorrow = addDays(new Date(), 1);
+      setRaceDate(tomorrow.toISOString());
+    }
+  }, [goalType, raceDate]);
 
   const handleGoalTypeChange = (value: string) => {
     setGoalType(value);
@@ -127,10 +136,20 @@ export function useEditGoal({
     } else if (step === "race-target") {
       return raceDistance !== undefined;
     } else if (step === "race-date") {
+      // Ensure date is in the future
       return raceDate !== undefined && new Date(raceDate) > new Date();
     }
     return false;
   };
+
+  const handleRaceDistanceChange = (value: string) => {
+    // Ensure we only set valid enum values that match our RaceDistance type
+    if (raceOptions.includes(value as RaceDistance)) {
+      setRaceDistance(value as RaceDistance);
+    }
+  };
+
+  const handleRaceDateChange = (value: string) => setRaceDate(value);
 
   return {
     goalType,
@@ -141,13 +160,8 @@ export function useEditGoal({
     handleGoalTypeChange,
     handleNext,
     handleBack,
-    handleRaceDistanceChange: (value: string) => {
-      // Ensure we only set valid enum values that match our RaceDistance type
-      if (raceOptions.includes(value as RaceDistance)) {
-        setRaceDistance(value as RaceDistance);
-      }
-    },
-    handleRaceDateChange: (value: string) => setRaceDate(value),
+    handleRaceDistanceChange,
+    handleRaceDateChange,
     canProceed
   };
 }
