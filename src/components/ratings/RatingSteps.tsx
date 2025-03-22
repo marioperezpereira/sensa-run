@@ -11,7 +11,7 @@ interface RatingStepsProps {
   currentStep: RatingStep;
   activity: any;
   moveToNextStep: () => void;
-  moveToPreviousStep: () => void; // Add this prop for back navigation
+  moveToPreviousStep: () => void;
   onConditionComplete: (condition: string) => void;
 }
 
@@ -27,7 +27,14 @@ export const RatingSteps = ({
   
   const content = () => {
     if (currentStep === 'loading') {
-      return <LoadingSpinner />;
+      return (
+        <div className="fixed inset-0 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <LoadingSpinner />
+            <p className="mt-4 text-sensa-purple">Buscando tus actividades recientes...</p>
+          </div>
+        </div>
+      );
     }
 
     if (currentStep === 'home') {
