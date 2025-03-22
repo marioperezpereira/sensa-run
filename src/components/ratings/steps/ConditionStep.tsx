@@ -16,7 +16,7 @@ export const ConditionStep = ({ onCompleted, onBack }: ConditionStepProps) => {
           variant="ghost" 
           size="icon" 
           onClick={onBack} 
-          className="absolute left-4 top-4 text-sensa-purple"
+          className="absolute -left-1 -top-1 text-sensa-purple"
           title="Volver"
         >
           <ArrowLeft className="h-5 w-5" />
