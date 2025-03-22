@@ -59,14 +59,14 @@ const ProfileInfoDialog = ({ onProfileUpdated }: ProfileInfoDialogProps) => {
         <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 mb-4 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
-              Calculamos las puntuaciones de tu perfil en base a los datos de tu perfil ({gender}, {age} años)
+              Calculamos las puntuaciones de tus carreras en base a los datos de tu perfil ({gender}, {age} años)
             </p>
             <button 
               onClick={() => setIsOpen(true)}
               className="text-sensa-purple hover:text-sensa-purple/80 flex items-center text-sm"
             >
               <Edit className="h-4 w-4 mr-1" />
-              Cambiar mis datos personales
+              Editar mis datos
             </button>
           </div>
         </div>
