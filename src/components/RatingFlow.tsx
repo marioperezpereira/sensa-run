@@ -40,9 +40,10 @@ export const RatingFlow = () => {
           setRecommendation(existingRec.recommendation);
           setShowFeedback(!existingRec.feedback);
           setTimeout(() => {
-            moveToNextStep(); // Move to energy step
-            moveToNextStep(); // Move to condition step
-            moveToNextStep(); // Move to completed step
+            moveToNextStep(); // Skip home step
+            moveToNextStep(); // Skip effort step
+            moveToNextStep(); // Skip energy step
+            moveToNextStep(); // Skip condition step
           }, 0);
         }
         setIsLoading(false);

@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export type RatingStep = 'loading' | 'effort' | 'energy' | 'condition' | 'completed';
+export type RatingStep = 'loading' | 'home' | 'effort' | 'energy' | 'condition' | 'completed';
 
 interface Activity {
   id: string;
@@ -44,6 +45,46 @@ export const useRatingsFlow = () => {
         return;
       }
 
+      // Set to the home screen first, instead of going directly to activity check
+      setCurrentStep('home');
+    } catch (error) {
+      console.error('Error in checkLatestActivity:', error);
+      setCurrentStep('home'); // Default to home in case of error
+    }
+  };
+
+  useEffect(() => {
+    checkLatestActivity();
+  }, []);
+
+  const moveToNextStep = () => {
+    switch (currentStep) {
+      case 'home':
+        // After home, check for Strava activity
+        checkStravaActivity();
+        break;
+      case 'effort':
+        setCurrentStep('energy');
+        break;
+      case 'energy':
+        setCurrentStep('condition');
+        break;
+      case 'condition':
+        setCurrentStep('completed');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const checkStravaActivity = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setCurrentStep('completed');
+        return;
+      }
+
       const { data: stravaData, error: stravaError } = await supabase.functions.invoke(
         'fetch-strava-activities',
         {
@@ -64,28 +105,8 @@ export const useRatingsFlow = () => {
       });
       setCurrentStep('effort');
     } catch (error) {
-      console.error('Error in checkLatestActivity:', error);
+      console.error('Error fetching Strava activities:', error);
       setCurrentStep('energy');
-    }
-  };
-
-  useEffect(() => {
-    checkLatestActivity();
-  }, []);
-
-  const moveToNextStep = () => {
-    switch (currentStep) {
-      case 'effort':
-        setCurrentStep('energy');
-        break;
-      case 'energy':
-        setCurrentStep('condition');
-        break;
-      case 'condition':
-        setCurrentStep('completed');
-        break;
-      default:
-        break;
     }
   };
 

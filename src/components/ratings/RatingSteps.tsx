@@ -1,9 +1,10 @@
 
-import { Card } from "../ui/card";
+import { RatingStep } from "@/hooks/useRatingsFlow";
 import { EffortStep } from "./steps/EffortStep";
 import { EnergyStep } from "./steps/EnergyStep";
 import { ConditionStep } from "./steps/ConditionStep";
-import type { RatingStep } from "@/hooks/useRatingsFlow";
+import { HomeScreen } from "./steps/HomeScreen";
+import { LoadingSpinner } from "../LoadingSpinner";
 
 interface RatingStepsProps {
   currentStep: RatingStep;
@@ -16,28 +17,27 @@ export const RatingSteps = ({
   currentStep,
   activity,
   moveToNextStep,
-  onConditionComplete
+  onConditionComplete,
 }: RatingStepsProps) => {
-  return (
-    <Card className="p-6 space-y-4 bg-white/80 backdrop-blur-sm border-none">
-      {currentStep === 'effort' && activity && (
-        <EffortStep 
-          activity={activity} 
-          onCompleted={moveToNextStep} 
-        />
-      )}
+  if (currentStep === 'loading') {
+    return <LoadingSpinner />;
+  }
 
-      {currentStep === 'energy' && (
-        <EnergyStep 
-          onCompleted={moveToNextStep} 
-        />
-      )}
+  if (currentStep === 'home') {
+    return <HomeScreen onContinue={moveToNextStep} />;
+  }
 
-      {currentStep === 'condition' && (
-        <ConditionStep 
-          onCompleted={onConditionComplete} 
-        />
-      )}
-    </Card>
-  );
+  if (currentStep === 'effort' && activity) {
+    return <EffortStep activity={activity} onComplete={moveToNextStep} />;
+  }
+
+  if (currentStep === 'energy') {
+    return <EnergyStep onComplete={moveToNextStep} />;
+  }
+
+  if (currentStep === 'condition') {
+    return <ConditionStep onComplete={onConditionComplete} />;
+  }
+
+  return null;
 };
