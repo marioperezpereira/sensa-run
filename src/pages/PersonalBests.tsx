@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PBProfileForm from "@/components/personal-bests/PBProfileForm";
 import RaceResultsList from "@/components/personal-bests/RaceResultsList";
 import AddRaceResultDialog from "@/components/personal-bests/AddRaceResultDialog";
+import ProfileInfoDialog from "@/components/personal-bests/ProfileInfoDialog";
 import { ChatHeader } from "@/components/ChatHeader";
 
 const PersonalBests = () => {
@@ -43,10 +44,15 @@ const PersonalBests = () => {
 
   const handleProfileSaved = () => {
     setProfileComplete(true);
+    setRefreshResults(prev => prev + 1);
   };
 
   const handleRaceAdded = () => {
     setShowAddDialog(false);
+    setRefreshResults(prev => prev + 1);
+  };
+
+  const handleProfileUpdated = () => {
     setRefreshResults(prev => prev + 1);
   };
 
@@ -95,7 +101,10 @@ const PersonalBests = () => {
             {!profileComplete ? (
               <PBProfileForm onProfileSaved={handleProfileSaved} />
             ) : (
-              <RaceResultsList refreshTrigger={refreshResults} />
+              <>
+                <ProfileInfoDialog onProfileUpdated={handleProfileUpdated} />
+                <RaceResultsList refreshTrigger={refreshResults} />
+              </>
             )}
           </CardContent>
         </Card>
