@@ -5,11 +5,13 @@ import { EnergyStep } from "./steps/EnergyStep";
 import { ConditionStep } from "./steps/ConditionStep";
 import { HomeScreen } from "./steps/HomeScreen";
 import { LoadingSpinner } from "../LoadingSpinner";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface RatingStepsProps {
   currentStep: RatingStep;
   activity: any;
   moveToNextStep: () => void;
+  moveToPreviousStep: () => void; // Add this prop for back navigation
   onConditionComplete: (condition: string) => void;
 }
 
@@ -17,27 +19,57 @@ export const RatingSteps = ({
   currentStep,
   activity,
   moveToNextStep,
+  moveToPreviousStep,
   onConditionComplete,
 }: RatingStepsProps) => {
+  // Display dialog only for non-loading steps
+  const showDialog = currentStep !== 'loading';
+  
+  const content = () => {
+    if (currentStep === 'loading') {
+      return <LoadingSpinner />;
+    }
+
+    if (currentStep === 'home') {
+      return <HomeScreen onContinue={moveToNextStep} />;
+    }
+
+    if (currentStep === 'effort' && activity) {
+      return <EffortStep 
+        activity={activity} 
+        onCompleted={moveToNextStep} 
+        onBack={moveToPreviousStep}
+      />;
+    }
+
+    if (currentStep === 'energy') {
+      return <EnergyStep 
+        onCompleted={moveToNextStep} 
+        onBack={moveToPreviousStep}
+      />;
+    }
+
+    if (currentStep === 'condition') {
+      return <ConditionStep 
+        onCompleted={onConditionComplete} 
+        onBack={moveToPreviousStep}
+      />;
+    }
+
+    return null;
+  };
+
+  // If it's the loading step, just show the spinner without the dialog
   if (currentStep === 'loading') {
-    return <LoadingSpinner />;
+    return content();
   }
 
-  if (currentStep === 'home') {
-    return <HomeScreen onContinue={moveToNextStep} />;
-  }
-
-  if (currentStep === 'effort' && activity) {
-    return <EffortStep activity={activity} onCompleted={moveToNextStep} />;
-  }
-
-  if (currentStep === 'energy') {
-    return <EnergyStep onCompleted={moveToNextStep} />;
-  }
-
-  if (currentStep === 'condition') {
-    return <ConditionStep onCompleted={onConditionComplete} />;
-  }
-
-  return null;
+  // For all other steps, show the dialog with appropriate content
+  return (
+    <Dialog open={showDialog} modal={false}>
+      <DialogContent className="bg-white shadow-lg rounded-xl max-w-md mx-auto p-6 sm:p-8 border-none">
+        {content()}
+      </DialogContent>
+    </Dialog>
+  );
 };

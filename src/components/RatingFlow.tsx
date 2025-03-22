@@ -7,9 +7,10 @@ import { useToast } from "./ui/use-toast";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { RecommendationDisplay } from "./recommendations/RecommendationDisplay";
 import { RatingSteps } from "./ratings/RatingSteps";
+import { Dialog, DialogContent } from "./ui/dialog";
 
 export const RatingFlow = () => {
-  const { currentStep, activity, moveToNextStep } = useRatingsFlow();
+  const { currentStep, activity, moveToNextStep, moveToPreviousStep } = useRatingsFlow();
   const [recommendation, setRecommendation] = useState<string>('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -137,11 +138,15 @@ export const RatingFlow = () => {
 
   if (currentStep === 'completed' && recommendation) {
     return (
-      <RecommendationDisplay 
-        recommendation={recommendation}
-        showFeedback={showFeedback}
-        error={error}
-      />
+      <Dialog open={true} modal={false}>
+        <DialogContent className="bg-white shadow-lg rounded-xl max-w-2xl mx-auto p-6 border-none">
+          <RecommendationDisplay 
+            recommendation={recommendation}
+            showFeedback={showFeedback}
+            error={error}
+          />
+        </DialogContent>
+      </Dialog>
     );
   }
 
@@ -150,6 +155,7 @@ export const RatingFlow = () => {
       currentStep={currentStep}
       activity={activity}
       moveToNextStep={moveToNextStep}
+      moveToPreviousStep={moveToPreviousStep}
       onConditionComplete={handleConditionComplete}
     />
   );

@@ -77,6 +77,26 @@ export const useRatingsFlow = () => {
     }
   };
 
+  const moveToPreviousStep = () => {
+    switch (currentStep) {
+      case 'effort':
+        setCurrentStep('home');
+        break;
+      case 'energy':
+        if (activity) {
+          setCurrentStep('effort');
+        } else {
+          setCurrentStep('home');
+        }
+        break;
+      case 'condition':
+        setCurrentStep('energy');
+        break;
+      default:
+        break;
+    }
+  };
+
   const checkStravaActivity = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -125,6 +145,7 @@ export const useRatingsFlow = () => {
     currentStep,
     activity: activity ? formatActivity() : null,
     moveToNextStep,
+    moveToPreviousStep,
     reset: () => {
       setCurrentStep('loading');
       setActivity(null);
