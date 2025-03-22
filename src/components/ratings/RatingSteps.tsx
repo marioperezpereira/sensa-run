@@ -22,17 +22,15 @@ export const RatingSteps = ({
   moveToPreviousStep,
   onConditionComplete,
 }: RatingStepsProps) => {
-  // Display dialog only for non-loading steps
-  const showDialog = currentStep !== 'loading';
+  // Show dialog for all steps, including loading
+  const showDialog = true;
   
   const content = () => {
     if (currentStep === 'loading') {
       return (
-        <div className="fixed inset-0 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-            <LoadingSpinner />
-            <p className="mt-4 text-sensa-purple">Buscando tus actividades recientes...</p>
-          </div>
+        <div className="flex flex-col items-center justify-center py-8">
+          <LoadingSpinner />
+          <p className="mt-4 text-sensa-purple">Buscando tus actividades recientes...</p>
         </div>
       );
     }
@@ -66,12 +64,6 @@ export const RatingSteps = ({
     return null;
   };
 
-  // If it's the loading step, just show the spinner without the dialog
-  if (currentStep === 'loading') {
-    return content();
-  }
-
-  // For all other steps, show the dialog with appropriate content
   return (
     <Dialog open={showDialog} modal={false}>
       <DialogContent className="bg-white shadow-lg rounded-xl max-w-md mx-auto p-6 sm:p-8 border-none">
