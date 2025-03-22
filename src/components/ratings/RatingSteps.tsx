@@ -5,7 +5,7 @@ import { EnergyStep } from "./steps/EnergyStep";
 import { ConditionStep } from "./steps/ConditionStep";
 import { HomeScreen } from "./steps/HomeScreen";
 import { LoadingSpinner } from "../LoadingSpinner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface RatingStepsProps {
   currentStep: RatingStep;
@@ -75,6 +75,7 @@ export const RatingSteps = ({
   return (
     <Dialog open={showDialog} modal={false}>
       <DialogContent className="bg-white shadow-lg rounded-xl max-w-md mx-auto p-6 sm:p-8 border-none">
+        <DialogTitle className="sr-only">Información de entrenamiento</DialogTitle>
         {content()}
       </DialogContent>
     </Dialog>
