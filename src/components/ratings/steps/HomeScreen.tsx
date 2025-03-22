@@ -10,7 +10,7 @@ interface HomeScreenProps {
 }
 
 export const HomeScreen = ({ onContinue }: HomeScreenProps) => {
-  const [quote, setQuote] = useState("");
+  const [quote, setQuote] = useState({ text: "", author: "" });
 
   useEffect(() => {
     setQuote(getRandomQuote());
@@ -20,9 +20,10 @@ export const HomeScreen = ({ onContinue }: HomeScreenProps) => {
     <Card className="p-6 bg-white/80 backdrop-blur-sm border-none">
       <div className="flex flex-col items-center space-y-8 py-6">
         <div className="text-center max-w-md">
-          <blockquote className="text-xl italic font-medium text-sensa-purple mb-6">
-            "{quote}"
+          <blockquote className="text-xl italic font-medium text-sensa-purple mb-2">
+            "{quote.text}"
           </blockquote>
+          <p className="text-sm text-gray-500 mb-6">— {quote.author}</p>
           
           <Button 
             onClick={onContinue}
