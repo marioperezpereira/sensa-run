@@ -5,7 +5,7 @@ import { EnergyStep } from "./steps/EnergyStep";
 import { ConditionStep } from "./steps/ConditionStep";
 import { HomeScreen } from "./steps/HomeScreen";
 import { LoadingSpinner } from "../LoadingSpinner";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 
 interface RatingStepsProps {
   currentStep: RatingStep;
@@ -23,7 +23,7 @@ export const RatingSteps = ({
   onConditionComplete,
 }: RatingStepsProps) => {
   // Show dialog for all steps, including loading
-  const showDialog = true;
+  const showContent = true;
   
   const content = () => {
     if (currentStep === 'loading') {
@@ -65,11 +65,13 @@ export const RatingSteps = ({
   };
 
   return (
-    <Dialog open={showDialog} modal={false}>
-      <DialogContent className="bg-white shadow-lg rounded-xl max-w-md mx-auto p-6 sm:p-8 border-none">
-        <DialogTitle className="sr-only">Información de entrenamiento</DialogTitle>
-        {content()}
-      </DialogContent>
-    </Dialog>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+      <Card className="bg-white shadow-lg rounded-xl max-w-md mx-auto border-none">
+        <CardContent className="p-6 sm:p-8">
+          <CardTitle className="sr-only">Información de entrenamiento</CardTitle>
+          {content()}
+        </CardContent>
+      </Card>
+    </div>
   );
 };

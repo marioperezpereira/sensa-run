@@ -7,7 +7,7 @@ import { useToast } from "./ui/use-toast";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { RecommendationDisplay } from "./recommendations/RecommendationDisplay";
 import { RatingSteps } from "./ratings/RatingSteps";
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Card, CardContent } from "./ui/card";
 
 export const RatingFlow = () => {
   const { currentStep, activity, moveToNextStep, moveToPreviousStep } = useRatingsFlow();
@@ -138,15 +138,17 @@ export const RatingFlow = () => {
 
   if (currentStep === 'completed' && recommendation) {
     return (
-      <Dialog open={true} modal={false}>
-        <DialogContent className="bg-white shadow-lg rounded-xl max-w-2xl mx-auto p-6 border-none">
-          <RecommendationDisplay 
-            recommendation={recommendation}
-            showFeedback={showFeedback}
-            error={error}
-          />
-        </DialogContent>
-      </Dialog>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0">
+        <Card className="bg-white shadow-lg rounded-xl max-w-2xl mx-auto border-none">
+          <CardContent className="p-6">
+            <RecommendationDisplay 
+              recommendation={recommendation}
+              showFeedback={showFeedback}
+              error={error}
+            />
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
