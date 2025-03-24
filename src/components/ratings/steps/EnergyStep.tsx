@@ -42,7 +42,7 @@ export const EnergyStep = ({ onCompleted, onBack }: EnergyStepProps) => {
   };
 
   return (
-    <div className="space-y-4 pt-6">
+    <div className="space-y-4">
       <h2 className="text-xl font-semibold text-sensa-purple text-center">Nivel de energía</h2>
       <p className="text-gray-700">
         En una escala del 1 al 10, ¿cómo calificarías tu nivel de energía hoy?
