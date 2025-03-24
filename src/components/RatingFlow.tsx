@@ -7,7 +7,7 @@ import { useToast } from "./ui/use-toast";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { RecommendationDisplay } from "./recommendations/RecommendationDisplay";
 import { RatingSteps } from "./ratings/RatingSteps";
-import { Card, CardContent } from "./ui/card";
+import { Dialog, DialogContent } from "./ui/dialog";
 
 export const RatingFlow = () => {
   const { currentStep, activity, moveToNextStep, moveToPreviousStep } = useRatingsFlow();
@@ -125,48 +125,28 @@ export const RatingFlow = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center z-50">
-        <div className="fixed inset-0 bg-black/80" />
-        <Card className="bg-white shadow-lg rounded-xl max-w-md mx-auto p-6 border-none z-10">
-          <CardContent className="flex flex-col items-center justify-center p-4">
-            <LoadingSpinner />
-            <p className="mt-4 text-sensa-purple">Generando tu recomendación...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center z-50">
-        <div className="fixed inset-0 bg-black/80" />
-        <Card className="bg-white shadow-lg rounded-xl max-w-md mx-auto p-6 border-none z-10">
-          <CardContent className="p-4">
-            <div className="text-red-500 text-center">
-              {error}
-            </div>
-          </CardContent>
-        </Card>
+      <div className="text-red-500 text-center">
+        {error}
       </div>
     );
   }
 
   if (currentStep === 'completed' && recommendation) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center z-50">
-        <div className="fixed inset-0 bg-black/80" />
-        <Card className="bg-white shadow-lg rounded-xl max-w-2xl mx-auto p-6 border-none z-10">
-          <CardContent className="p-0">
-            <RecommendationDisplay 
-              recommendation={recommendation}
-              showFeedback={showFeedback}
-              error={error}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <Dialog open={true} modal={false}>
+        <DialogContent className="bg-white shadow-lg rounded-xl max-w-2xl mx-auto p-6 border-none">
+          <RecommendationDisplay 
+            recommendation={recommendation}
+            showFeedback={showFeedback}
+            error={error}
+          />
+        </DialogContent>
+      </Dialog>
     );
   }
 
