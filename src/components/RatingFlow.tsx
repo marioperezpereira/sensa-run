@@ -7,7 +7,7 @@ import { useToast } from "./ui/use-toast";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { RecommendationDisplay } from "./recommendations/RecommendationDisplay";
 import { RatingSteps } from "./ratings/RatingSteps";
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Card, CardContent } from "./ui/card";
 
 export const RatingFlow = () => {
   const { currentStep, activity, moveToNextStep, moveToPreviousStep } = useRatingsFlow();
@@ -125,28 +125,48 @@ export const RatingFlow = () => {
   };
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/80" />
+        <Card className="bg-white shadow-lg rounded-xl max-w-md mx-auto p-6 border-none z-10">
+          <CardContent className="flex flex-col items-center justify-center p-4">
+            <LoadingSpinner />
+            <p className="mt-4 text-sensa-purple">Generando tu recomendación...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="text-red-500 text-center">
-        {error}
+      <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/80" />
+        <Card className="bg-white shadow-lg rounded-xl max-w-md mx-auto p-6 border-none z-10">
+          <CardContent className="p-4">
+            <div className="text-red-500 text-center">
+              {error}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (currentStep === 'completed' && recommendation) {
     return (
-      <Dialog open={true} modal={false}>
-        <DialogContent className="bg-white shadow-lg rounded-xl max-w-2xl mx-auto p-6 border-none">
-          <RecommendationDisplay 
-            recommendation={recommendation}
-            showFeedback={showFeedback}
-            error={error}
-          />
-        </DialogContent>
-      </Dialog>
+      <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/80" />
+        <Card className="bg-white shadow-lg rounded-xl max-w-2xl mx-auto p-6 border-none z-10">
+          <CardContent className="p-0">
+            <RecommendationDisplay 
+              recommendation={recommendation}
+              showFeedback={showFeedback}
+              error={error}
+            />
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
