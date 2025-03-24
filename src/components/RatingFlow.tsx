@@ -7,7 +7,6 @@ import { useToast } from "./ui/use-toast";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { RecommendationDisplay } from "./recommendations/RecommendationDisplay";
 import { RatingSteps } from "./ratings/RatingSteps";
-import { Dialog, DialogContent } from "./ui/dialog";
 
 export const RatingFlow = () => {
   const { currentStep, activity, moveToNextStep, moveToPreviousStep } = useRatingsFlow();
@@ -125,7 +124,11 @@ export const RatingFlow = () => {
   };
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   if (error) {
@@ -138,15 +141,13 @@ export const RatingFlow = () => {
 
   if (currentStep === 'completed' && recommendation) {
     return (
-      <Dialog open={true} modal={false}>
-        <DialogContent className="bg-white shadow-lg rounded-xl max-w-2xl mx-auto p-6 border-none">
-          <RecommendationDisplay 
-            recommendation={recommendation}
-            showFeedback={showFeedback}
-            error={error}
-          />
-        </DialogContent>
-      </Dialog>
+      <section className="bg-white shadow-lg rounded-xl max-w-2xl mx-auto p-6 border border-gray-200">
+        <RecommendationDisplay 
+          recommendation={recommendation}
+          showFeedback={showFeedback}
+          error={error}
+        />
+      </section>
     );
   }
 
