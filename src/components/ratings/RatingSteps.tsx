@@ -39,22 +39,19 @@ export const RatingSteps = ({
     if (currentStep === 'effort' && activity) {
       return <EffortStep 
         activity={activity} 
-        onCompleted={moveToNextStep} 
-        onBack={moveToPreviousStep}
+        onCompleted={moveToNextStep}
       />;
     }
 
     if (currentStep === 'energy') {
       return <EnergyStep 
-        onCompleted={moveToNextStep} 
-        onBack={moveToPreviousStep}
+        onCompleted={moveToNextStep}
       />;
     }
 
     if (currentStep === 'condition') {
       return <ConditionStep 
-        onCompleted={onConditionComplete} 
-        onBack={moveToPreviousStep}
+        onCompleted={onConditionComplete}
       />;
     }
 

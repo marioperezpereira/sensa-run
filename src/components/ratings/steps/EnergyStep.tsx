@@ -2,8 +2,6 @@
 import { RatingSlider } from "../RatingSlider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
 
 interface EnergyStepProps {
   onCompleted: () => void;
@@ -45,17 +43,6 @@ export const EnergyStep = ({ onCompleted, onBack }: EnergyStepProps) => {
 
   return (
     <div className="space-y-4 pt-6">
-      {onBack && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onBack} 
-          className="absolute -left-1 -top-1 text-sensa-purple"
-          title="Volver"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-      )}
       <h2 className="text-xl font-semibold text-sensa-purple text-center">Nivel de energía</h2>
       <p className="text-gray-700">
         En una escala del 1 al 10, ¿cómo calificarías tu nivel de energía hoy?

@@ -2,13 +2,11 @@
 import { RatingSlider } from "../RatingSlider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button"; 
-import { ArrowLeft } from "lucide-react";
 
 interface EffortStepProps {
   activity: any;
   onCompleted: () => void;
-  onBack?: () => void; // Add back navigation prop
+  onBack?: () => void; // Keep the prop for type compatibility
 }
 
 export const EffortStep = ({ activity, onCompleted, onBack }: EffortStepProps) => {
@@ -46,17 +44,6 @@ export const EffortStep = ({ activity, onCompleted, onBack }: EffortStepProps) =
 
   return (
     <div className="space-y-4 relative">
-      {onBack && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onBack} 
-          className="absolute -left-1 -top-1 text-sensa-purple"
-          title="Volver"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-      )}
       <h2 className="text-xl font-semibold text-sensa-purple text-center">Valoración de tu última actividad</h2>
       <p className="text-gray-700">
         Tu última actividad fue{" "}
