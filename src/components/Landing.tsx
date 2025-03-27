@@ -2,10 +2,25 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Smile, Frown, Bandage } from "lucide-react";
+import { Smile, Frown, Bandage, Target, HeartPulse, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export const Landing = () => {
   const navigate = useNavigate();
+  const [emojiIndex, setEmojiIndex] = useState(0);
+  
+  const emojis = [
+    { icon: <Smile className="h-8 w-8 text-sensa-purple" />, label: "Feliz" },
+    { icon: <Frown className="h-8 w-8 text-sensa-purple" />, label: "Cansado" },
+    { icon: <Bandage className="h-8 w-8 text-sensa-purple" />, label: "Lesionado" }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setEmojiIndex((prev) => (prev + 1) % emojis.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-between bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
@@ -49,21 +64,20 @@ export const Landing = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex justify-center gap-6">
-                  <div className="flex flex-col items-center">
-                    <div className="rounded-full bg-sensa-purple/10 p-3">
-                      <Smile className="h-8 w-8 text-sensa-purple" />
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="rounded-full bg-sensa-purple/10 p-3">
-                      <Frown className="h-8 w-8 text-sensa-purple" />
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <div className="rounded-full bg-sensa-purple/10 p-3">
-                      <Bandage className="h-8 w-8 text-sensa-purple" />
-                    </div>
+                <div className="flex justify-center">
+                  <div className="relative h-16 w-16">
+                    {emojis.map((emoji, index) => (
+                      <div 
+                        key={index} 
+                        className={`absolute top-0 left-0 rounded-full bg-sensa-purple/10 p-3 w-full h-full flex items-center justify-center transition-all duration-500 ${
+                          index === emojiIndex 
+                            ? "opacity-100 transform scale-100 rotate-0" 
+                            : "opacity-0 transform scale-75 rotate-90"
+                        }`}
+                      >
+                        {emoji.icon}
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <p className="text-center text-lg text-gray-700">
@@ -71,6 +85,14 @@ export const Landing = () => {
                 </p>
               </CardContent>
             </Card>
+            <div className="mt-6 flex justify-center">
+              <Button 
+                onClick={() => navigate("/auth")}
+                className="bg-sensa-purple hover:bg-sensa-purple/90 text-white px-8 py-6 h-auto text-lg rounded-[42px] font-medium tracking-wide transform transition hover:scale-105 w-full sm:w-auto"
+              >
+                Descubre Sensa
+              </Button>
+            </div>
           </div>
 
           {/* Sección 3: Lista de beneficios */}
@@ -81,12 +103,12 @@ export const Landing = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Beneficio 1 */}
               <Card className="border border-gray-200 shadow-sm h-full">
-                <CardContent className="p-6 flex flex-col h-full">
+                <CardContent className="p-6 flex flex-col h-full items-center">
                   <div className="rounded-full bg-sensa-purple/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
-                    <span className="text-xl">🎯</span>
+                    <Target className="h-6 w-6 text-sensa-purple" />
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">Entrena con tu objetivo claro</h3>
-                  <p className="text-gray-600 flex-grow">
+                  <h3 className="font-semibold text-lg mb-2 text-center">Entrena con tu objetivo claro</h3>
+                  <p className="text-gray-600 flex-grow text-center">
                     Dinos cuándo quieres correr tu próxima carrera: tu sesión diaria está diseñada para afrontarla con la mayor de las garantías.
                   </p>
                 </CardContent>
@@ -94,12 +116,12 @@ export const Landing = () => {
 
               {/* Beneficio 2 */}
               <Card className="border border-gray-200 shadow-sm h-full">
-                <CardContent className="p-6 flex flex-col h-full">
+                <CardContent className="p-6 flex flex-col h-full items-center">
                   <div className="rounded-full bg-sensa-purple/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
-                    <span className="text-xl">👂</span>
+                    <HeartPulse className="h-6 w-6 text-sensa-purple" />
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">Tus sensaciones importan</h3>
-                  <p className="text-gray-600 flex-grow">
+                  <h3 className="font-semibold text-lg mb-2 text-center">Tus sensaciones importan</h3>
+                  <p className="text-gray-600 flex-grow text-center">
                     Registra cómo te sientes para recibir una recomendación que respete tu cuerpo.
                   </p>
                 </CardContent>
@@ -107,16 +129,24 @@ export const Landing = () => {
 
               {/* Beneficio 3 */}
               <Card className="border border-gray-200 shadow-sm h-full">
-                <CardContent className="p-6 flex flex-col h-full">
+                <CardContent className="p-6 flex flex-col h-full items-center">
                   <div className="rounded-full bg-sensa-purple/10 p-3 w-12 h-12 flex items-center justify-center mb-4">
-                    <span className="text-xl">🔄</span>
+                    <RefreshCw className="h-6 w-6 text-sensa-purple" />
                   </div>
-                  <h3 className="font-semibold text-lg mb-2">Integración con Strava</h3>
-                  <p className="text-gray-600 flex-grow">
+                  <h3 className="font-semibold text-lg mb-2 text-center">Integración con Strava</h3>
+                  <p className="text-gray-600 flex-grow text-center">
                     Si lo deseas, puedes conectar tu cuenta para aconsejarte mejor basándonos en tus entrenamientos previos.
                   </p>
                 </CardContent>
               </Card>
+            </div>
+            <div className="mt-8 flex justify-center">
+              <Button 
+                onClick={() => navigate("/auth")}
+                className="bg-sensa-purple hover:bg-sensa-purple/90 text-white px-8 py-6 h-auto text-lg rounded-[42px] font-medium tracking-wide transform transition hover:scale-105 w-full sm:w-auto"
+              >
+                Descubre Sensa
+              </Button>
             </div>
           </div>
         </div>
