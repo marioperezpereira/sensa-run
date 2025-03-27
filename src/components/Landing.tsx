@@ -23,7 +23,7 @@ export const Landing = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-between bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20">
+    <div className="min-h-screen flex flex-col items-center justify-between bg-gradient-to-br from-sensa-purple/20 to-sensa-lime/20 pt-safe">
       {/* Sección 1: Hero principal */}
       <div className="w-full max-w-5xl mx-auto text-center space-y-8 flex-1 flex items-center p-6">
         <div className="w-full space-y-12">
