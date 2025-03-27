@@ -58,7 +58,7 @@ export const Landing = () => {
           {/* Sección 2: Breve explicación del valor */}
           <div className="py-12 px-4">
             <Card className="border border-gray-200 shadow-sm">
-              <CardContent className="space-y-6">
+              <CardHeader>
                 <div className="flex justify-center">
                   <div className="relative h-16 w-16">
                     {emojis.map((emoji, index) => (
@@ -75,11 +75,11 @@ export const Landing = () => {
                     ))}
                   </div>
                 </div>
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold text-sensa-purple text-center">
-                    Porque no somos robots
-                  </CardTitle>
-                </CardHeader>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <CardTitle className="text-2xl font-bold text-sensa-purple text-center">
+                  Porque no somos robots
+                </CardTitle>
                 <p className="text-center text-lg text-gray-700">
                   Sensa te ayuda a entrenar escuchando tu cuerpo recomendándote cada día un entrenamiento basado en tus sensaciones y objetivos.
                 </p>
