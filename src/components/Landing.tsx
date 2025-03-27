@@ -83,16 +83,16 @@ export const Landing = () => {
                 <p className="text-center text-lg text-gray-700">
                   Sensa te ayuda a entrenar escuchando tu cuerpo recomendándote cada día un entrenamiento basado en tus sensaciones y objetivos.
                 </p>
+                <div className="mt-6 flex justify-center">
+                  <Button 
+                    onClick={() => navigate("/auth")}
+                    className="bg-sensa-purple hover:bg-sensa-purple/90 text-white px-8 py-6 h-auto text-lg rounded-[42px] font-medium tracking-wide transform transition hover:scale-105 w-full sm:w-auto"
+                  >
+                    Descubre Sensa
+                  </Button>
+                </div>
               </CardContent>
             </Card>
-            <div className="mt-6 flex justify-center">
-              <Button 
-                onClick={() => navigate("/auth")}
-                className="bg-sensa-purple hover:bg-sensa-purple/90 text-white px-8 py-6 h-auto text-lg rounded-[42px] font-medium tracking-wide transform transition hover:scale-105 w-full sm:w-auto"
-              >
-                Descubre Sensa
-              </Button>
-            </div>
           </div>
 
           {/* Sección 3: Lista de beneficios */}
