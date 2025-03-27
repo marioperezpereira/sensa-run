@@ -81,7 +81,7 @@ export const Landing = () => {
                   Porque no somos robots
                 </CardTitle>
                 <p className="text-center text-lg text-gray-700">
-                  Sensa te ayuda a entrenar escuchando tu cuerpo recomendándote cada día un entrenamiento basado en tus sensaciones y objetivos.
+                  Olvídate del estrés de las planificaciones: Sensa te ayuda a entrenar escuchando tu cuerpo recomendándote cada día un entrenamiento basado en tus sensaciones y objetivos.
                 </p>
                 <div className="mt-6 flex justify-center">
                   <Button 
