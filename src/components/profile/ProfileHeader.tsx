@@ -7,7 +7,7 @@ const ProfileHeader = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-center pt-safe">
       <h1 className="text-2xl font-bold">Mi Perfil</h1>
       <Button 
         variant="ghost"

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,6 @@ const Profile = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Get current user
   const { data: userData, isLoading: isLoadingUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
@@ -25,7 +23,6 @@ const Profile = () => {
     },
   });
 
-  // Get onboarding data
   const { data: onboardingData, isLoading: isLoadingOnboarding } = useQuery({
     queryKey: ['onboarding', userData?.id],
     queryFn: async () => {

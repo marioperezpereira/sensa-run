@@ -7,7 +7,7 @@ export const ChatHeader = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm border-b">
+    <div className="bg-white/80 backdrop-blur-sm border-b pt-safe">
       <div className="container max-w-2xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
