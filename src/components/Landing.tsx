@@ -122,7 +122,7 @@ export const Landing = () => {
                   </div>
                   <h3 className="font-semibold text-lg mb-2 text-center">Tus sensaciones importan</h3>
                   <p className="text-gray-600 flex-grow text-center">
-                    Registra cómo te sientes para recibir una recomendación que respete tu cuerpo.
+                    Porque lo más importante en el entrenamiento es la continuidad, Sensa evita lesiones y contratiempos teniendo en cuenta tus sensaciones físicas y psicológicas.
                   </p>
                 </CardContent>
               </Card>
