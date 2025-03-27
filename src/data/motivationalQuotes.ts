@@ -42,10 +42,6 @@ export const motivationalQuotes: MotivationalQuote[] = [
     author: "Platón"
   },
   {
-    text: "Los sueños no se hacen realidad a través de la magia; toma sudor, determinación y trabajo duro.",
-    author: "Colin Powell"
-  },
-  {
     text: "No entreno hasta que no puedo más. Entreno hasta que ellos no pueden más.",
     author: "Herschel Walker"
   },
@@ -56,10 +52,6 @@ export const motivationalQuotes: MotivationalQuote[] = [
   {
     text: "Si no tienes confianza, siempre encontrarás una manera de no ganar.",
     author: "Carl Lewis"
-  },
-  {
-    text: "No importa cuán lento corras, estás lapping a todos en el sofá.",
-    author: "Anónimo"
   },
   {
     text: "La mejor forma de empezar es dejando de hablar y empezando a hacer.",
