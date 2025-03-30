@@ -58,30 +58,29 @@ export const EnergyStep = ({ onCompleted, onBack }: EnergyStepProps) => {
       <p className="text-gray-700">
         ¿Cómo te encuentras hoy? Selecciona la opción que mejor describa tu estado actual:
       </p>
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-2">
         {energyOptions.map((option) => (
           <Button
             key={option.value}
             onClick={() => setSelectedEnergy(option.value)}
-            className={`w-full justify-start text-left py-4 h-auto ${
-              selectedEnergy === option.value 
-                ? "bg-violet-100 text-violet-800 border-2 border-violet-500" 
-                : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+            className={`justify-start text-left rounded-xl py-4 ${
+              selectedEnergy === option.value ? 'ring-2 ring-offset-2 ring-sensa-purple bg-sensa-purple/10' : ''
             }`}
             variant="outline"
           >
-            <span className="text-lg mr-2">{option.label}</span>
+            {option.label}
           </Button>
         ))}
       </div>
       
-      <Button
-        onClick={handleSubmit}
-        className="w-full bg-violet-500 hover:bg-violet-600 text-white rounded-[42px] py-4"
-        disabled={selectedEnergy === null}
-      >
-        Continuar
-      </Button>
+      {selectedEnergy !== null && (
+        <Button
+          onClick={handleSubmit}
+          className="w-full bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-4"
+        >
+          Continuar
+        </Button>
+      )}
     </div>
   );
 };
