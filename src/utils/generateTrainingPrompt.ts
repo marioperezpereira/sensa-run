@@ -125,7 +125,7 @@ export const generateTrainingPrompt = async (latestActivity: any, effort: number
     if (profileData) {
       const parts = [];
       if (profileData.gender) {
-        parts.push(`${profileData.gender === 'male' ? 'hombre' : 'mujer'}`);
+        parts.push(`${profileData.gender === 'Male' ? 'hombre' : 'mujer'}`);
       }
       if (profileData.date_of_birth) {
         const age = Math.floor((new Date().getTime() - new Date(profileData.date_of_birth).getTime()) / 31536000000);
@@ -164,7 +164,7 @@ ${lastActivityText ? `${lastActivityText} ` : ''}Su percepción de niveles de en
 
 NOTA: Ten en cuenta que los datos de frecuencia cardíaca podrían no ser completamente precisos debido a posibles problemas con los monitores de frecuencia cardíaca.
 
-Basado en las percepciones personales, objetivos e historial de entrenamientos, sugiere un entrenamiento para el usuario a realizar en el día de hoy. El formato en que lo aportes debe incluir un título de no más de 10 palabras explicando en qué consiste el entrenamiento, una descripción en la cual se explique de forma más detallada cómo se ha de ejecutar el entrenamiento y sensaciones que debe tener mientras lo ejecute (no recomiendes un ritmo específico de entrenamiento, la recomendación debe girar en torno a las percepciones del usuario). La descripción escríbela de forma relativamente concisa (máximo 3 párrafos cortos). Debes también incluir una sesión alternativa a realizar en caso de que no le encaje la recomendada al usuario. En caso de que el usuario ya haya entrenado en el día de hoy, no le recomiendes otro entrenamiento en la sesión principal y recomiéndaselo como alternativa, pero avísale sobre los riesgos de doblar entrenamientos en el mismo día.`;
+Basado en las percepciones personales, objetivos e historial de entrenamientos, sugiere un entrenamiento para el usuario a realizar en el día de hoy. El formato en que lo aportes debe incluir un título de no más de 10 palabras explicando en qué consiste el entrenamiento, una descripción en la cual se explique de forma más detallada cómo se ha de ejecutar el entrenamiento y sensaciones que debe tener mientras lo ejecute (no recomiendes un ritmo específico de entrenamiento, la recomendación debe girar en torno a las percepciones del usuario). La descripción escríbela de forma relativamente concisa (máximo 3 párrafos cortos). Debes también incluir una sesión alternativa a realizar en caso de que no le encaje la recomendada al usuario. Esta recomendación incluirá también un título con el mismo formato que para la sesión principal (empieza en el título indicando "Sesión alternativa:" y luego el nombre de la sesión), pero la descripción será más breve, tan sólo de un párrafo. En caso de que el usuario ya haya entrenado en el día de hoy, no le recomiendes otro entrenamiento en la sesión principal y recomiéndaselo como alternativa, pero avísale sobre los riesgos de doblar entrenamientos en el mismo día (sólo si ya ha entrenado hoy, sino no lo hagas)`;
   } catch (error) {
     console.error('Error generating prompt:', error);
     return '';
