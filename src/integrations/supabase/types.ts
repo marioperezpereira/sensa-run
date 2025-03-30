@@ -111,6 +111,8 @@ export type Database = {
           minutes: number
           race_date: string
           seconds: number
+          surface_type: string | null
+          track_type: string | null
           updated_at: string
           user_id: string
         }
@@ -122,6 +124,8 @@ export type Database = {
           minutes?: number
           race_date: string
           seconds?: number
+          surface_type?: string | null
+          track_type?: string | null
           updated_at?: string
           user_id: string
         }
@@ -133,6 +137,8 @@ export type Database = {
           minutes?: number
           race_date?: string
           seconds?: number
+          surface_type?: string | null
+          track_type?: string | null
           updated_at?: string
           user_id?: string
         }
