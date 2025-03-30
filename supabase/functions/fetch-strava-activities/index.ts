@@ -92,6 +92,33 @@ serve(async (req) => {
 
     const activities = await activitiesResponse.json()
     console.log(`Successfully fetched ${activities.length} activities`)
+    
+    // For each activity, fetch its laps
+    for (const activity of activities) {
+      try {
+        const lapsResponse = await fetch(
+          `https://www.strava.com/api/v3/activities/${activity.id}/laps`,
+          {
+            headers: {
+              'Authorization': `Bearer ${refreshData.access_token}`
+            }
+          }
+        )
+        
+        if (lapsResponse.ok) {
+          const laps = await lapsResponse.json()
+          // Add laps to the activity object
+          activity.laps = laps
+          console.log(`Fetched ${laps.length} laps for activity ${activity.id}`)
+        } else {
+          console.error(`Failed to fetch laps for activity ${activity.id}: ${lapsResponse.status}`)
+          activity.laps = []
+        }
+      } catch (error) {
+        console.error(`Error fetching laps for activity ${activity.id}:`, error)
+        activity.laps = []
+      }
+    }
 
     return new Response(JSON.stringify({ activities }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
