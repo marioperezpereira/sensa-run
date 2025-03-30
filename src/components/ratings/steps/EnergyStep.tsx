@@ -15,7 +15,7 @@ export const EnergyStep = ({ onCompleted, onBack }: EnergyStepProps) => {
 
   const energyOptions = [
     { label: "🤩 ¡Me siento a tope!", value: 4 },
-    { label: "😉 Me noto algo cansado, pero estoy bien", value: 3 },
+    { label: "😉 Me noto algo cansado, pero bien", value: 3 },
     { label: "🫠 Estoy bastante fatigado", value: 2 },
     { label: "🥵 ¡Casi no me puedo ni mover!", value: 1 },
   ];
