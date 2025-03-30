@@ -1,14 +1,26 @@
 
-import { UseFormReturn } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RaceFormValues } from "./types";
+import { UseFormReturn } from "react-hook-form";
+import { RaceFormValues, trackDistances } from "./types";
 
 interface DistanceFieldProps {
   form: UseFormReturn<RaceFormValues>;
 }
 
 const DistanceField = ({ form }: DistanceFieldProps) => {
+  const surfaceType = form.watch("surfaceType");
+  const trackType = form.watch("trackType");
+
+  // Get the appropriate distances based on the surface type and track type
+  let availableDistances: string[] = [];
+  
+  if (surfaceType === "Asfalto") {
+    availableDistances = ["5K", "10K", "Half Marathon", "Marathon"];
+  } else if (surfaceType === "Pista de atletismo" && trackType) {
+    availableDistances = trackDistances[trackType] || [];
+  }
+
   return (
     <FormField
       control={form.control}
@@ -16,17 +28,23 @@ const DistanceField = ({ form }: DistanceFieldProps) => {
       render={({ field }) => (
         <FormItem>
           <FormLabel>Distancia</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
+          <Select
+            onValueChange={field.onChange}
+            defaultValue={field.value}
+            value={field.value}
+            disabled={surfaceType === "Pista de atletismo" && !trackType}
+          >
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder="Selecciona la distancia" />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              <SelectItem value="5K">5K</SelectItem>
-              <SelectItem value="10K">10K</SelectItem>
-              <SelectItem value="Half Marathon">Media maratón</SelectItem>
-              <SelectItem value="Marathon">Maratón</SelectItem>
+              {availableDistances.map((distance) => (
+                <SelectItem key={distance} value={distance}>
+                  {distance}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <FormMessage />

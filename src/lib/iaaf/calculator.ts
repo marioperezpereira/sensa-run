@@ -9,10 +9,35 @@ import {
 } from "./constants";
 
 const DISTANCE_MAPPINGS: { [key: string]: string } = {
+  // Road races
   "5K": "Road 5 km",
   "10K": "Road 10 km",
   "Half Marathon": "Road HM",
-  "Marathon": "Road Marathon"
+  "Marathon": "Road Marathon",
+  
+  // Track races (outdoor)
+  "100m": "100m",
+  "200m": "200m",
+  "400m": "400m",
+  "800m": "800m",
+  "1500m": "1500m",
+  "Milla": "Mile",
+  "3000m": "3000m",
+  "5000m": "5000m",
+  "10000m": "10000m",
+  
+  // Track races (indoor)
+  "60m": "60m",
+};
+
+// Generate indoor-specific mappings
+const INDOOR_SUFFIX_MAPPINGS: { [key: string]: string } = {
+  "200m": "200m sh",
+  "400m": "400m sh",
+  "800m": "800m sh",
+  "1500m": "1500m sh",
+  "Milla": "Mile sh",
+  "3000m": "3000m sh",
 };
 
 /**
@@ -30,6 +55,7 @@ const DISTANCE_MAPPINGS: { [key: string]: string } = {
  * @param minutes - Minutes component of the time
  * @param seconds - Seconds component of the time
  * @param gender - Gender ("men" or "women")
+ * @param isIndoor - Whether the event is indoor (for track events)
  * @returns - World Athletics points as a number, rounded to nearest integer
  */
 export const calculateIAAFPoints = (
@@ -37,7 +63,8 @@ export const calculateIAAFPoints = (
   hours: number, 
   minutes: number, 
   seconds: number, 
-  gender: 'men' | 'women'
+  gender: 'men' | 'women',
+  isIndoor: boolean = false
 ): number => {
   try {
     // Validate inputs
@@ -47,9 +74,15 @@ export const calculateIAAFPoints = (
     }
     
     // Map the distance to the event name used in the coefficients object
-    const eventName = DISTANCE_MAPPINGS[distance];
+    let eventName = DISTANCE_MAPPINGS[distance];
+    
+    // For indoor track events (except 60m which is already mapped correctly)
+    if (isIndoor && distance !== "60m" && INDOOR_SUFFIX_MAPPINGS[distance]) {
+      eventName = INDOOR_SUFFIX_MAPPINGS[distance];
+    }
+    
     if (!eventName) {
-      console.warn(`Unknown distance mapping: ${distance}`);
+      console.warn(`Unknown distance mapping: ${distance} (Indoor: ${isIndoor})`);
       return 0;
     }
     
@@ -72,7 +105,7 @@ export const calculateIAAFPoints = (
 };
 
 // Export the DISTANCE_MAPPINGS for use in other parts of the application
-export { DISTANCE_MAPPINGS };
+export { DISTANCE_MAPPINGS, INDOOR_SUFFIX_MAPPINGS };
 
 function score(coefficients, x) {
   if (!coefficients || !Array.isArray(coefficients)) {

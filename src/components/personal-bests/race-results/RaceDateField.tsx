@@ -1,11 +1,12 @@
 
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es } from 'date-fns/locale';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import { UseFormReturn } from "react-hook-form";
 import { RaceFormValues } from "./types";
 
@@ -20,15 +21,16 @@ const RaceDateField = ({ form }: RaceDateFieldProps) => {
       name="raceDate"
       render={({ field }) => (
         <FormItem className="flex flex-col">
-          <FormLabel>Fecha de la carrera</FormLabel>
+          <FormLabel>Fecha</FormLabel>
           <Popover>
             <PopoverTrigger asChild>
               <FormControl>
                 <Button
-                  variant={"outline"}
-                  className={`w-full pl-3 text-left font-normal ${
+                  variant="outline"
+                  className={cn(
+                    "w-full pl-3 text-left font-normal",
                     !field.value && "text-muted-foreground"
-                  }`}
+                  )}
                 >
                   {field.value ? (
                     format(field.value, "PPP", { locale: es })
@@ -39,16 +41,17 @@ const RaceDateField = ({ form }: RaceDateFieldProps) => {
                 </Button>
               </FormControl>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 z-50" align="start">
+            <PopoverContent className="w-auto p-0" align="start">
               <Calendar
                 mode="single"
                 selected={field.value}
                 onSelect={field.onChange}
                 disabled={(date) =>
-                  date > new Date()
+                  date > new Date() || date < new Date("1900-01-01")
                 }
                 initialFocus
                 locale={es}
+                weekStartsOn={1} // Monday
               />
             </PopoverContent>
           </Popover>

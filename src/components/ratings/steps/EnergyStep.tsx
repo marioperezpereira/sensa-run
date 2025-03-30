@@ -12,6 +12,7 @@ interface EnergyStepProps {
 export const EnergyStep = ({ onCompleted, onBack }: EnergyStepProps) => {
   const { toast } = useToast();
   const [selectedEnergy, setSelectedEnergy] = useState<number | null>(null);
+  const [hasSelected, setHasSelected] = useState<boolean>(false);
 
   const energyOptions = [
     { label: "🤩 ¡Me siento a tope!", value: 4 },
@@ -19,6 +20,11 @@ export const EnergyStep = ({ onCompleted, onBack }: EnergyStepProps) => {
     { label: "🫠 Estoy bastante fatigado", value: 2 },
     { label: "🥵 ¡Casi no me puedo ni mover!", value: 1 },
   ];
+
+  const handleSelection = (value: number) => {
+    setSelectedEnergy(value);
+    setHasSelected(true); // Mark that user has made a selection
+  };
 
   const handleSubmit = async () => {
     if (selectedEnergy === null) return;
@@ -62,7 +68,7 @@ export const EnergyStep = ({ onCompleted, onBack }: EnergyStepProps) => {
         {energyOptions.map((option) => (
           <Button
             key={option.value}
-            onClick={() => setSelectedEnergy(option.value)}
+            onClick={() => handleSelection(option.value)}
             className={`justify-start text-left rounded-xl py-4 ${
               selectedEnergy === option.value ? 'ring-2 ring-offset-2 ring-sensa-purple bg-sensa-purple/10' : ''
             }`}
@@ -73,7 +79,7 @@ export const EnergyStep = ({ onCompleted, onBack }: EnergyStepProps) => {
         ))}
       </div>
       
-      {selectedEnergy !== null && (
+      {hasSelected && (
         <Button
           onClick={handleSubmit}
           className="w-full bg-sensa-purple hover:bg-sensa-purple/90 text-white rounded-[42px] py-4"

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +12,8 @@ import { RaceFormSchema, RaceFormValues } from "./race-results/types";
 import RaceDateField from "./race-results/RaceDateField";
 import TimeFields from "./race-results/TimeFields";
 import DistanceField from "./race-results/DistanceField";
+import SurfaceTypeField from "./race-results/SurfaceTypeField";
+import TrackTypeField from "./race-results/TrackTypeField";
 
 interface AddRaceResultDialogProps {
   open: boolean;
@@ -26,11 +28,31 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
   const form = useForm<RaceFormValues>({
     resolver: zodResolver(RaceFormSchema),
     defaultValues: {
+      surfaceType: "Asfalto",
       hours: 0,
       minutes: 0,
       seconds: 0,
     },
   });
+
+  // Reset track type when surface type changes
+  const surfaceType = form.watch("surfaceType");
+  useEffect(() => {
+    if (surfaceType === "Asfalto") {
+      form.setValue("trackType", undefined);
+      form.setValue("distance", "");
+    } else if (surfaceType === "Pista de atletismo") {
+      form.setValue("distance", "");
+    }
+  }, [surfaceType, form]);
+
+  // Reset distance when track type changes
+  const trackType = form.watch("trackType");
+  useEffect(() => {
+    if (trackType) {
+      form.setValue("distance", "");
+    }
+  }, [trackType, form]);
 
   const onSubmit = async (values: RaceFormValues) => {
     setIsSubmitting(true);
@@ -66,7 +88,9 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
       
       // Reset form
       form.reset({
-        distance: undefined,
+        surfaceType: "Asfalto",
+        trackType: undefined,
+        distance: "",
         raceDate: undefined,
         hours: 0,
         minutes: 0,
@@ -88,7 +112,7 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
 
   // Helper function to save race result
   const saveRaceResult = async (userId: string, values: RaceFormValues) => {
-    const { raceDate, distance, hours, minutes, seconds } = values;
+    const { raceDate, distance, hours, minutes, seconds, surfaceType, trackType } = values;
     
     return await supabase.from('race_results').insert({
       user_id: userId,
@@ -97,6 +121,8 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
       hours,
       minutes,
       seconds,
+      surface_type: surfaceType,
+      track_type: trackType || null,
     });
   };
 
@@ -109,6 +135,8 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+            <SurfaceTypeField form={form} />
+            <TrackTypeField form={form} />
             <DistanceField form={form} />
             <RaceDateField form={form} />
             <TimeFields form={form} />

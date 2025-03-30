@@ -1,9 +1,9 @@
 
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { Clock, ChevronRight, Award } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { formatDistanceToKm, formatTime } from "@/lib/utils";
 import { RaceResult } from "./types";
+import { ChevronRight, Medal, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface DistanceResultCardProps {
   distance: string;
@@ -12,87 +12,87 @@ interface DistanceResultCardProps {
   count: number;
   onViewAll: (distance: string) => void;
   getIAAFPoints: (result: RaceResult | null) => number;
+  surfaceType?: string;
+  trackType?: string;
 }
 
-const DistanceResultCard = ({
-  distance,
-  pb,
-  latest,
-  count,
+const DistanceResultCard = ({ 
+  distance, 
+  pb, 
+  latest, 
+  count, 
   onViewAll,
   getIAAFPoints,
+  surfaceType = "Asfalto",
+  trackType
 }: DistanceResultCardProps) => {
-  const formatTime = (hours: number, minutes: number, seconds: number) => {
-    if (hours > 0) {
-      return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "d MMM yyyy", { locale: es });
-  };
+  const formattedDistance = distance;
+  const iaafPoints = pb ? getIAAFPoints(pb) : 0;
+  
+  // Format title based on surface and track type
+  let title = formattedDistance;
+  if (surfaceType === "Pista de atletismo" && trackType) {
+    title = `${formattedDistance} (${trackType})`;
+  }
 
   return (
-    <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="text-lg font-semibold">{distance}</h3>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => onViewAll(distance)}
-          className="text-xs"
-        >
-          Ver todos ({count}) <ChevronRight className="ml-1 h-3 w-3" />
+    <Card className="p-4 hover:shadow-md transition-shadow duration-200">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-semibold">{title}</h3>
+          {count > 0 && <p className="text-sm text-gray-500">{count} {count === 1 ? 'resultado' : 'resultados'}</p>}
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => onViewAll(distance)}>
+          Ver todos <ChevronRight size={16} className="ml-1" />
         </Button>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Best time */}
-        <div className="bg-[#FEF7CD]/50 rounded-lg p-3">
-          <p className="text-xs text-gray-500 mb-1">Mejor tiempo</p>
-          {pb ? (
-            <>
-              <div className="flex justify-between items-center">
-                <p className="font-semibold flex items-center">
-                  <Clock className="mr-1 h-4 w-4" />
-                  {formatTime(pb.hours, pb.minutes, pb.seconds)}
-                </p>
-                <div className="flex items-center bg-amber-100 text-amber-800 font-medium px-2 py-1 rounded-full text-xs">
-                  <Award className="mr-1 h-3 w-3" />
-                  {getIAAFPoints(pb)} pts
+
+      {count > 0 ? (
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* PB Card */}
+          <div className="bg-amber-50 rounded-md p-3">
+            <div className="flex items-center mb-2">
+              <Medal className="h-5 w-5 text-amber-500 mr-2" />
+              <span className="font-medium text-amber-700">Mejor Marca</span>
+            </div>
+            {pb && (
+              <>
+                <div className="text-lg font-semibold">{formatTime(pb.hours, pb.minutes, pb.seconds)}</div>
+                <div className="text-sm text-gray-600 flex justify-between mt-1">
+                  <span className="flex items-center">
+                    <Calendar className="h-3.5 w-3.5 mr-1" />
+                    {new Date(pb.race_date).toLocaleDateString('es-ES')}
+                  </span>
+                  {iaafPoints > 0 && (
+                    <span className="text-amber-600 font-medium">{Math.round(iaafPoints)} pts</span>
+                  )}
                 </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">{formatDate(pb.race_date)}</p>
-            </>
-          ) : (
-            <p className="text-sm italic text-gray-400">No hay datos</p>
-          )}
-        </div>
-        
-        {/* Latest */}
-        <div className="bg-gray-100 rounded-lg p-3">
-          <p className="text-xs text-gray-500 mb-1">Última carrera</p>
-          {latest ? (
-            <>
-              <div className="flex justify-between items-center">
-                <p className="font-semibold flex items-center">
-                  <Clock className="mr-1 h-4 w-4" />
-                  {formatTime(latest.hours, latest.minutes, latest.seconds)}
-                </p>
-                <div className="flex items-center bg-gray-200 text-gray-700 font-medium px-2 py-1 rounded-full text-xs">
-                  <Award className="mr-1 h-3 w-3" />
-                  {getIAAFPoints(latest)} pts
+              </>
+            )}
+          </div>
+
+          {/* Latest Card */}
+          <div className="bg-gray-50 rounded-md p-3">
+            <div className="mb-2 font-medium text-gray-700">Último resultado</div>
+            {latest && (
+              <>
+                <div className="text-lg font-semibold">{formatTime(latest.hours, latest.minutes, latest.seconds)}</div>
+                <div className="text-sm text-gray-600 mt-1">
+                  <span className="flex items-center">
+                    <Calendar className="h-3.5 w-3.5 mr-1" />
+                    {new Date(latest.race_date).toLocaleDateString('es-ES')}
+                  </span>
                 </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">{formatDate(latest.race_date)}</p>
-            </>
-          ) : (
-            <p className="text-sm italic text-gray-400">No hay datos</p>
-          )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      ) : (
+        <div className="mt-4 text-center py-6 bg-gray-50 rounded-md">
+          <p className="text-gray-500">No hay resultados para esta distancia</p>
+        </div>
+      )}
+    </Card>
   );
 };
 

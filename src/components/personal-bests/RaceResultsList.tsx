@@ -37,19 +37,81 @@ const RaceResultsList = ({ refreshTrigger = 0 }: RaceResultsListProps) => {
     return <EmptyResultsState />;
   }
 
+  // Group results by surface type
+  const roadResults = resultsByDistance.filter(r => r.surfaceType === "Asfalto");
+  const trackResults = resultsByDistance.filter(r => r.surfaceType === "Pista de atletismo");
+  
+  // Further group track results by type
+  const outdoorResults = trackResults.filter(r => r.trackType === "Aire Libre");
+  const indoorResults = trackResults.filter(r => r.trackType === "Pista Cubierta");
+
   return (
-    <div className="space-y-4">
-      {resultsByDistance.map(({ distance, pb, latest, count }) => (
-        <DistanceResultCard 
-          key={distance}
-          distance={distance}
-          pb={pb}
-          latest={latest}
-          count={count}
-          onViewAll={handleViewResults}
-          getIAAFPoints={getIAAFPoints}
-        />
-      ))}
+    <div className="space-y-6">
+      {/* Road races */}
+      {roadResults.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-3">Asfalto</h2>
+          <div className="space-y-4">
+            {roadResults.map(({ distance, pb, latest, count, surfaceType, trackType }) => (
+              <DistanceResultCard 
+                key={`${distance}-${surfaceType}-${trackType}`}
+                distance={distance}
+                pb={pb}
+                latest={latest}
+                count={count}
+                onViewAll={handleViewResults}
+                getIAAFPoints={getIAAFPoints}
+                surfaceType={surfaceType}
+                trackType={trackType}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Track races - Outdoor */}
+      {outdoorResults.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-3">Pista de Atletismo - Aire Libre</h2>
+          <div className="space-y-4">
+            {outdoorResults.map(({ distance, pb, latest, count, surfaceType, trackType }) => (
+              <DistanceResultCard 
+                key={`${distance}-${surfaceType}-${trackType}`}
+                distance={distance}
+                pb={pb}
+                latest={latest}
+                count={count}
+                onViewAll={handleViewResults}
+                getIAAFPoints={getIAAFPoints}
+                surfaceType={surfaceType}
+                trackType={trackType}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Track races - Indoor */}
+      {indoorResults.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-3">Pista de Atletismo - Pista Cubierta</h2>
+          <div className="space-y-4">
+            {indoorResults.map(({ distance, pb, latest, count, surfaceType, trackType }) => (
+              <DistanceResultCard 
+                key={`${distance}-${surfaceType}-${trackType}`}
+                distance={distance}
+                pb={pb}
+                latest={latest}
+                count={count}
+                onViewAll={handleViewResults}
+                getIAAFPoints={getIAAFPoints}
+                surfaceType={surfaceType}
+                trackType={trackType}
+              />
+            ))}
+          </div>
+        </div>
+      )}
       
       {viewDistance && (
         <ViewRaceResultsDialog 

@@ -14,15 +14,6 @@ export const useRaceResults = (distance: string, refreshTrigger = 0) => {
   const [gender, setGender] = useState<'men' | 'women'>('men');
   const { toast } = useToast();
 
-  // Convert string distance to PBRaceDistance enum
-  const getPBDistance = (dist: string): PBRaceDistance => {
-    if (dist === "5K" || dist === "10K") return dist;
-    if (dist === "Media maratón") return "Half Marathon";
-    if (dist === "Maratón") return "Marathon";
-    // Default fallback - should not happen with proper validation
-    return "5K";
-  };
-
   const fetchResults = async () => {
     setLoading(true);
     try {
@@ -44,11 +35,14 @@ export const useRaceResults = (distance: string, refreshTrigger = 0) => {
         setGender(profile.gender.toLowerCase() === 'female' ? 'women' : 'men');
       }
       
-      const { data, error } = await supabase
+      // Fetch results based on distance
+      let query = supabase
         .from('race_results')
         .select('*')
-        .eq('distance', getPBDistance(distance))
+        .eq('distance', distance)
         .order('race_date', { ascending: false });
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setResults(data || []);
@@ -100,12 +94,16 @@ export const useRaceResults = (distance: string, refreshTrigger = 0) => {
     try {
       if (!result) return 0;
       
+      // Determine if it's an indoor event
+      const isIndoor = result.track_type === "Pista Cubierta";
+      
       return calculateIAAFPoints(
         result.distance, 
         result.hours, 
         result.minutes, 
         result.seconds, 
-        gender
+        gender,
+        isIndoor
       );
     } catch (error) {
       console.error('Error calculating IAAF points:', error);

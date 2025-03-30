@@ -10,6 +10,8 @@ interface ResultsByDistance {
   pb: RaceResult | null;
   latest: RaceResult | null;
   count: number;
+  surfaceType: string;
+  trackType?: string;
 }
 
 // Helper function to convert database enum to display format
@@ -17,7 +19,7 @@ const formatDistanceForDisplay = (distance: string): string => {
   if (distance === "5K" || distance === "10K") return distance;
   if (distance === "Half Marathon") return "Media maratón";
   if (distance === "Marathon") return "Maratón";
-  return distance; // Fallback
+  return distance; // Return as is for track distances
 };
 
 export const useRaceResultsList = (refreshTrigger: number = 0) => {
@@ -56,12 +58,27 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
 
         if (error) throw error;
 
-        // Group by distance
-        const distances = Array.from(new Set((results || []).map(r => formatDistanceForDisplay(r.distance))));
+        // Group results by distance and track type
+        const resultsMap = new Map<string, RaceResult[]>();
         
-        const grouped = distances.map(displayDistance => {
-          // Filter results for this display distance by matching with the DB enum value
-          const distanceResults = (results || []).filter(r => formatDistanceForDisplay(r.distance) === displayDistance);
+        (results || []).forEach(result => {
+          // Create a unique key for each distance + surface + track type combination
+          const surfaceType = result.surface_type || "Asfalto";
+          const trackType = result.track_type || "";
+          const key = `${result.distance}|${surfaceType}|${trackType}`;
+          
+          if (!resultsMap.has(key)) {
+            resultsMap.set(key, []);
+          }
+          
+          resultsMap.get(key)?.push(result);
+        });
+        
+        // Process grouped results
+        const groupedResults: ResultsByDistance[] = [];
+        
+        resultsMap.forEach((distanceResults, key) => {
+          const [distance, surfaceType, trackType] = key.split('|');
           
           // Find PB (fastest time)
           const pb = [...distanceResults].sort((a, b) => {
@@ -73,15 +90,56 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
           // Latest is already first since we ordered by date
           const latest = distanceResults[0] || null;
           
-          return {
-            distance: displayDistance,
+          groupedResults.push({
+            distance: formatDistanceForDisplay(distance),
+            surfaceType,
+            trackType: trackType || undefined,
             pb,
             latest,
             count: distanceResults.length
-          };
+          });
         });
         
-        setResultsByDistance(grouped);
+        // Sort results: first by surface type (Asfalto first), then by trackType, then by distance
+        groupedResults.sort((a, b) => {
+          // Sort by surface type (Asfalto first)
+          if (a.surfaceType !== b.surfaceType) {
+            return a.surfaceType === "Asfalto" ? -1 : 1;
+          }
+          
+          // Sort by track type
+          if (a.trackType !== b.trackType) {
+            if (!a.trackType) return -1;
+            if (!b.trackType) return 1;
+            return a.trackType === "Aire Libre" ? -1 : 1;
+          }
+          
+          // Sort by distance (shortest to longest)
+          const aDist = a.distance;
+          const bDist = b.distance;
+          
+          // Check for numerical prefixes
+          const aMatch = aDist.match(/^(\d+)/);
+          const bMatch = bDist.match(/^(\d+)/);
+          
+          if (aMatch && bMatch) {
+            return parseInt(aMatch[1]) - parseInt(bMatch[1]);
+          }
+          
+          // Sort road races
+          const roadOrder = ["5K", "10K", "Media maratón", "Maratón"];
+          const aIndex = roadOrder.indexOf(aDist);
+          const bIndex = roadOrder.indexOf(bDist);
+          
+          if (aIndex >= 0 && bIndex >= 0) {
+            return aIndex - bIndex;
+          }
+          
+          // Sort alphabetically as fallback
+          return aDist.localeCompare(bDist);
+        });
+        
+        setResultsByDistance(groupedResults);
       } catch (error) {
         console.error('Error fetching race results:', error);
         toast({
@@ -101,12 +159,16 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
     try {
       if (!result) return 0;
       
+      // Determine if it's an indoor event
+      const isIndoor = result.track_type === "Pista Cubierta";
+      
       return calculateIAAFPoints(
         result.distance, 
         result.hours, 
         result.minutes, 
         result.seconds, 
-        gender
+        gender,
+        isIndoor
       );
     } catch (error) {
       console.error('Error calculating IAAF points:', error);
