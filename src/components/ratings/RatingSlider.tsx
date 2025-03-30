@@ -52,20 +52,18 @@ export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }:
 
   // Scale information content - reused in both hover card and dialog
   const ScaleInfoContent = () => (
-    <div className="bg-white rounded-lg border shadow-md">
-      <div className="p-4">
-        <h4 className="font-medium mb-2 text-center">Escala de Esfuerzo Percibido</h4>
-        <div className="space-y-1">
-          {Object.entries(effortDescriptions).map(([level, description]) => {
-            const bgColor = getColorForRating(Number(level));
-            return (
-              <div key={level} className={`flex items-center px-2 py-1 rounded ${bgColor}`}>
-                <span className="font-bold w-6 text-center">{level}</span>
-                <span className="ml-2 text-xs sm:text-sm">{description}</span>
-              </div>
-            );
-          })}
-        </div>
+    <div className="p-4">
+      <h4 className="font-medium mb-2 text-center">Escala de Esfuerzo Percibido</h4>
+      <div className="space-y-1">
+        {Object.entries(effortDescriptions).map(([level, description]) => {
+          const bgColor = getColorForRating(Number(level));
+          return (
+            <div key={level} className={`flex items-center px-2 py-1 rounded ${bgColor}`}>
+              <span className="font-bold w-6 text-center">{level}</span>
+              <span className="ml-2 text-xs sm:text-sm">{description}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
