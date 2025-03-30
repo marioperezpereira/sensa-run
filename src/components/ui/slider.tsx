@@ -17,7 +17,7 @@ const Slider = React.forwardRef<
   SliderProps
 >(({ className, value, defaultValue, labels = { min: "Fácil", max: "Máximo" }, ...props }, ref) => {
   return (
-    <div className="space-y-4">
+    <div>
       <div className="flex justify-between text-sm text-gray-600">
         <span>{labels.min}</span>
         <span>{labels.max}</span>
