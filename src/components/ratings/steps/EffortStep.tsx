@@ -56,9 +56,7 @@ export const EffortStep = ({ activity, onCompleted, onBack }: EffortStepProps) =
           "{activity.name}"
         </a>
         , {activity.formattedDistance} km el {activity.formattedDate}. 
-        En una escala del 1 al 10, donde 1 es un paseo suave y 10 el máximo 
-        esfuerzo posible, ¿podrías decirnos cuánto fue el esfuerzo percibido 
-        durante esta sesión?
+        ¿Podrías decirnos cuál fue tu esfuerzo percibido durante esta sesión?
       </p>
       <RatingSlider onSubmit={handleSubmit} context="effort" defaultValue={1} />
     </div>

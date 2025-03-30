@@ -75,7 +75,7 @@ const ProfileInfoDialog = ({ onProfileUpdated }: ProfileInfoDialogProps) => {
         <DialogHeader>
           <DialogTitle>Datos de perfil</DialogTitle>
           <DialogDescription>
-            Estos datos son utilizados para calcular tus puntuaciones IAAF
+            Estos datos son utilizados para puntuar tus carreras
           </DialogDescription>
         </DialogHeader>
         

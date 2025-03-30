@@ -74,7 +74,7 @@ const PBProfileForm = ({
       <div className="mb-4">
         <h2 className="text-lg font-medium">Información de perfil</h2>
         <p className="text-sm text-gray-500">
-          Para calcular los puntos IAAF equivalentes de tus marcas necesitamos algunos datos adicionales.
+          Para calcular los puntos equivalentes de tus marcas necesitamos algunos datos adicionales.
         </p>
       </div>
       
