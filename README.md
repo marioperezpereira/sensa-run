@@ -28,8 +28,6 @@ Destinado a ser el punto diario de encuentro con Sensa, el usuario recibe una se
 
 Una vez respondidas estas 3 preguntas, el usuario recibirá una sesión de entrenamiento recomendada acorde a la información recogida.
 
-![image](https://github.com/user-attachments/assets/1414d89d-fca7-41ca-8331-77e37f5366ee)
-
 ### Personal Bests
 
 En esta sección el usuario puede registrar sus mejores marcas en diferentes pruebas. Cuenta con una calculadora de puntos basado en puntuaciones de World Athletics, que sirve al usuario para saber en qué distancias ha tenido mejor rendimiento que en otras.
