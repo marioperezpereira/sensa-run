@@ -40,7 +40,7 @@ export const useMessages = () => {
         const distance = (activity.distance / 1000).toFixed(2);
         
         const newMessage = {
-          content: `¡Hola! Tu última actividad según Strava fue "${activity.name}", ${distance} km el ${date}. En una escala del 1 al 10, donde 1 es un paseo suave y 10 el máximo esfuerzo posible, ¿podrías decirnos cuánto fue el esfuerzo percibido durante esta sesión?`,
+          content: `¡Hola! Tu última actividad según Strava fue "${activity.name}", ${distance} km el ${date}. ¿Podrías decirnos cuánto fue tu esfuerzo percibido durante esta sesión?`,
           isBot: true,
           timestamp: new Date().toLocaleTimeString(),
           activityId: activity.id

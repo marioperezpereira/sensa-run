@@ -76,9 +76,9 @@ ${averageDistanceText ? `${averageDistanceText}\n\n` : ''}Hoy es ${format(new Da
         : 'y entrena para mantenerse en forma.'
     }
 
-${lastActivityText ? `${lastActivityText} ` : ''}Su percepción de niveles de energía es de ${energy} sobre 10 (siendo 10 completamente descansado y 1 nada descansado). Se encuentra con ${conditionText}.
+${lastActivityText ? `${lastActivityText} ` : ''}Su percepción de niveles de energía es de ${energy} sobre 4 (siendo 4 lleno de energía y 1 completamente exhausto). Se encuentra con ${conditionText}.
 
-Basado en las percepciones personales, objetivos e historial de entrenamientos, sugiere un entrenamiento para el usuario a realizar en el día de hoy. El formato en que lo aportes debe incluir un título de no más de 10 palabras explicando en qué consiste el entrenamiento, una descripción en la cual se explique de forma más detallada cómo se ha de ejecutar el entrenamiento y sensaciones que debe tener mientras lo ejecute (se pueden aportar ritmos como guía para no exceder, pero principalmente la recomendación debe girar en torno a las percepciones del usuario), y debe también incluir una sesión alternativa a realizar en caso de que no le encaje la recomendada al usuario.`;
+Basado en las percepciones personales, objetivos e historial de entrenamientos, sugiere un entrenamiento para el usuario a realizar en el día de hoy. El formato en que lo aportes debe incluir un título de no más de 10 palabras explicando en qué consiste el entrenamiento, una descripción en la cual se explique de forma más detallada cómo se ha de ejecutar el entrenamiento y sensaciones que debe tener mientras lo ejecute (no recomiendes un ritmo específico de entrenamiento, la recomendación debe girar en torno a las percepciones del usuario). La descripción escríbela de forma relativamente concisa (máximo 3 párrafos cortos). Debes también incluir una sesión alternativa a realizar en caso de que no le encaje la recomendada al usuario. En caso de que el usuario ya haya entrenado en el día de hoy, no le recomiendes otro entrenamiento en la sesión principal y recomiéndaselo como alternativa, pero avísale sobre los riesgos de doblar entrenamientos en el mismo día.`;
   } catch (error) {
     console.error('Error generating prompt:', error);
     return '';

@@ -61,7 +61,7 @@ export const EffortRating = ({ activityId, onRatingSubmitted }: EffortRatingProp
   };
 
   return (
-    <div className="space-y-4">
+    <div>
       <div className="flex flex-wrap gap-2">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((rating) => (
           <Button
