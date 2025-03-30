@@ -60,7 +60,7 @@ export const EffortStep = ({ activity, onCompleted, onBack }: EffortStepProps) =
         esfuerzo posible, ¿podrías decirnos cuánto fue el esfuerzo percibido 
         durante esta sesión?
       </p>
-      <RatingSlider onSubmit={handleSubmit} />
+      <RatingSlider onSubmit={handleSubmit} context="effort" defaultValue={1} />
     </div>
   );
 };
