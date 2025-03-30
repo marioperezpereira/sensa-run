@@ -68,6 +68,33 @@ export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }:
         labels={labels[context]}
       />
       
+      <HoverCard>
+        <HoverCardTrigger asChild>
+          <button className="text-violet-600 flex items-center text-sm gap-1 hover:text-violet-700 focus:outline-none">
+            <Info size={16} />
+            <span>Escala de esfuerzo</span>
+          </button>
+        </HoverCardTrigger>
+        <HoverCardContent className="w-80 p-0">
+          <div className="bg-white rounded-lg border shadow-md">
+            <div className="p-4">
+              <h4 className="font-medium mb-2 text-center">Escala de Esfuerzo Percibido</h4>
+              <div className="space-y-1">
+                {Object.entries(effortDescriptions).map(([level, description]) => {
+                  let bgColor = getColorForRating(level);
+                  return (
+                    <div key={level} className={`flex items-center px-2 py-1 rounded ${bgColor}`}>
+                      <span className="font-bold w-6 text-center">{level}</span>
+                      <span className="ml-2 text-xs">{description}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </HoverCardContent>
+      </HoverCard>
+
       <Button
         onClick={() => onSubmit(rating)}
         className="w-full bg-violet-500 hover:bg-violet-600 text-white rounded-[42px] py-4"
