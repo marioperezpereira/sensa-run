@@ -20,8 +20,8 @@ export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }:
       max: "Lleno de energía"
     },
     effort: {
-      min: "Muy ligero",
-      max: "Extremo"
+      min: "",
+      max: ""
     }
   };
 
@@ -38,45 +38,22 @@ export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }:
     9: "Máximo (Casi imposible mantener por mucho tiempo)",
     10: "Extremo (Esfuerzo máximo absoluto)"
   };
+  
+  const getColorForRating = (ratingValue: number): string => {
+    if (ratingValue <= 2) return "bg-blue-100 text-blue-700";
+    if (ratingValue <= 4) return "bg-green-100 text-green-700";
+    if (ratingValue <= 6) return "bg-yellow-100 text-yellow-700";
+    if (ratingValue <= 8) return "bg-orange-100 text-orange-700";
+    return "bg-red-100 text-red-700";
+  };
 
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <HoverCard>
-          <HoverCardTrigger asChild>
-            <button className="text-violet-600 flex items-center text-sm gap-1 hover:text-violet-700 focus:outline-none">
-              <Info size={16} />
-              <span>Escala de esfuerzo</span>
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-80 p-0">
-            <div className="bg-white rounded-lg border shadow-md">
-              <div className="p-4">
-                <h4 className="font-medium mb-2 text-center">Escala de Esfuerzo Percibido</h4>
-                <div className="space-y-1">
-                  {Object.entries(effortDescriptions).map(([level, description]) => {
-                    let bgColor;
-                    const levelNum = parseInt(level);
-                    
-                    if (levelNum <= 2) bgColor = "bg-blue-100";
-                    else if (levelNum <= 4) bgColor = "bg-green-100";
-                    else if (levelNum <= 6) bgColor = "bg-yellow-100";
-                    else if (levelNum <= 8) bgColor = "bg-orange-100";
-                    else bgColor = "bg-red-100";
-                    
-                    return (
-                      <div key={level} className={`flex items-center px-2 py-1 rounded ${bgColor}`}>
-                        <span className="font-bold w-6 text-center">{level}</span>
-                        <span className="ml-2 text-xs">{description}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </HoverCardContent>
-        </HoverCard>
-        <div className="bg-violet-100 px-3 py-1 rounded-full text-violet-700 font-medium">
+        <div className="text-violet-600 text-sm">
+          {effortDescriptions[rating as keyof typeof effortDescriptions].split('(')[0].trim()}
+        </div>
+        <div className={`px-3 py-1 rounded-full font-medium ${getColorForRating(rating)}`}>
           {rating}
         </div>
       </div>
@@ -90,10 +67,6 @@ export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }:
         step={1}
         labels={labels[context]}
       />
-      
-      <div className="text-sm text-gray-600 mt-2">
-        <p className="font-medium">{rating}: {effortDescriptions[rating as keyof typeof effortDescriptions]}</p>
-      </div>
       
       <Button
         onClick={() => onSubmit(rating)}
