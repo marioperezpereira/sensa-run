@@ -2,8 +2,10 @@
 import { useState } from 'react';
 import { Button } from '../ui/button';
 import { Slider } from '../ui/slider';
+import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../ui/hover-card";
 import { Info } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface RatingSliderProps {
   onSubmit: (rating: number) => void;
@@ -13,6 +15,7 @@ interface RatingSliderProps {
 
 export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }: RatingSliderProps) => {
   const [rating, setRating] = useState<number>(defaultValue);
+  const isMobile = useIsMobile();
 
   const labels = {
     energy: {
@@ -47,6 +50,26 @@ export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }:
     return "bg-red-100 text-red-700";
   };
 
+  // Scale information content - reused in both hover card and dialog
+  const ScaleInfoContent = () => (
+    <div className="bg-white rounded-lg border shadow-md">
+      <div className="p-4">
+        <h4 className="font-medium mb-2 text-center">Escala de Esfuerzo Percibido</h4>
+        <div className="space-y-1">
+          {Object.entries(effortDescriptions).map(([level, description]) => {
+            const bgColor = getColorForRating(Number(level));
+            return (
+              <div key={level} className={`flex items-center px-2 py-1 rounded ${bgColor}`}>
+                <span className="font-bold w-6 text-center">{level}</span>
+                <span className="ml-2 text-xs sm:text-sm">{description}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -68,32 +91,33 @@ export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }:
         labels={labels[context]}
       />
       
-      <HoverCard>
-        <HoverCardTrigger asChild>
-          <button className="text-violet-600 flex items-center text-sm gap-1 hover:text-violet-700 focus:outline-none">
-            <Info size={16} />
-            <span>Escala de esfuerzo</span>
-          </button>
-        </HoverCardTrigger>
-        <HoverCardContent className="w-80 p-0">
-          <div className="bg-white rounded-lg border shadow-md">
-            <div className="p-4">
-              <h4 className="font-medium mb-2 text-center">Escala de Esfuerzo Percibido</h4>
-              <div className="space-y-1">
-                {Object.entries(effortDescriptions).map(([level, description]) => {
-                  let bgColor = getColorForRating(level);
-                  return (
-                    <div key={level} className={`flex items-center px-2 py-1 rounded ${bgColor}`}>
-                      <span className="font-bold w-6 text-center">{level}</span>
-                      <span className="ml-2 text-xs">{description}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </HoverCardContent>
-      </HoverCard>
+      {isMobile ? (
+        // Dialog for mobile devices
+        <Dialog>
+          <DialogTrigger asChild>
+            <button className="text-violet-600 flex items-center text-sm gap-1 hover:text-violet-700 focus:outline-none">
+              <Info size={16} />
+              <span>Escala de esfuerzo</span>
+            </button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <ScaleInfoContent />
+          </DialogContent>
+        </Dialog>
+      ) : (
+        // HoverCard for desktop devices
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <button className="text-violet-600 flex items-center text-sm gap-1 hover:text-violet-700 focus:outline-none">
+              <Info size={16} />
+              <span>Escala de esfuerzo</span>
+            </button>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-80 p-0">
+            <ScaleInfoContent />
+          </HoverCardContent>
+        </HoverCard>
+      )}
 
       <Button
         onClick={() => onSubmit(rating)}
