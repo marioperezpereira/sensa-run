@@ -11,9 +11,17 @@ interface RatingSliderProps {
   onSubmit: (rating: number) => void;
   context?: 'energy' | 'effort';
   defaultValue?: number;
+  onRatingChange?: () => void;
+  showSubmitButton?: boolean;
 }
 
-export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }: RatingSliderProps) => {
+export const RatingSlider = ({ 
+  onSubmit, 
+  context = 'effort', 
+  defaultValue = 1, 
+  onRatingChange,
+  showSubmitButton = true 
+}: RatingSliderProps) => {
   const [rating, setRating] = useState<number>(defaultValue);
   const isMobile = useIsMobile();
 
@@ -50,6 +58,13 @@ export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }:
     return "bg-red-100 text-red-700";
   };
 
+  const handleValueChange = (value: number[]) => {
+    setRating(value[0]);
+    if (onRatingChange) {
+      onRatingChange();
+    }
+  };
+
   // Scale information content - reused in both hover card and dialog
   const ScaleInfoContent = () => (
     <div className="p-4">
@@ -82,7 +97,7 @@ export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }:
       <Slider
         defaultValue={[defaultValue]}
         value={[rating]}
-        onValueChange={(value) => setRating(value[0])}
+        onValueChange={handleValueChange}
         max={10}
         min={1}
         step={1}
@@ -117,12 +132,14 @@ export const RatingSlider = ({ onSubmit, context = 'effort', defaultValue = 1 }:
         </HoverCard>
       )}
 
-      <Button
-        onClick={() => onSubmit(rating)}
-        className="w-full bg-violet-500 hover:bg-violet-600 text-white rounded-[42px] py-4"
-      >
-        Enviar valoración
-      </Button>
+      {showSubmitButton && (
+        <Button
+          onClick={() => onSubmit(rating)}
+          className="w-full bg-violet-500 hover:bg-violet-600 text-white rounded-[42px] py-4"
+        >
+          Enviar valoración
+        </Button>
+      )}
     </div>
   );
 };

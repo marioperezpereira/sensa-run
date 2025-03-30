@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { RatingSlider } from "../RatingSlider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,6 +12,7 @@ interface EffortStepProps {
 
 export const EffortStep = ({ activity, onCompleted, onBack }: EffortStepProps) => {
   const { toast } = useToast();
+  const [hasSelected, setHasSelected] = useState(false);
 
   const handleSubmit = async (rating: number) => {
     try {
@@ -42,6 +44,10 @@ export const EffortStep = ({ activity, onCompleted, onBack }: EffortStepProps) =
     }
   };
 
+  const handleRatingChange = () => {
+    setHasSelected(true);
+  };
+
   return (
     <div className="space-y-4 relative">
       <h2 className="text-xl font-semibold text-sensa-purple text-center">Valoración de tu última actividad</h2>
@@ -58,7 +64,13 @@ export const EffortStep = ({ activity, onCompleted, onBack }: EffortStepProps) =
         , {activity.formattedDistance} km el {activity.formattedDate}. 
         ¿Podrías decirnos cuál fue tu esfuerzo percibido durante esta sesión?
       </p>
-      <RatingSlider onSubmit={handleSubmit} context="effort" defaultValue={1} />
+      <RatingSlider 
+        onSubmit={handleSubmit} 
+        context="effort" 
+        defaultValue={1} 
+        onRatingChange={handleRatingChange}
+        showSubmitButton={hasSelected}
+      />
     </div>
   );
 };

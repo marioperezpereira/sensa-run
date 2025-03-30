@@ -93,8 +93,11 @@ serve(async (req) => {
     const activities = await activitiesResponse.json()
     console.log(`Successfully fetched ${activities.length} activities`)
     
-    // For each activity, fetch its laps
-    for (const activity of activities) {
+    // Only fetch laps for the latest 5 activities to avoid API rate limits
+    const activitiesForLaps = activities.slice(0, 5);
+    
+    // For each of the latest 5 activities, fetch its laps
+    for (const activity of activitiesForLaps) {
       try {
         const lapsResponse = await fetch(
           `https://www.strava.com/api/v3/activities/${activity.id}/laps`,
@@ -118,6 +121,11 @@ serve(async (req) => {
         console.error(`Error fetching laps for activity ${activity.id}:`, error)
         activity.laps = []
       }
+    }
+    
+    // Make sure all activities have a laps property, even if it's empty
+    for (let i = 5; i < activities.length; i++) {
+      activities[i].laps = [];
     }
 
     return new Response(JSON.stringify({ activities }), {
