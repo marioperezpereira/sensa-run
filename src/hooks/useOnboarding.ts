@@ -39,6 +39,7 @@ export const useOnboarding = (onComplete: () => void) => {
         .eq('user_id', user.id)
         .maybeSingle();
 
+      // We no longer need to type cast race_distance since the schema now accepts any string
       const dataToSave = {
         running_experience: formData.running_experience,
         weekly_frequency: formData.weekly_frequency,
@@ -46,7 +47,7 @@ export const useOnboarding = (onComplete: () => void) => {
         race_distance: formData.race_distance,
         race_date: formData.race_date,
         additional_info: formData.additional_info,
-        race_type: formData.race_type, // Save race type
+        race_type: formData.race_type, 
       };
 
       if (existingData) {

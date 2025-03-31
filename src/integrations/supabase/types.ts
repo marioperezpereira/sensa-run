@@ -206,7 +206,8 @@ export type Database = {
           goal_type: string
           id: string
           race_date: string | null
-          race_distance: Database["public"]["Enums"]["race_distance"] | null
+          race_distance: string | null
+          race_type: string | null
           running_experience: string
           strava_profile: string | null
           user_id: string
@@ -219,7 +220,8 @@ export type Database = {
           goal_type: string
           id?: string
           race_date?: string | null
-          race_distance?: Database["public"]["Enums"]["race_distance"] | null
+          race_distance?: string | null
+          race_type?: string | null
           running_experience: string
           strava_profile?: string | null
           user_id: string
@@ -232,7 +234,8 @@ export type Database = {
           goal_type?: string
           id?: string
           race_date?: string | null
-          race_distance?: Database["public"]["Enums"]["race_distance"] | null
+          race_distance?: string | null
+          race_type?: string | null
           running_experience?: string
           strava_profile?: string | null
           user_id?: string

@@ -21,7 +21,9 @@ const UserInfo = ({ user, onboardingData }: UserInfoProps) => {
       const formattedDate = onboardingData.race_date ? 
         format(new Date(onboardingData.race_date), "d 'de' MMMM 'de' yyyy", { locale: es }) :
         "fecha no especificada";
-      return `Preparando un ${onboardingData.race_distance} el ${formattedDate}`;
+      
+      const raceType = onboardingData.race_type || "Asfalto";
+      return `Preparando un ${onboardingData.race_distance} (${raceType}) el ${formattedDate}`;
     }
     
     return "Sin objetivo específico";
@@ -56,6 +58,7 @@ const UserInfo = ({ user, onboardingData }: UserInfoProps) => {
         currentGoalType={onboardingData?.goal_type || ""}
         currentRaceDistance={onboardingData?.race_distance}
         currentRaceDate={onboardingData?.race_date}
+        currentRaceType={onboardingData?.race_type || "Asfalto"}
       />
     </>
   );
