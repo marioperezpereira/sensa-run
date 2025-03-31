@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { RaceResult } from "@/components/personal-bests/race-results/types";
+import { RaceResult, SurfaceType, TrackType } from "@/components/personal-bests/race-results/types";
 import { calculateIAAFPoints } from "@/lib/iaaf";
 
 interface ResultsByDistance {
@@ -71,7 +71,18 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
             resultsMap.set(key, []);
           }
           
-          resultsMap.get(key)?.push(result);
+          const typedResult: RaceResult = {
+            id: result.id,
+            race_date: result.race_date,
+            distance: result.distance,
+            hours: result.hours,
+            minutes: result.minutes,
+            seconds: result.seconds,
+            surface_type: result.surface_type as SurfaceType,
+            track_type: result.track_type as TrackType
+          };
+          
+          resultsMap.get(key)?.push(typedResult);
         });
         
         // Process grouped results

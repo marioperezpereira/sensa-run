@@ -45,7 +45,20 @@ export const useRaceResults = (distance: string, refreshTrigger = 0) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setResults(data || []);
+      
+      // Transform data to RaceResult type
+      const typedResults: RaceResult[] = data?.map(result => ({
+        id: result.id,
+        race_date: result.race_date,
+        distance: result.distance,
+        hours: result.hours,
+        minutes: result.minutes,
+        seconds: result.seconds,
+        surface_type: result.surface_type as RaceResult['surface_type'],
+        track_type: result.track_type as RaceResult['track_type']
+      })) || [];
+      
+      setResults(typedResults);
     } catch (error) {
       console.error('Error fetching race results:', error);
       toast({

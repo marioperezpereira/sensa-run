@@ -69,7 +69,7 @@ const EditRaceForm = ({ result, onResultUpdated, onCancel }: EditRaceFormProps) 
       const { error } = await supabase
         .from('race_results')
         .update({
-          distance: values.distance,
+          distance: values.distance as any, // Type cast to handle both enum and string types
           race_date: format(values.raceDate, 'yyyy-MM-dd'),
           hours: values.hours,
           minutes: values.minutes,
