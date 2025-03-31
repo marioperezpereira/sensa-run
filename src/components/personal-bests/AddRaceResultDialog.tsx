@@ -116,7 +116,7 @@ const AddRaceResultDialog = ({ open, onOpenChange, onRaceAdded }: AddRaceResultD
     
     return await supabase.from('race_results').insert({
       user_id: userId,
-      distance: distance as any, // Type cast to handle both enum and string types
+      distance: distance, // Now directly using the string value
       race_date: raceDate.toISOString().split('T')[0], // Format as YYYY-MM-DD
       hours,
       minutes,

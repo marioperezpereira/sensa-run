@@ -74,7 +74,7 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
           const typedResult: RaceResult = {
             id: result.id,
             race_date: result.race_date,
-            distance: result.distance,
+            distance: result.distance, // Now directly using the string value
             hours: result.hours,
             minutes: result.minutes,
             seconds: result.seconds,

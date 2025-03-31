@@ -105,7 +105,7 @@ export type Database = {
       race_results: {
         Row: {
           created_at: string
-          distance: Database["public"]["Enums"]["pb_race_distance"]
+          distance: string
           hours: number
           id: string
           minutes: number
@@ -118,7 +118,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          distance: Database["public"]["Enums"]["pb_race_distance"]
+          distance: string
           hours?: number
           id?: string
           minutes?: number
@@ -131,7 +131,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          distance?: Database["public"]["Enums"]["pb_race_distance"]
+          distance?: string
           hours?: number
           id?: string
           minutes?: number

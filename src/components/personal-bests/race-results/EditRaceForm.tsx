@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,9 +13,6 @@ import TimeFields from "./TimeFields";
 import DistanceField from "./DistanceField";
 import SurfaceTypeField from "./SurfaceTypeField";
 import TrackTypeField from "./TrackTypeField";
-import { Enums } from "@/integrations/supabase/types";
-
-type PBRaceDistance = Enums<"pb_race_distance">;
 
 interface EditRaceFormProps {
   result: RaceResult;
@@ -69,7 +65,7 @@ const EditRaceForm = ({ result, onResultUpdated, onCancel }: EditRaceFormProps) 
       const { error } = await supabase
         .from('race_results')
         .update({
-          distance: values.distance as any, // Type cast to handle both enum and string types
+          distance: values.distance,
           race_date: format(values.raceDate, 'yyyy-MM-dd'),
           hours: values.hours,
           minutes: values.minutes,
