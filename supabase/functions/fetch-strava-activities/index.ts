@@ -1,8 +1,5 @@
 
-// Import only what's necessary from Deno standard library
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
-
-// Direct import createClient without the problematic dependencies
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.24.0?dts"
 
 const corsHeaders = {
