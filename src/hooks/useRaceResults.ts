@@ -39,7 +39,7 @@ export const useRaceResults = (distance: string, refreshTrigger = 0) => {
       let query = supabase
         .from('race_results')
         .select('*')
-        .eq('distance', distance)
+        .eq('distance', distance as PBRaceDistance) // Type cast to handle both enum and track distances
         .order('race_date', { ascending: false });
 
       const { data, error } = await query;
