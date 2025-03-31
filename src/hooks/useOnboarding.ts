@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -15,6 +16,7 @@ export const useOnboarding = (onComplete: () => void) => {
     race_date: undefined,
     additional_info: "",
     strava_profile: "",
+    race_type: "Asfalto", // Default race type
   });
 
   const handleInputChange = (key: keyof OnboardingData, value: string) => {
@@ -44,6 +46,7 @@ export const useOnboarding = (onComplete: () => void) => {
         race_distance: formData.race_distance,
         race_date: formData.race_date,
         additional_info: formData.additional_info,
+        race_type: formData.race_type, // Save race type
       };
 
       if (existingData) {
@@ -119,7 +122,7 @@ export const useOnboarding = (onComplete: () => void) => {
       case "goal":
         return formData.goal_type !== "";
       case "race-target":
-        return formData.race_distance !== undefined;
+        return formData.race_distance !== undefined && formData.race_type !== undefined;
       case "race-date":
         return formData.race_date !== undefined && new Date(formData.race_date) > new Date();
       case "additional-info":

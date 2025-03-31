@@ -52,6 +52,8 @@ export const OnboardingQuestion = ({ onComplete }: OnboardingQuestionProps) => {
           <RaceTargetStep
             value={formData.race_distance}
             onChange={(value) => handleInputChange("race_distance", value)}
+            raceType={formData.race_type}
+            onRaceTypeChange={(value) => handleInputChange("race_type", value)}
           />
         );
       case "race-date":
@@ -100,4 +102,3 @@ export const OnboardingQuestion = ({ onComplete }: OnboardingQuestionProps) => {
     </div>
   );
 };
-

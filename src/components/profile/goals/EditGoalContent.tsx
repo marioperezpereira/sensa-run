@@ -8,9 +8,11 @@ interface EditGoalContentProps {
   goalType: string;
   raceDistance?: string;
   raceDate?: string;
+  raceType?: string;
   onGoalTypeChange: (value: string) => void;
   onRaceDistanceChange: (value: string) => void;
   onRaceDateChange: (value: string) => void;
+  onRaceTypeChange: (value: string) => void;
 }
 
 const EditGoalContent = ({
@@ -18,9 +20,11 @@ const EditGoalContent = ({
   goalType,
   raceDistance,
   raceDate,
+  raceType = "Asfalto",
   onGoalTypeChange,
   onRaceDistanceChange,
-  onRaceDateChange
+  onRaceDateChange,
+  onRaceTypeChange
 }: EditGoalContentProps) => {
   switch (step) {
     case "goal":
@@ -28,7 +32,9 @@ const EditGoalContent = ({
     case "race-target":
       return <RaceTargetStep 
                value={raceDistance} 
-               onChange={onRaceDistanceChange} 
+               onChange={onRaceDistanceChange}
+               raceType={raceType}
+               onRaceTypeChange={onRaceTypeChange}
              />;
     case "race-date":
       return <RaceDateStep value={raceDate} onChange={onRaceDateChange} />;

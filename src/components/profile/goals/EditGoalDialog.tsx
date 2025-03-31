@@ -9,9 +9,6 @@ import {
 import { useEditGoal } from "@/hooks/useEditGoal";
 import EditGoalContent from "./EditGoalContent";
 import EditGoalFooter from "./EditGoalFooter";
-import { raceOptions } from "@/components/onboarding/types";
-
-type RaceDistance = typeof raceOptions[number];
 
 interface EditGoalDialogProps {
   isOpen: boolean;
@@ -20,6 +17,7 @@ interface EditGoalDialogProps {
   currentGoalType: string;
   currentRaceDistance?: string;
   currentRaceDate?: string;
+  currentRaceType?: string;
 }
 
 const EditGoalDialog = ({
@@ -28,15 +26,18 @@ const EditGoalDialog = ({
   userId,
   currentGoalType,
   currentRaceDistance,
-  currentRaceDate
+  currentRaceDate,
+  currentRaceType = "Asfalto"
 }: EditGoalDialogProps) => {
   const {
     goalType,
     raceDistance,
     raceDate,
+    raceType,
     step,
     isSubmitting,
     handleGoalTypeChange,
+    handleRaceTypeChange,
     handleNext,
     handleBack,
     handleRaceDistanceChange,
@@ -47,6 +48,7 @@ const EditGoalDialog = ({
     currentGoalType,
     currentRaceDistance,
     currentRaceDate,
+    currentRaceType,
     onClose
   });
 
@@ -66,9 +68,11 @@ const EditGoalDialog = ({
             goalType={goalType}
             raceDistance={raceDistance}
             raceDate={raceDate}
+            raceType={raceType}
             onGoalTypeChange={handleGoalTypeChange}
             onRaceDistanceChange={handleRaceDistanceChange}
             onRaceDateChange={handleRaceDateChange}
+            onRaceTypeChange={handleRaceTypeChange}
           />
         </div>
 

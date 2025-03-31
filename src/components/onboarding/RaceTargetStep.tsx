@@ -2,46 +2,76 @@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { raceOptions } from "./types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState, useEffect } from "react";
+import { raceTypeOptions, getDistancesByRaceType } from "./types";
 
 interface RaceTargetStepProps {
   value?: string;
   onChange: (value: string) => void;
+  raceType?: string;
+  onRaceTypeChange: (value: string) => void;
 }
 
-export const RaceTargetStep = ({ value, onChange }: RaceTargetStepProps) => {
+export const RaceTargetStep = ({ 
+  value, 
+  onChange, 
+  raceType = "Asfalto", 
+  onRaceTypeChange 
+}: RaceTargetStepProps) => {
+  const [availableDistances, setAvailableDistances] = useState<string[]>([]);
+
+  useEffect(() => {
+    setAvailableDistances(getDistancesByRaceType(raceType as any));
+    // If the current selected distance is not available in the new race type,
+    // clear the selection
+    if (value && !getDistancesByRaceType(raceType as any).includes(value)) {
+      onChange("");
+    }
+  }, [raceType, onChange, value]);
+
   return (
-    <div className="space-y-4">
-      <p className="text-gray-800 text-sm md:text-base">
-        ¿Cuál es tu próximo objetivo?
-      </p>
-      <RadioGroup
-        className="gap-3"
-        value={value}
-        onValueChange={onChange}
-      >
-        {raceOptions.map((option) => (
-          <div key={option} className="flex items-center">
-            <RadioGroupItem 
-              value={option} 
-              id={option}
-              className="peer hidden"
-            />
-            <Label
-              htmlFor={option}
-              className={cn(
-                "flex-1 cursor-pointer rounded-xl border border-gray-200 p-4",
-                "hover:bg-gray-50 hover:border-gray-300",
-                "peer-checked:border-telegram-blue peer-checked:bg-telegram-light",
-                "transition-all duration-200",
-                value === option && "font-bold"
-              )}
-            >
-              {option}
-            </Label>
-          </div>
-        ))}
-      </RadioGroup>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <label className="text-sm font-medium leading-none">Tipo de carrera</label>
+        <Select 
+          value={raceType} 
+          onValueChange={onRaceTypeChange}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecciona el tipo de carrera" />
+          </SelectTrigger>
+          <SelectContent>
+            {raceTypeOptions.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-gray-800 text-sm md:text-base">
+          ¿Cuál es tu próximo objetivo?
+        </p>
+        <Select
+          value={value}
+          onValueChange={onChange}
+          disabled={availableDistances.length === 0}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecciona la distancia" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableDistances.map((distance) => (
+              <SelectItem key={distance} value={distance}>
+                {distance}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };

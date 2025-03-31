@@ -12,10 +12,11 @@ export type OnboardingData = {
   running_experience: string;
   weekly_frequency: string;
   goal_type: string;
-  race_distance?: "5K" | "10K" | "Media maratón" | "Maratón";
+  race_distance?: string;
   race_date?: string;
   additional_info?: string;
   strava_profile?: string;
+  race_type?: string; // New field for track or road race type
 };
 
 export const experienceOptions = [
@@ -37,4 +38,22 @@ export const goalOptions = [
   "Quiero preparar una carrera lo mejor posible"
 ] as const;
 
-export const raceOptions = ["5K", "10K", "Media maratón", "Maratón"] as const;
+// Race type options (road or track)
+export const raceTypeOptions = ["Asfalto", "Pista Cubierta", "Aire Libre"] as const;
+export type RaceType = typeof raceTypeOptions[number];
+
+// Road distances
+export const roadDistances = ["5K", "10K", "Media maratón", "Maratón"] as const;
+
+// Track distances by type
+export const trackDistances = {
+  "Pista Cubierta": ["60m", "200m", "400m", "800m", "1500m", "Milla", "3000m"],
+  "Aire Libre": ["100m", "200m", "400m", "800m", "1500m", "Milla", "3000m", "5000m", "10000m"]
+};
+
+// All available distances based on race type
+export const getDistancesByRaceType = (raceType: RaceType | undefined): string[] => {
+  if (!raceType) return [];
+  if (raceType === "Asfalto") return roadDistances as unknown as string[];
+  return trackDistances[raceType as "Pista Cubierta" | "Aire Libre"] || [];
+};

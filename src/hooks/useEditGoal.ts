@@ -3,16 +3,14 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { raceOptions } from "@/components/onboarding/types";
 import { addDays } from "date-fns";
-
-type RaceDistance = typeof raceOptions[number];
 
 interface UseEditGoalProps {
   userId: string | undefined;
   currentGoalType: string;
   currentRaceDistance?: string;
   currentRaceDate?: string;
+  currentRaceType?: string;
   onClose: () => void;
 }
 
@@ -21,13 +19,13 @@ export function useEditGoal({
   currentGoalType,
   currentRaceDistance,
   currentRaceDate,
+  currentRaceType = "Asfalto",
   onClose
 }: UseEditGoalProps) {
   const [goalType, setGoalType] = useState(currentGoalType);
-  const [raceDistance, setRaceDistance] = useState<RaceDistance | undefined>(
-    currentRaceDistance as RaceDistance | undefined
-  );
+  const [raceDistance, setRaceDistance] = useState<string | undefined>(currentRaceDistance);
   const [raceDate, setRaceDate] = useState<string | undefined>(currentRaceDate);
+  const [raceType, setRaceType] = useState<string>(currentRaceType);
   const [step, setStep] = useState<"goal" | "race-target" | "race-date">("goal");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -49,6 +47,12 @@ export function useEditGoal({
       setRaceDistance(undefined);
       setRaceDate(undefined);
     }
+  };
+
+  const handleRaceTypeChange = (value: string) => {
+    setRaceType(value);
+    // Clear the race distance when changing race type
+    setRaceDistance(undefined);
   };
 
   const handleNext = () => {
@@ -94,10 +98,12 @@ export function useEditGoal({
       if (goalType === "Quiero preparar una carrera lo mejor posible") {
         updateData.race_distance = raceDistance;
         updateData.race_date = raceDate;
+        updateData.race_type = raceType;
       } else {
         // Clear race fields if goal type changed to non-race
         updateData.race_distance = null;
         updateData.race_date = null;
+        updateData.race_type = null;
       }
 
       const { error } = await supabase
@@ -143,10 +149,7 @@ export function useEditGoal({
   };
 
   const handleRaceDistanceChange = (value: string) => {
-    // Ensure we only set valid enum values that match our RaceDistance type
-    if (raceOptions.includes(value as RaceDistance)) {
-      setRaceDistance(value as RaceDistance);
-    }
+    setRaceDistance(value);
   };
 
   const handleRaceDateChange = (value: string) => setRaceDate(value);
@@ -155,9 +158,11 @@ export function useEditGoal({
     goalType,
     raceDistance,
     raceDate,
+    raceType,
     step,
     isSubmitting,
     handleGoalTypeChange,
+    handleRaceTypeChange,
     handleNext,
     handleBack,
     handleRaceDistanceChange,
