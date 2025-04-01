@@ -1,16 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { RaceResult } from "@/components/personal-bests/race-results/types";
-import { calculateIAAFPoints } from "@/lib/iaaf";
-
-// Convert display distance back to database format
-const getDbDistance = (displayDistance: string): string => {
-  if (displayDistance === "Media maratón") return "Half Marathon";
-  if (displayDistance === "Maratón") return "Marathon";
-  return displayDistance;
-};
+import { getIAAFPoints } from "@/lib/iaaf/utils";
+import { getDbDistance } from "@/lib/utils";
 
 export const useRaceResults = (distance: string, refreshTrigger = 0) => {
   const [loading, setLoading] = useState(true);
@@ -111,25 +104,8 @@ export const useRaceResults = (distance: string, refreshTrigger = 0) => {
     setResults(results.map(r => r.id === updatedResult.id ? updatedResult : r));
   };
 
-  const getIAAFPoints = (result: RaceResult) => {
-    try {
-      if (!result) return 0;
-      
-      // Determine if it's an indoor event
-      const isIndoor = result.track_type === "Pista Cubierta";
-      
-      return calculateIAAFPoints(
-        result.distance, 
-        result.hours, 
-        result.minutes, 
-        result.seconds, 
-        gender,
-        isIndoor
-      );
-    } catch (error) {
-      console.error('Error calculating IAAF points:', error);
-      return 0;
-    }
+  const calculatePoints = (result: RaceResult) => {
+    return getIAAFPoints(result, gender);
   };
 
   useEffect(() => {
@@ -142,6 +118,6 @@ export const useRaceResults = (distance: string, refreshTrigger = 0) => {
     gender,
     deleteResult,
     updateResultInState,
-    getIAAFPoints
+    getIAAFPoints: calculatePoints
   };
 };

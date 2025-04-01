@@ -1,0 +1,859 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/lib/iaaf/coefficients.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../prettify.css" />
+    <link rel="stylesheet" href="../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../index.html">All files</a> / <a href="index.html">src/lib/iaaf</a> coefficients.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/244</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>1/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>1/1</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/244</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a>
+<a name='L191'></a><a href='#L191'>191</a>
+<a name='L192'></a><a href='#L192'>192</a>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a>
+<a name='L200'></a><a href='#L200'>200</a>
+<a name='L201'></a><a href='#L201'>201</a>
+<a name='L202'></a><a href='#L202'>202</a>
+<a name='L203'></a><a href='#L203'>203</a>
+<a name='L204'></a><a href='#L204'>204</a>
+<a name='L205'></a><a href='#L205'>205</a>
+<a name='L206'></a><a href='#L206'>206</a>
+<a name='L207'></a><a href='#L207'>207</a>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">&nbsp;
+// Coefficient data for IAAF scoring calculations
+&nbsp;
+// Define interfaces for type safety
+export interface IAFCoefficient {
+  [key: string]: number[];
+}
+&nbsp;
+export interface CoefficientTable {
+  men: IAFCoefficient;
+  women: IAFCoefficient;
+}
+&nbsp;
+// Scoring coefficients for men's and women's events
+<span class="cstat-no" title="statement not covered" >export const coefficients: CoefficientTable = {</span>
+<span class="cstat-no" title="statement not covered" >  men: {</span>
+<span class="cstat-no" title="statement not covered" >    TJ: [0.4603666024030417, 90.96978768056579, -514.9946082626993],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 20kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      2.735041573859393e-5, -0.623559717833615, 3554.1219906366896,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "Road HM": [9.469710951061014e-5, -1.3521892901331114, 4827.020676429092],</span>
+<span class="cstat-no" title="statement not covered" >    "Hept. sh": [</span>
+<span class="cstat-no" title="statement not covered" >      1.7511052939828738e-6, 0.18632999798127692, -46.18002211678322,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "5000m": [0.002777997945427213, -8.000608112196687, 5760.418712362531],</span>
+<span class="cstat-no" title="statement not covered" >    "300m": [1.8296570247447335, -209.30430382250051, 5985.805789959268],</span>
+<span class="cstat-no" title="statement not covered" >    "200m": [5.083329625804254, -360.8260380705033, 6403.154333221377],</span>
+<span class="cstat-no" title="statement not covered" >    "55mH": [30.085307708674918, -803.1373763838637, 5359.772393310966],</span>
+<span class="cstat-no" title="statement not covered" >    "60mH": [23.916231718984818, -698.1937268964539, 5095.479315056291],</span>
+<span class="cstat-no" title="statement not covered" >    "4x400m": [0.05050072203675704, -33.73384421285573, 5633.448990227305],</span>
+<span class="cstat-no" title="statement not covered" >    "50mH": [27.41182627032049, -726.5120697133789, 4719.283643435643],</span>
+<span class="cstat-no" title="statement not covered" >    "400m": [1.0210130425695638, -161.3092238081408, 6371.289298935095],</span>
+<span class="cstat-no" title="statement not covered" >    "Mile sh": [0.036900007414912395, -30.626657725760197, 6354.958031052956],</span>
+<span class="cstat-no" title="statement not covered" >    "600m": [0.3856992283143512, -99.89240864996827, 6467.788691627793],</span>
+<span class="cstat-no" title="statement not covered" >    "10000m": [5.239994429364625e-4, -3.3011925260043427, 5199.371486475808],</span>
+<span class="cstat-no" title="statement not covered" >    "20,000mW": [2.7350002531860776e-5, -0.6235797774588789, 3554.403148578058],</span>
+<span class="cstat-no" title="statement not covered" >    "3000m sh": [0.00832191917227365, -13.980775520668885, 5871.90250552597],</span>
+<span class="cstat-no" title="statement not covered" >    "800m sh": [0.19739256108073278, -72.63927638712084, 6682.6879602972185],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 3kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      0.0013188638764620175, -4.232300411919454, 3395.3467675125576,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "5000mW": [4.669995672369684e-4, -2.5217935388764374, 3404.4156502809637],</span>
+<span class="cstat-no" title="statement not covered" >    "4x200m sh": [0.3119896689477031, -89.85075766433874, 6469.076514942455],</span>
+<span class="cstat-no" title="statement not covered" >    "50m": [95.82235385745662, -1763.0165325322305, 8108.971505376976],</span>
+<span class="cstat-no" title="statement not covered" >    "500m": [0.585027774798931, -121.67863906127604, 6326.92802974442],</span>
+<span class="cstat-no" title="statement not covered" >    "15,000mW": [4.979999739458674e-5, -0.8396274711976517, 3539.02770275042],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 10 Miles": [</span>
+<span class="cstat-no" title="statement not covered" >      1.8524985210266465e-4, -1.9447905029914807, 5104.302716247388,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "100m": [24.642211664166098, -837.7135408530303, 7119.3125116789015],</span>
+<span class="cstat-no" title="statement not covered" >    "4x100m": [1.2360320753572864, -171.79529610507234, 5969.431205180357],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 15 km": [2.1619813224982992e-4, -2.104692144502337, 5122.29998515785],</span>
+<span class="cstat-no" title="statement not covered" >    "500m sh": [0.5649713205833109, -119.76970949143652, 6347.5570185079705],</span>
+<span class="cstat-no" title="statement not covered" >    "110mH": [7.1470227474935655, -375.8846820439139, 4920.401710892969],</span>
+<span class="cstat-no" title="statement not covered" >    "10,000mW": [</span>
+<span class="cstat-no" title="statement not covered" >      1.1370001341616184e-4, -1.2620689961606075, 3502.2382226384216,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "35,000mW": [6.13999967058812e-6, -0.27998393156747703, 3191.8161623578926],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 100 km": [</span>
+<span class="cstat-no" title="statement not covered" >      1.7649869023559175e-6, -0.17155533952055002, 4168.759475629777,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "400mH": [0.5459888468067362, -104.2787780128183, 4979.068748674414],</span>
+<span class="cstat-no" title="statement not covered" >    HJ: [32.14570816360356, 745.3746826150164, -705.259733494051],</span>
+<span class="cstat-no" title="statement not covered" >    "300m sh": [1.802963929735995, -209.12735993028036, 6064.19838705298],</span>
+<span class="cstat-no" title="statement not covered" >    "4x400mix": [0.027319971572494772, -21.855722774421338, 4371.091344809567],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 30kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      8.929872357660252e-6, -0.3412926057870429, 3260.9773729436565,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "2 Miles": [0.007029988518363783, -12.721403001585259, 5755.13271902001],</span>
+<span class="cstat-no" title="statement not covered" >    "2000m SC": [0.010229985822021836, -13.503484790678613, 4456.117711582512],</span>
+<span class="cstat-no" title="statement not covered" >    PV: [3.0457199208785823, 239.612026696057, -280.5412229935755],</span>
+<span class="cstat-no" title="statement not covered" >    "400m sh": [0.9810285010226494, -158.13093544779986, 6372.245446830289],</span>
+<span class="cstat-no" title="statement not covered" >    HT: [0.0028444950947790204, 15.081627308136717, -21.68901198504136],</span>
+<span class="cstat-no" title="statement not covered" >    "3000m SC": [0.0043159973458793965, -8.804593368752649, 4490.321079731511],</span>
+<span class="cstat-no" title="statement not covered" >    "30,000mW": [8.929998959835068e-6, -0.3413044839752075, 3261.1635900282854],</span>
+<span class="cstat-no" title="statement not covered" >    "1500m": [0.04065992529984008, -31.307736299477256, 6026.662254345021],</span>
+<span class="cstat-no" title="statement not covered" >    "4x400mix sh": [</span>
+<span class="cstat-no" title="statement not covered" >      0.026880251011740075, -21.772687901858262, 4408.906997824612,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    JT: [0.0024031524897170087, 13.841186813175682, -21.05825095349428],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 50kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      2.123989730853351e-6, -0.15802293332546835, 2939.1902791610046,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 30 km": [</span>
+<span class="cstat-no" title="statement not covered" >      4.1899103628650555e-5, -0.8882236041678482, 4707.383289585705,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "55m": [78.9227608844667, -1578.3239369830117, 7890.637076645042],</span>
+<span class="cstat-no" title="statement not covered" >    "4x200m": [0.2976775548102779, -85.72750621619343, 6172.13094653259],</span>
+<span class="cstat-no" title="statement not covered" >    "1500m sh": [0.041999988506264074, -32.423575703958704, 6257.669581143418],</span>
+<span class="cstat-no" title="statement not covered" >    "3000m": [0.008150049932713843, -13.691983542337312, 5750.59246378555],</span>
+<span class="cstat-no" title="statement not covered" >    LJ: [1.931092872960562, 186.73134733641928, -479.70640445759636],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 5kmW": [4.673316170291028e-4, -2.522675135297817, 3404.498836055718],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 5 km": [0.0027791125913787518, -8.002589936962636, 5760.829724426498],</span>
+<span class="cstat-no" title="statement not covered" >    "3000mW": [0.0013179978841543205, -4.2307618788757395, 3395.177055106571],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 15kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      4.9801244751997674e-5, -0.8395916226980376, 3538.6471161143127,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "50,000mW": [</span>
+<span class="cstat-no" title="statement not covered" >      2.123999976233037e-6, -0.15802557747075685, 2939.2753526763263,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "60m": [68.62032200155772, -1468.376079820242, 7854.923996115336],</span>
+<span class="cstat-no" title="statement not covered" >    "1000m sh": [0.11389778654137217, -54.670029751952825, 6560.289996561711],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 35kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      6.1400669292650464e-6, -0.2799797053730302, 3191.6897468937095,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "800m": [0.1980049254166545, -72.07136038821409, 6558.28160300618],</span>
+<span class="cstat-no" title="statement not covered" >    "1000m": [0.11229987246056083, -53.34129687676432, 6334.142779359594],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 10kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      1.1369880949837693e-4, -1.2619474331455365, 3501.5994292710093,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    DT: [0.00400631290161968, 17.8920605010303, -27.18777464602681],</span>
+<span class="cstat-no" title="statement not covered" >    "4x400m sh": [0.04890033030582153, -33.25166827913472, 5652.691308940412],</span>
+<span class="cstat-no" title="statement not covered" >    "Dec.": [9.772168523991976e-7, 0.139129643801148, -48.958602564753164],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 20 km": [</span>
+<span class="cstat-no" title="statement not covered" >      1.0849945387967144e-4, -1.4544357631051241, 4874.178186156554,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "200m sh": [5.0428984333116205, -363.0051678271411, 6532.672628951492],</span>
+<span class="cstat-no" title="statement not covered" >    "Road Marathon": [</span>
+<span class="cstat-no" title="statement not covered" >      2.0101186255287035e-5, -0.6150659606552438, 4705.042285787989,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "2000m": [0.02181003181267993, -23.03116782160032, 6080.168871850823],</span>
+<span class="cstat-no" title="statement not covered" >    "5000m sh": [0.002900003148620267, -8.351976844926412, 6013.40053571912],</span>
+<span class="cstat-no" title="statement not covered" >    Mile: [0.035099677603458446, -29.132456259137143, 6044.924547011615],</span>
+<span class="cstat-no" title="statement not covered" >    "2000m sh": [0.022600003526984658, -23.865373073726005, 6300.3976437979145],</span>
+<span class="cstat-no" title="statement not covered" >    SP: [0.04234614355526389, 57.99966265925241, -55.823610246186945],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 10 km": [5.243835511893474e-4, -3.302659028227424, 5200.274036400777],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 25 km": [6.380128595110182e-5, -1.102413160310192, 4762.120081442874],</span>
+<span class="cstat-no" title="statement not covered" >    "600m sh": [0.3899861152610953, -102.17335025475768, 6692.146447579609],</span>
+<span class="cstat-no" title="statement not covered" >    "2 Miles sh": [</span>
+<span class="cstat-no" title="statement not covered" >      0.007209969187584653, -13.078823619347986, 5931.217870712513,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "Road Mile": [0.035099677603458446, -29.132456259137143, 6044.924547011615],</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+<span class="cstat-no" title="statement not covered" >  women: {</span>
+<span class="cstat-no" title="statement not covered" >    TJ: [0.4296645887350792, 90.3430418780863, -231.6675825305283],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 20kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      1.869988372757989e-5, -0.493658647842274, 3258.0265828920237,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "Road HM": [2.5960366893742386e-5, -0.5606107770831628, 3026.587224518895],</span>
+<span class="cstat-no" title="statement not covered" >    "5000m": [8.079992470730324e-4, -3.3935897885437782, 3563.2616780022654],</span>
+<span class="cstat-no" title="statement not covered" >    "300m": [0.6999743364017235, -107.79032021608691, 4149.692833384965],</span>
+<span class="cstat-no" title="statement not covered" >    "200m": [2.2422237149162925, -204.01464451534775, 4640.727341804304],</span>
+<span class="cstat-no" title="statement not covered" >    "55mH": [13.198221547797402, -443.3395456766666, 3722.9474163894774],</span>
+<span class="cstat-no" title="statement not covered" >    "60mH": [11.16828188896136, -406.39148481091615, 3696.9522386075114],</span>
+<span class="cstat-no" title="statement not covered" >    "4x400m": [0.015620076884804046, -14.995086303404946, 3598.7788204069657],</span>
+<span class="cstat-no" title="statement not covered" >    "50mH": [16.212665326054548, -495.9578685610686, 3792.827532194031],</span>
+<span class="cstat-no" title="statement not covered" >    "400m": [0.3350059758445596, -73.6974469594461, 4053.1545244171575],</span>
+<span class="cstat-no" title="statement not covered" >    "Mile sh": [0.011540015186639607, -13.513232952897397, 3955.963356088527],</span>
+<span class="cstat-no" title="statement not covered" >    "600m": [0.1290024817337887, -46.439367295225566, 4179.4139537496085],</span>
+<span class="cstat-no" title="statement not covered" >    "10000m": [1.712000450308747e-4, -1.5407985033832432, 3466.7925173026015],</span>
+<span class="cstat-no" title="statement not covered" >    "Hept.": [1.5806071811915508e-6, 0.17704089212065277, -43.84270064775592],</span>
+<span class="cstat-no" title="statement not covered" >    "20,000mW": [1.8699999291954365e-5, -0.4936798059331515, 3258.285541488556],</span>
+<span class="cstat-no" title="statement not covered" >    "3000m sh": [0.002590000537161685, -6.215973858107134, 3729.5683351015323],</span>
+<span class="cstat-no" title="statement not covered" >    "800m sh": [0.05719995663858857, -30.201001015322618, 3986.4574604244845],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 3kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      9.235372677025705e-4, -3.4012984886514914, 3131.6220206810976,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "5000mW": [3.246000429020235e-4, -2.0384849417822863, 3200.416166438328],</span>
+<span class="cstat-no" title="statement not covered" >    "4x200m sh": [0.0825999217407336, -35.02153700840836, 3712.1957862451673],</span>
+<span class="cstat-no" title="statement not covered" >    "50m": [33.046243452504314, -799.5823293340509, 4836.413712938258],</span>
+<span class="cstat-no" title="statement not covered" >    "500m": [0.1875992157997608, -54.58957565931178, 3971.259245572466],</span>
+<span class="cstat-no" title="statement not covered" >    "15,000mW": [</span>
+<span class="cstat-no" title="statement not covered" >      3.3869995586716106e-5, -0.6627677511465961, 3242.2582453516807,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 10 Miles": [</span>
+<span class="cstat-no" title="statement not covered" >      5.0161458530027705e-5, -0.7928929030433878, 3133.291096993169,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "100m": [9.927426450685289, -436.6751262119069, 4802.020943877404],</span>
+<span class="cstat-no" title="statement not covered" >    "4x100m": [0.38950036063393156, -76.3380579665054, 3740.3711316947592],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 15 km": [</span>
+<span class="cstat-no" title="statement not covered" >      5.950169956620444e-5, -0.8673501034970386, 3160.8202295460505,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "500m sh": [0.17139835836097816, -51.58928019804989, 3881.97389184442],</span>
+<span class="cstat-no" title="statement not covered" >    "10,000mW": [7.849989817173327e-5, -1.0079383485714501, 3235.480591699248],</span>
+<span class="cstat-no" title="statement not covered" >    "35,000mW": [4.930000111613025e-6, -0.25083835488906914, 3190.663239908332],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 100 km": [</span>
+<span class="cstat-no" title="statement not covered" >      8.73997733214654e-7, -0.10697653743886448, 3273.457442281433,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "400mH": [0.20856495718486912, -54.2249062108549, 3524.488878249118],</span>
+<span class="cstat-no" title="statement not covered" >    HJ: [39.557908744493034, 831.3655724464043, -601.5063267494843],</span>
+<span class="cstat-no" title="statement not covered" >    "300m sh": [0.6595068053519668, -104.1948510278562, 4115.419602857961],</span>
+<span class="cstat-no" title="statement not covered" >    "4x400mix": [0.027319971572494772, -21.855722774421338, 4371.091344809567],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 30kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      6.89002999299383e-6, -0.2943343933311784, 3143.4127356701356,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "2 Miles": [0.0021569982582902714, -5.592213856668138, 3624.5803229979647],</span>
+<span class="cstat-no" title="statement not covered" >    "Pent. sh": [</span>
+<span class="cstat-no" title="statement not covered" >      2.9452123778365286e-6, 0.24163567137421538, -42.43645722704241,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "2000m SC": [0.003635987799696705, -6.777453730493733, 3158.2797230951983],</span>
+<span class="cstat-no" title="statement not covered" >    PV: [3.9325797501069246, 275.48968329946365, -205.1216924619548],</span>
+<span class="cstat-no" title="statement not covered" >    "400m sh": [0.32239778088712256, -72.2140857003651, 4043.8163995789655],</span>
+<span class="cstat-no" title="statement not covered" >    HT: [0.0030967239667614166, 15.730166876520684, -22.699498543297523],</span>
+<span class="cstat-no" title="statement not covered" >    "3000m SC": [0.0013229981350130343, -3.99544233512367, 3016.5498521791887],</span>
+<span class="cstat-no" title="statement not covered" >    "30,000mW": [6.890001039170008e-6, -0.29434075898247514, 3143.558449914548],</span>
+<span class="cstat-no" title="statement not covered" >    "1500m": [0.01339999627048627, -14.471861176560651, 3907.3655835949467],</span>
+<span class="cstat-no" title="statement not covered" >    "4x400mix sh": [</span>
+<span class="cstat-no" title="statement not covered" >      0.026880251011740075, -21.772687901858262, 4408.906997824612,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    JT: [0.004072274456476066, 18.042616052881158, -18.842904339435336],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 50kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      1.990012802723643e-6, -0.15665146940138275, 3082.856899531209,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 30 km": [</span>
+<span class="cstat-no" title="statement not covered" >      1.1779975715341595e-5, -0.3760051889530356, 3000.427789900161,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "55m": [27.69222698350768, -728.2024319005941, 4786.948624048266],</span>
+<span class="cstat-no" title="statement not covered" >    "4x200m": [0.07949854657189448, -33.70677533008393, 3572.84874624628],</span>
+<span class="cstat-no" title="statement not covered" >    "1500m sh": [0.013649954143477805, -14.741826462372728, 3980.259331609617],</span>
+<span class="cstat-no" title="statement not covered" >    "3000m": [0.0025389974609562604, -6.09357042856243, 3656.127933666052],</span>
+<span class="cstat-no" title="statement not covered" >    LJ: [1.958114032649064, 193.69548254413166, -233.98988652729167],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 5kmW": [3.247214016910971e-4, -2.03870460612589, 3199.987032004472],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 5 km": [8.086109772535849e-4, -3.394979088225057, 3563.519547606804],</span>
+<span class="cstat-no" title="statement not covered" >    "3000mW": [9.230001724518933e-4, -3.4003232245366064, 3131.689052976566],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 15kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      3.387067634299081e-5, -0.6627433846042905, 3241.956113495311,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "50,000mW": [</span>
+<span class="cstat-no" title="statement not covered" >      1.9900000562662976e-6, -0.15665278293489848, 3082.9263533053163,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "60m": [24.91177544269476, -697.4127036580539, 4880.84062414919],</span>
+<span class="cstat-no" title="statement not covered" >    "1000m sh": [0.034730273669098644, -23.643965410011788, 4024.137096635415],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 35kmW": [4.92991338066893e-6, -0.250830552043384, 3190.5165854229563],</span>
+<span class="cstat-no" title="statement not covered" >    "800m": [0.06879989341997295, -34.399261916380055, 4299.822125108796],</span>
+<span class="cstat-no" title="statement not covered" >    "1000m": [0.038199708533426247, -25.211487793783817, 4159.840558573429],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 10kmW": [</span>
+<span class="cstat-no" title="statement not covered" >      7.850131933358987e-5, -1.0078686324185995, 3234.987258339839,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    DT: [0.0040284238096806035, 17.94169538353276, -19.210748193687323],</span>
+<span class="cstat-no" title="statement not covered" >    "100mH": [3.982296326194273, -238.8619577729478, 3581.9054393060505],</span>
+<span class="cstat-no" title="statement not covered" >    "4x400m sh": [</span>
+<span class="cstat-no" title="statement not covered" >      0.015500027842040298, -15.003873478513015, 3630.8991499322874,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 20 km": [</span>
+<span class="cstat-no" title="statement not covered" >      2.9561167921593728e-5, -0.6002903493061389, 3047.491516400696,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "200m sh": [1.9617476310046413, -186.35304547847045, 4425.540362004947],</span>
+<span class="cstat-no" title="statement not covered" >    "Road Marathon": [</span>
+<span class="cstat-no" title="statement not covered" >      5.389966906974475e-6, -0.25224574933865895, 2951.2162982728405,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "2000m": [0.006766010458436056, -10.148946030704451, 3805.8288250550686],</span>
+<span class="cstat-no" title="statement not covered" >    "5000m sh": [8.2499992965758e-4, -3.464991324219369, 3638.23229190876],</span>
+<span class="cstat-no" title="statement not covered" >    Mile: [0.011649998601839462, -13.513881163102496, 3918.992004961794],</span>
+<span class="cstat-no" title="statement not covered" >    "2000m sh": [0.006849999624836789, -10.305069946577078, 3875.710937557713],</span>
+<span class="cstat-no" title="statement not covered" >    SP: [0.046214387641356325, 60.75503111383068, -25.931941888942674],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 10 km": [</span>
+<span class="cstat-no" title="statement not covered" >      1.7119892280619345e-4, -1.540623663798911, 3466.0215817096905,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "Road 25 km": [</span>
+<span class="cstat-no" title="statement not covered" >      1.7820078937803765e-5, -0.4640160886376883, 3020.6229502419883,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "600m sh": [0.10630096102938147, -40.4675585171226, 3851.3911703779886],</span>
+<span class="cstat-no" title="statement not covered" >    "2 Miles sh": [</span>
+<span class="cstat-no" title="statement not covered" >      0.0022019917299053726, -5.708869030298274, 3700.1929170416843,</span>
+<span class="cstat-no" title="statement not covered" >    ],</span>
+<span class="cstat-no" title="statement not covered" >    "Road Mile": [0.011649998601839462, -13.513881163102496, 3918.992004961794],</span>
+<span class="cstat-no" title="statement not covered" >  },</span>
+<span class="cstat-no" title="statement not covered" >};</span>
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2025-04-01T11:31:10.378Z
+            </div>
+        <script src="../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../sorter.js"></script>
+        <script src="../../../block-navigation.js"></script>
+    </body>
+</html>
+    

@@ -1,10 +1,10 @@
-
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Pencil, Trash2, Clock, Award } from "lucide-react";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { RaceResult } from "./types";
+import { formatTime } from "@/lib/utils";
 
 interface ResultsTableProps {
   results: RaceResult[];
@@ -21,13 +21,6 @@ const ResultsTable = ({
   gender,
   getIAAFPoints 
 }: ResultsTableProps) => {
-  const formatTime = (hours: number, minutes: number, seconds: number) => {
-    if (hours > 0) {
-      return `${hours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`;
-    }
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "d MMM yyyy", { locale: es });
   };

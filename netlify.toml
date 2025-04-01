@@ -1,10 +1,27 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[dev]
+  command = "npm run dev"
+  port = 8080
+  targetPort = 8080
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[build.environment]
+  NODE_VERSION = "20.11.1"
+  NPM_VERSION = "10.2.4"
 
 [[headers]]
   for = "/*"
   [headers.values]
+    Content-Security-Policy = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co https://cdn.brevo.com https://sibautomation.com;"
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
-    Content-Security-Policy = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.gpteng.co https://cdn.brevo.com https://sibautomation.com;"
 
 [[headers]]
   for = "/*.js"
@@ -30,22 +47,3 @@
   for = "/*.tsx"
   [headers.values]
     Content-Type = "application/javascript"
-
-# Handle SPA routing - updated with higher priority
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  force = true
-
-[build]
-  command = "npm run build"
-  publish = "dist"
-  environment = { NODE_VERSION = "20", NPM_VERSION = "10" }
-
-[build.processing]
-  skip_processing = false
-
-[build.processing.js]
-  bundle = false
-  minify = false

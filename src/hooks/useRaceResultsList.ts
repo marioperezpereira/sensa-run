@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { RaceResult, SurfaceType, TrackType } from "@/components/personal-bests/race-results/types";
-import { calculateIAAFPoints } from "@/lib/iaaf";
+import { getIAAFPoints } from "@/lib/iaaf/utils";
+import { formatDistanceForDisplay, timeToSeconds } from "@/lib/utils";
 
 interface ResultsByDistance {
   distance: string;
@@ -13,14 +13,6 @@ interface ResultsByDistance {
   surfaceType: string;
   trackType?: string;
 }
-
-// Helper function to convert database enum to display format
-const formatDistanceForDisplay = (distance: string): string => {
-  if (distance === "5K" || distance === "10K") return distance;
-  if (distance === "Half Marathon") return "Media maratón";
-  if (distance === "Marathon") return "Maratón";
-  return distance; // Return as is for track distances
-};
 
 export const useRaceResultsList = (refreshTrigger: number = 0) => {
   const [loading, setLoading] = useState(true);
@@ -94,8 +86,8 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
           
           // Find PB (fastest time)
           const pb = [...distanceResults].sort((a, b) => {
-            const aTime = a.hours * 3600 + a.minutes * 60 + a.seconds;
-            const bTime = b.hours * 3600 + b.minutes * 60 + b.seconds;
+            const aTime = timeToSeconds(a.hours, a.minutes, a.seconds);
+            const bTime = timeToSeconds(b.hours, b.minutes, b.seconds);
             return aTime - bTime;
           })[0] || null;
           
@@ -167,30 +159,13 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
     fetchResults();
   }, [toast, refreshTrigger]);
   
-  const getIAAFPoints = (result: RaceResult | null) => {
-    try {
-      if (!result) return 0;
-      
-      // Determine if it's an indoor event
-      const isIndoor = result.track_type === "Pista Cubierta";
-      
-      return calculateIAAFPoints(
-        result.distance, 
-        result.hours, 
-        result.minutes, 
-        result.seconds, 
-        gender,
-        isIndoor
-      );
-    } catch (error) {
-      console.error('Error calculating IAAF points:', error);
-      return 0;
-    }
+  const calculatePoints = (result: RaceResult | null) => {
+    return getIAAFPoints(result, gender);
   };
 
   return {
     loading,
     resultsByDistance,
-    getIAAFPoints
+    getIAAFPoints: calculatePoints
   };
 };
