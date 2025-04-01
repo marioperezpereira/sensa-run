@@ -5,6 +5,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { RaceResult } from "@/components/personal-bests/race-results/types";
 import { calculateIAAFPoints } from "@/lib/iaaf";
 
+// Convert display distance back to database format
+const getDbDistance = (displayDistance: string): string => {
+  if (displayDistance === "Media maratón") return "Half Marathon";
+  if (displayDistance === "Maratón") return "Marathon";
+  return displayDistance;
+};
+
 export const useRaceResults = (distance: string, refreshTrigger = 0) => {
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState<RaceResult[]>([]);
@@ -32,12 +39,15 @@ export const useRaceResults = (distance: string, refreshTrigger = 0) => {
         setGender(profile.gender.toLowerCase() === 'female' ? 'women' : 'men');
       }
       
+      // Convert display distance to database format
+      const dbDistance = getDbDistance(distance);
+      
       // Fetch results based on distance AND user_id
       let query = supabase
         .from('race_results')
         .select('*')
-        .eq('distance', distance) // Filter by distance
-        .eq('user_id', user.id)   // Filter by user_id - this was missing!
+        .eq('distance', dbDistance) // Filter by correctly formatted distance
+        .eq('user_id', user.id)     // Filter by user_id
         .order('race_date', { ascending: false });
 
       const { data, error } = await query;

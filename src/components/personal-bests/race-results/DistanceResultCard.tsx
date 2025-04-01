@@ -1,5 +1,5 @@
 
-import { formatDistanceToKm, formatTime } from "@/lib/utils";
+import { formatTime } from "@/lib/utils";
 import { RaceResult } from "./types";
 import { ChevronRight, Medal, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,13 +26,12 @@ const DistanceResultCard = ({
   surfaceType = "Asfalto",
   trackType
 }: DistanceResultCardProps) => {
-  const formattedDistance = distance;
   const iaafPoints = pb ? getIAAFPoints(pb) : 0;
   
   // Format title based on surface and track type
-  let title = formattedDistance;
+  let title = distance;
   if (surfaceType === "Pista de atletismo" && trackType) {
-    title = `${formattedDistance} (${trackType})`;
+    title = `${distance} (${trackType})`;
   }
 
   return (
