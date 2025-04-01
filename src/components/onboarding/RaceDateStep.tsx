@@ -21,8 +21,11 @@ export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
     }
   }, [value, onChange]);
   
+  const [open, setOpen] = useState(false);
+  
   const handleDateSelect = (selectedDate: Date) => {
     onChange(selectedDate.toISOString());
+    setOpen(false);
   };
   
   // Convert string date to Date object if it exists
@@ -38,7 +41,7 @@ export const RaceDateStep = ({ value, onChange }: RaceDateStepProps) => {
       <p className="text-gray-800 text-sm md:text-base">
         ¿Qué fecha quieres correrla?
       </p>
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"

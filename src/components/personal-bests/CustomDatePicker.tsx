@@ -51,6 +51,7 @@ const CustomDatePicker = ({ value, onChange }: CustomDatePickerProps) => {
   const handleDateSelect = (day: number) => {
     const selectedDate = new Date(currentYear, currentMonth, day);
     onChange(selectedDate);
+    // Auto-close is handled by parent component
   };
   
   const today = new Date();

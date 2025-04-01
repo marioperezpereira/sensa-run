@@ -8,12 +8,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { UseFormReturn } from "react-hook-form";
 import { ProfileFormValues } from "./types";
 import CustomDatePicker from "./CustomDatePicker";
+import { useState } from "react";
 
 interface DateOfBirthFieldProps {
   form: UseFormReturn<ProfileFormValues>;
 }
 
 const DateOfBirthField = ({ form }: DateOfBirthFieldProps) => {
+  const [open, setOpen] = useState(false);
+  
   return (
     <FormField
       control={form.control}
@@ -21,7 +24,7 @@ const DateOfBirthField = ({ form }: DateOfBirthFieldProps) => {
       render={({ field }) => (
         <FormItem className="flex flex-col">
           <FormLabel>Fecha de nacimiento</FormLabel>
-          <Popover>
+          <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <FormControl>
                 <Button
@@ -42,7 +45,10 @@ const DateOfBirthField = ({ form }: DateOfBirthFieldProps) => {
             <PopoverContent className="w-auto p-0" align="start">
               <CustomDatePicker 
                 value={field.value} 
-                onChange={field.onChange}
+                onChange={(date) => {
+                  field.onChange(date);
+                  setOpen(false);
+                }}
               />
             </PopoverContent>
           </Popover>
