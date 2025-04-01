@@ -24,11 +24,11 @@ export function RecommendationDisplay({
       <ReactMarkdown
         components={{
           h3: ({children}: {children: ReactNode}) => (
-            <h3 className="text-2xl font-bold mt-8 mb-4 text-sensa-purple">{children}</h3>
+            <h3 className="text-2xl font-bold mt-8 mb-4 text-center text-sensa-purple">{children}</h3>
           ),
           hr: () => <hr className="my-6" />,
           p: ({children}: {children: ReactNode}) => (
-            <p className="mb-4 leading-relaxed text-center">{children}</p>
+            <p className="mb-4 leading-relaxed">{children}</p>
           )
         }}
       >
