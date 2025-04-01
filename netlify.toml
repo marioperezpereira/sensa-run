@@ -14,7 +14,7 @@
   status = 200
 
 [build.environment]
-  NODE_VERSION = "18.x"
+  NODE_VERSION = "18.19.1"
   NPM_VERSION = "10.2.4"
 
 [[headers]]
