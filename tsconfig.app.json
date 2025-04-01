@@ -9,6 +9,7 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    "types": ["vite/client", "react", "react-dom"],
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
