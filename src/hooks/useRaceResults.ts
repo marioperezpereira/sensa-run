@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -31,11 +32,12 @@ export const useRaceResults = (distance: string, refreshTrigger = 0) => {
         setGender(profile.gender.toLowerCase() === 'female' ? 'women' : 'men');
       }
       
-      // Fetch results based on distance
+      // Fetch results based on distance AND user_id
       let query = supabase
         .from('race_results')
         .select('*')
-        .eq('distance', distance) // Now string-based distance
+        .eq('distance', distance) // Filter by distance
+        .eq('user_id', user.id)   // Filter by user_id - this was missing!
         .order('race_date', { ascending: false });
 
       const { data, error } = await query;

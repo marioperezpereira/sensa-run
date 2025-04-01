@@ -50,10 +50,11 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
           setGender(profile.gender.toLowerCase() === 'female' ? 'women' : 'men');
         }
         
-        // Get race results
+        // Get race results, filtering by user_id
         const { data: results, error } = await supabase
           .from('race_results')
           .select('*')
+          .eq('user_id', user.id) // Add filter by user_id
           .order('race_date', { ascending: false });
 
         if (error) throw error;
@@ -74,7 +75,7 @@ export const useRaceResultsList = (refreshTrigger: number = 0) => {
           const typedResult: RaceResult = {
             id: result.id,
             race_date: result.race_date,
-            distance: result.distance, // Now directly using the string value
+            distance: result.distance,
             hours: result.hours,
             minutes: result.minutes,
             seconds: result.seconds,
