@@ -49,19 +49,30 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4.5-turbo',
+        model: 'gpt-4o',
         messages: [
-          { role: 'system', content: 'Eres un entrenador de atletismo experto que proporciona recomendaciones de entrenamiento.' },
+          { role: 'system', content: 'Eres un entrenador de atletismo experto que proporciona recomendaciones de entrenamiento personalizadas. Analiza cuidadosamente el historial de entrenamientos, las percepciones subjetivas del atleta y sus objetivos para crear recomendaciones seguras y efectivas. Adapta siempre tus sugerencias al nivel actual del atleta y su estado físico y mental.' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
+        max_tokens: 1500,
       }),
     });
 
     if (!response.ok) {
       const error = await response.json();
       console.error('OpenAI API error:', error);
-      throw new Error('Failed to generate recommendation');
+      
+      // More specific error handling
+      if (response.status === 401) {
+        throw new Error('Invalid OpenAI API key');
+      } else if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      } else if (response.status === 400) {
+        throw new Error('Invalid request to OpenAI API');
+      } else {
+        throw new Error(`OpenAI API error: ${error.error?.message || 'Unknown error'}`);
+      }
     }
 
     const data = await response.json();
