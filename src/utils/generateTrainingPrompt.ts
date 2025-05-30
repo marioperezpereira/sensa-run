@@ -1,4 +1,3 @@
-
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { supabase } from "@/integrations/supabase/client";
@@ -115,9 +114,14 @@ export const generateTrainingPrompt = async (latestActivity: any, effort: number
         .limit(1)
         .maybeSingle();
 
+      // Format the activity date
+      const activityDate = latestActivity.start_date ? 
+        format(new Date(latestActivity.start_date), "d 'de' MMMM", { locale: es }) : 
+        'fecha no disponible';
+
       lastActivityText = latestCondition?.effort_level !== null && latestCondition?.effort_level !== undefined
-        ? `En su último entrenamiento corrió ${(latestActivity.distance / 1000).toFixed(2)}km y su percepción de esfuerzo fue de ${latestCondition.effort_level} sobre 10.`
-        : `En su último entrenamiento corrió ${(latestActivity.distance / 1000).toFixed(2)}km.`;
+        ? `En su último entrenamiento el ${activityDate} corrió ${(latestActivity.distance / 1000).toFixed(2)}km y su percepción de esfuerzo fue de ${latestCondition.effort_level} sobre 10.`
+        : `En su último entrenamiento el ${activityDate} corrió ${(latestActivity.distance / 1000).toFixed(2)}km.`;
     }
     
     // Format user profile information
@@ -132,22 +136,32 @@ export const generateTrainingPrompt = async (latestActivity: any, effort: number
         parts.push(`${age} años`);
       }
       if (parts.length > 0) {
-        userProfileText = `\n\nEntrenando a un atleta ${parts.join(', ')}.`;
+        userProfileText = `\n\nEntrenando a un atleta ${parts.join(' de ')}.`;
       }
     }
     
     // Format personal best results
     let personalBestsText = '';
     if (raceResults && raceResults.length > 0) {
-      personalBestsText = '\n\nMarcas personales:';
+      personalBestsText = '\n\nMarcas personales más recientes:';
       raceResults.forEach(result => {
         const raceDate = format(new Date(result.race_date), "d 'de' MMMM 'de' yyyy", { locale: es });
         const hours = result.hours ? `${result.hours}h ` : '';
         const minutes = result.minutes ? `${result.minutes}min ` : '';
         const seconds = result.seconds ? `${result.seconds}s` : '';
-        personalBestsText += `\n- ${result.distance}: ${hours}${minutes}${seconds}(${raceDate})`;
+        
+        // Add surface and track type information if available
+        let surfaceInfo = '';
+        if (result.surface_type) {
+          surfaceInfo = ` en ${result.surface_type.toLowerCase()}`;
+          if (result.track_type) {
+            surfaceInfo += ` (${result.track_type.toLowerCase()})`;
+          }
+        }
+        
+        personalBestsText += `\n- ${result.distance}: ${hours}${minutes}${seconds} (${raceDate})${surfaceInfo}`;
       });
-      personalBestsText += '\n\nEstas marcas son históricas y no garantizan el rendimiento actual del atleta.';
+      personalBestsText += '\n\nEstas marcas son históricas y no garantizan el rendimiento actual del atleta, pero son un buen indicador de su nivel y experiencia en diferentes superficies y distancias.';
     }
 
     return `Eres un entrenador de atletismo de alto nivel, aunque entrenas a gente de todos los ámbitos y niveles. Estás entrenando a un atleta que lleva corriendo regularmente ${onboarding.running_experience}.${userProfileText}
@@ -164,7 +178,10 @@ ${lastActivityText ? `${lastActivityText} ` : ''}Su percepción de niveles de en
 
 NOTA: Ten en cuenta que los datos de frecuencia cardíaca podrían no ser completamente precisos debido a posibles problemas con los monitores de frecuencia cardíaca.
 
-Basado en las percepciones personales, objetivos e historial de entrenamientos, sugiere un entrenamiento para el usuario a realizar en el día de hoy. El formato en que lo aportes debe incluir un título de no más de 10 palabras explicando en qué consiste el entrenamiento, una descripción en la cual se explique de forma más detallada cómo se ha de ejecutar el entrenamiento y sensaciones que debe tener mientras lo ejecute (no recomiendes un ritmo específico de entrenamiento, la recomendación debe girar en torno a las percepciones del usuario). La descripción escríbela de forma relativamente concisa (máximo 3 párrafos cortos). Debes también incluir una sesión alternativa a realizar en caso de que no le encaje la recomendada al usuario. Esta recomendación incluirá también un título con el mismo formato que para la sesión principal (empieza en el título indicando "Sesión alternativa:" y luego el nombre de la sesión), pero la descripción será más breve, tan sólo de un párrafo. En caso de que el usuario ya haya entrenado en el día de hoy, no le recomiendes otro entrenamiento en la sesión principal y recomiéndaselo como alternativa, pero avísale sobre los riesgos de doblar entrenamientos en el mismo día (sólo si ya ha entrenado hoy, sino no lo hagas)`;
+Basado en las percepciones personales, objetivos e historial de entrenamientos, sugiere un entrenamiento para el usuario a realizar en el día de hoy. El formato en que lo aportes debe incluir un título de no más de 10 palabras explicando en qué consiste el entrenamiento, una descripción en la cual se explique de forma más detallada cómo se ha de ejecutar el entrenamiento y sensaciones que debe tener mientras lo ejecute (no recomiendes un ritmo específico de entrenamiento, la recomendación debe girar en torno a las percepciones del usuario). La descripción escríbela de forma relativamente concisa (máximo 3 párrafos cortos). Debes también incluir una sesión alternativa a realizar en caso de que no le encaje la recomendada al usuario. Esta recomendación incluirá también un título con el mismo formato que para la sesión principal (empieza en el título indicando "Sesión alternativa:" y luego el nombre de la sesión), pero la descripción será más breve, tan sólo de un párrafo.
+
+Si el usuario ya ha entrenado en el día de hoy (lo sabrás porque ya te he enviado la fecha de hoy y el último entrenamiento que ha realizado), no le recomiendes otro entrenamiento en la sesión principal y recomiéndaselo como alternativa, pero avísale sobre los riesgos de doblar entrenamientos en el mismo día (sólo si ya ha entrenado hoy, sino no lo hagas).
+`;
   } catch (error) {
     console.error('Error generating prompt:', error);
     return '';
